@@ -9,6 +9,7 @@
 | `quality-gate-lint.txt` | Android Lint 单独跑的完整输出（含 Gradle 失败时的基线提示） |
 | `quality-gate-tests.txt` | 单元测试单独跑的完整输出 |
 | `quality-gate.log` | ktlint 全量扫描的完整违规清单（1469 条，含文件:行:列与规则名） |
+| `device-acceptance-2026-10-02.md` | **真机验收报告**：设备环境、逐项证据、发现的问题、未覆盖项 |
 
 ## 最近一次结果（2026-10-02）
 

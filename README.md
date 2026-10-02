@@ -56,7 +56,7 @@ DailySchedule 把两条流水合并到**项目**这一个维度上：
 | --- | --- |
 | 桌面小组件 | 依赖（Glance）已在版本目录声明，代码未写 |
 | JSON 导入 / 导出 | 备份恢复链路的缺口；当前只有单向上限的 xlsx 导出 |
-| 真机验收 | 见 [质量门禁](#质量门禁) |
+| 设置页标题栏 | `SettingsScreen` / `CategoryManageScreen` 没有标题栏与返回按钮，只能靠系统返回手势（真机验收发现） |
 
 ## 技术栈
 
@@ -211,6 +211,7 @@ echo "sdk.dir=/你的/Android/sdk" > local.properties
 | Android Lint | `./gradlew :app:lintDebug` | **0 error / 54 warning** |
 | ktlint | `./gradlew :app:ktlintSources` | 能跑，存量 1469 处风格违规**未清** |
 | 打包 | `./gradlew assembleDebug` | 通过 |
+| 真机验收 | `docs/quality/device-acceptance-2026-10-02.md` | Redmi / Android 16 上 12 项中 11 项通过，1 项未覆盖 |
 
 两点需要说明，因为它们都是「看起来绿、实际空过」的坑：
 
@@ -239,6 +240,8 @@ echo "sdk.dir=/你的/Android/sdk" > local.properties
 | `phase6-uiux.md` | 视觉语言与页面规格 |
 | `phase7-implementation-plan.md` | 实施计划与 WBS |
 | `rev2-ui-revision.html` | 第二轮改版方案与落地状态（三 Tab、统计重做、补录标记） |
+| `quality/device-acceptance-2026-10-02.md` | 真机验收报告：环境、逐项证据、发现的问题、未覆盖项 |
+| `quality/README.md` | 质量门禁原始日志的索引与 ktlint 违规分布 |
 | `../BUILD.md` | 本机构建与排错 |
 
 ## 版本规划

@@ -84,7 +84,7 @@
 <h1>DailySchedule 改版方案 · Rev2</h1>
 <div class="meta">
   来源：郗哥 2026-09-10《改进方案》+ 2026-10-01 补充说明与参考截图 &nbsp;·&nbsp;
-  状态：<span class="tag">代码已落地 · 编译 / 170 单测 / Android Lint / 打包全绿 · 待真机验收</span>
+  状态：<span class="tag">代码已落地 · 编译 / 170 单测 / Android Lint / 打包全绿 · 真机验收已跑（Redmi · Android 16）</span>
 </div>
 
 <h2>一、你的决策（已锁定）</h2>
@@ -567,12 +567,15 @@
 
 <h3 style="margin-top:18px">还没动的（下一批）</h3>
 <ol>
-  <li><b>真机验收</b> <span class="tag">阻塞：无设备</span> —— 验收脚本
-      <code>D:/toolchain/verify_device.sh</code> 已就绪（含 MIUI 防 Doze、
-      <code>--no-streaming</code> 安装、冷启动计时、崩溃扫描、数据库落盘检查）。
-      本机 <code>adb devices</code> 为空；SDK 内也未安装 <code>emulator</code> 与
-      <code>system-images</code>，且模拟器覆盖不到 MIUI 的 Doze / 安装拦截行为，
-      故不做模拟器替代。需接入一台 Android 真机后跑。</li>
+  <li><b>真机验收</b> <span class="tag">已完成 11/12</span> —— 2026-10-02 在 Redmi
+      （<code>rothko</code> / Android 16 / HyperOS V816）跑完：安装、连续两次冷启动无
+      schema 错、导出 xlsx 经仅标准库的独立读取器校验、统计三图、记账左滑、设置页、
+      详情面板与周热力图全部通过。报告见
+      <code>docs/quality/device-acceptance-2026-10-02.md</code>。
+      未覆盖 1 项：<b>补录角标</b>（设备库内 4 条会话全部来自计时，没有补录记录）。
+      另发现一处缺陷：<code>SettingsScreen</code> / <code>CategoryManageScreen</code>
+      没有标题栏与返回按钮，只能靠系统返回手势退出（而同为设置入口的
+      <code>DataTransferScreen</code> 有标题栏，属遗漏）。</li>
   <li><b>版本控制</b> —— <code>D:/DailySchedule</code> 下没有 git 仓库（<code>git status</code>
       报 not a repository），任何批量改动都不可回滚。同时 git 全局
       <code>user.name</code> / <code>user.email</code> 未配置，首次提交前需要先落身份。
