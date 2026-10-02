@@ -15,11 +15,13 @@ import com.dailyschedule.app.data.db.dao.CategoryDao
 import com.dailyschedule.app.data.db.dao.ExpenseDao
 import com.dailyschedule.app.data.db.dao.ProjectDao
 import com.dailyschedule.app.data.db.dao.SessionDao
+import com.dailyschedule.app.data.repository.BackupRepositoryImpl
 import com.dailyschedule.app.data.repository.CategoryRepositoryImpl
 import com.dailyschedule.app.data.repository.ExpenseRepositoryImpl
 import com.dailyschedule.app.data.repository.PreferencesRepositoryImpl
 import com.dailyschedule.app.data.repository.ProjectRepositoryImpl
 import com.dailyschedule.app.data.repository.SessionRepositoryImpl
+import com.dailyschedule.app.domain.repository.BackupRepository
 import com.dailyschedule.app.domain.repository.CategoryRepository
 import com.dailyschedule.app.domain.repository.ExpenseRepository
 import com.dailyschedule.app.domain.repository.PreferencesRepository
@@ -59,6 +61,10 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindPreferencesRepository(impl: PreferencesRepositoryImpl): PreferencesRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindBackupRepository(impl: BackupRepositoryImpl): BackupRepository
 
     @Binds
     @Singleton

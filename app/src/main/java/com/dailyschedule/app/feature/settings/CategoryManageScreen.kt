@@ -1,5 +1,6 @@
 package com.dailyschedule.app.feature.settings
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,13 +15,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +52,7 @@ private val CATEGORY_COLORS = listOf(
     "#C9A227", "#7BA05B", "#4B8B8B", "#8A8F98",
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryManageScreen(
     onBack: () -> Unit,
@@ -55,17 +64,30 @@ fun CategoryManageScreen(
     var newName by remember { mutableStateOf("") }
     var newColor by remember { mutableStateOf(CATEGORY_COLORS.first()) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(
-            text = stringResource(R.string.category_manage_title),
-            style = MaterialTheme.typography.titleLarge,
-        )
+    BackHandler(onBack = onBack)
 
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.category_manage_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Outlined.ArrowBack,
+                            contentDescription = stringResource(R.string.cd_back),
+                        )
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
         // 一次性提示
         message?.let { (resId, count) ->
             Card(
@@ -142,6 +164,7 @@ fun CategoryManageScreen(
                     onDelete = { viewModel.deleteCategory(category) },
                 )
             }
+        }
         }
     }
 }

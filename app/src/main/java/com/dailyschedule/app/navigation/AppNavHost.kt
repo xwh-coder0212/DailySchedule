@@ -125,6 +125,7 @@ fun AppNavHost() {
             }
             composable<Settings> {
                 SettingsScreen(
+                    onBack = { navController.popBackStack() },
                     onOpenCategoryManager = { navController.navigate(CategoryManager) },
                     onOpenDataTransfer = { navController.navigate(DataTransfer) },
                 )

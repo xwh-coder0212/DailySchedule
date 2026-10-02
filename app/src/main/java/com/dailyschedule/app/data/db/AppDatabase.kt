@@ -21,7 +21,7 @@ import com.dailyschedule.app.data.db.entity.ProjectEntity
         ExpenseEntity::class,
         CategoryEntity::class,
     ],
-    version = 2,
+    version = AppDatabase.DB_VERSION,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -34,6 +34,19 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun expenseDao(): ExpenseDao
 
     abstract fun categoryDao(): CategoryDao
+
+    companion object {
+
+        /**
+         * Room schema 版本。
+         *
+         * 写成常量并被 `@Database(version = ...)` 引用，而不是在两处各写一个字面量：
+         * JSON 备份文件里要写一个 `dbVersion` 字段供排查问题，那个值必须与这里一致。
+         * 两处各写一个数字，某天加迁移时改了注释里的那个、忘了另一个，
+         * 备份文件就会开始说假话，而且没有任何东西会报错。
+         */
+        const val DB_VERSION: Int = 2
+    }
 }
 
 /**

@@ -207,4 +207,59 @@ interface SessionDao {
      */
     @Query("DELETE FROM focus_sessions WHERE id = :id AND status = 'COMPLETED'")
     suspend fun deleteCompleted(id: Long): Int
+
+    // ── 备份 / 恢复专用 ──
+    //
+    // 下面三个方法**只服务于 JSON 备份与恢复**，日常读写一律走上面的查询。
+    // 放在同一个 DAO 而不是另开一个，是因为它们操作的是同一张表、
+    // 用的是同一套状态字面量约定，拆开只会让"哪个查询属于备份"变得不明显。
+
+    /**
+     * 全量会话，**排除活动会话**（RUNNING / PAUSED），按 id 升序。
+     *
+     * 排除它们有两个独立的理由，任一成立就够了：
+     * 1. 活动会话的单调时钟（`*ElapsedMs`）来自本次开机，换设备/重启后
+     *    不对应任何真实时刻 —— 恢复回去会显示成任意数字。
+     * 2. 它还不是一条事实：没有 `durationMs`，导出的 Excel 里也没有它。
+     *
+     * 用 `status NOT IN (...)` 而不是"读全部再在 Kotlin 里过滤"：过滤条件
+     * 与 [SessionUniquenessGuard] 里那条触发器用的是同一个字面量集合，
+     * 写在 SQL 里更容易被一起看到。
+     */
+    @Query(
+        """
+        SELECT * FROM focus_sessions
+        WHERE status NOT IN ('RUNNING', 'PAUSED')
+        ORDER BY id ASC
+        """
+    )
+    suspend fun getAllSettledOnce(): List<FocusSessionEntity>
+
+    /**
+     * 恢复时批量写回，**带显式 id**。
+     *
+     * Room 对 `autoGenerate = true` 的主键：传入非 0 的 id 就用传入值，
+     * 传 0 才自增。所以这里必须传原 id —— 会话与项目的关联就靠它。
+     * 写完之后 SQLite 的 `sqlite_sequence` 会自动抬到最大 id，
+     * 后续新增记录不会撞上恢复进来的 id。
+     *
+     * `ABORT` 而不是 `REPLACE`：冲突说明校验漏了东西（重复 id、外键不存在），
+     * 这种时候应该整个事务回滚，而不是悄悄覆盖一行。
+     */
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertAll(entities: List<FocusSessionEntity>): List<Long>
+
+    /** 恢复前清空。放在事务里，失败会一起回滚 */
+    @Query("DELETE FROM focus_sessions")
+    suspend fun deleteAll()
+
+    /**
+     * 会写进备份的会话数。界面在导出/导入前显示"这次涉及多少条"。
+     *
+     * 与 [getAllSettledOnce] 用**同一个过滤条件**，否则界面说 42 条、
+     * 文件里 40 条，用户会以为丢了数据。这正是把它做成 Flow 而不是
+     * 让界面自己去数字的原因：条件只有一处。
+     */
+    @Query("SELECT COUNT(*) FROM focus_sessions WHERE status NOT IN ('RUNNING', 'PAUSED')")
+    fun observeSettledCount(): Flow<Int>
 }

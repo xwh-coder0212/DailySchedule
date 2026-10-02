@@ -52,4 +52,18 @@ interface ProjectDao {
 
     @Query("SELECT COALESCE(MAX(sortOrder), -1) FROM projects")
     suspend fun maxSortOrder(): Int
+
+    // ── 备份 / 恢复专用（理由见 SessionDao 同名方法） ──
+
+    @Query("SELECT * FROM projects ORDER BY id ASC")
+    suspend fun getAllOnce(): List<ProjectEntity>
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertAll(entities: List<ProjectEntity>): List<Long>
+
+    @Query("DELETE FROM projects")
+    suspend fun deleteAll()
+
+    @Query("SELECT COUNT(*) FROM projects")
+    fun observeCount(): Flow<Int>
 }

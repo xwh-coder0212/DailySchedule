@@ -109,4 +109,15 @@ interface ExpenseDao {
 
     @Delete
     suspend fun delete(entity: ExpenseEntity)
+
+    // ── 备份 / 恢复专用（理由见 SessionDao 同名方法） ──
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertAll(entities: List<ExpenseEntity>): List<Long>
+
+    @Query("DELETE FROM expenses")
+    suspend fun deleteAll()
+
+    @Query("SELECT COUNT(*) FROM expenses")
+    fun observeCount(): Flow<Int>
 }
