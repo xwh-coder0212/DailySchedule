@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DailySchedule 改版方案 · Rev2</title>
+<style>
+  :root{
+    --ink:#1A1C1A; --ink2:#5F6058; --ink3:#888780;
+    --line:#E4E4DE; --surf:#FFFFFF; --page:#F5F5F1; --tint:#ECECE6;
+    --brand:#0F6E56; --brand-soft:#E1F5EE; --brand-mid:#9FE1CB;
+    --blue:#185FA5; --coral:#993C1D; --amber:#BA7517;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:40px 24px 72px;background:#F0F0EA;color:var(--ink);
+       font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+       font-size:14px;line-height:1.7}
+  .wrap{max-width:1160px;margin:0 auto}
+  h1{font-size:22px;font-weight:600;margin:0 0 6px}
+  h2{font-size:16px;font-weight:600;margin:40px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  h3{font-size:14px;font-weight:600;margin:24px 0 8px}
+  .meta{color:var(--ink2);font-size:13px;margin-bottom:28px}
+  .card{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:20px 24px;margin-bottom:16px}
+  table{width:100%;border-collapse:collapse;font-size:13px;background:var(--surf)}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-weight:600;background:var(--page);color:var(--ink2)}
+  code{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;background:var(--page);padding:1px 5px;border-radius:4px}
+  .tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:6px;background:var(--brand-soft);color:var(--brand)}
+  .tag.warn{background:#FCEBEB;color:#A32D2D}
+  .tag.gray{background:var(--page);color:var(--ink3)}
+  .tag.amber{background:#FAEEDA;color:#854F0B}
+  .row{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+  .phone{width:238px;background:var(--surf);border:1px solid var(--line);border-radius:22px;overflow:hidden;
+         display:flex;flex-direction:column;height:430px;flex:0 0 auto;position:relative}
+  .bar{display:flex;justify-content:space-between;padding:6px 14px 0;font-size:11px;color:var(--ink2)}
+  .hd{display:flex;align-items:flex-start;justify-content:space-between;padding:8px 14px 10px}
+  .h1t{font-size:16px;font-weight:600}
+  .sub{font-size:11px;color:var(--ink3);margin-top:2px}
+  .plus{width:26px;height:26px;border-radius:9px;background:var(--brand-soft);color:var(--brand);
+        display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1}
+  .todo{border-radius:14px;height:54px;padding:0 16px;display:flex;align-items:center;
+        justify-content:space-between;font-size:14px;color:#fff}
+  .todo b{font-weight:600}
+  .nav{display:flex;border-top:1px solid var(--line);background:var(--surf);margin-top:auto}
+  .nav>div{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0;font-size:11px;color:var(--ink3)}
+  .nav>div.on{color:var(--brand)}
+  .nav>div.on span{font-weight:600}
+  .chart{background:var(--page);border-radius:12px;margin:8px 12px 0;padding:9px 11px}
+  .ct{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600}
+  .ct .more{font-size:11px;font-weight:400;color:var(--ink3)}
+  .seg{display:flex;background:#F1EFE8;border-radius:9px;padding:2px;margin:0 12px}
+  .seg>div{flex:1;text-align:center;font-size:11px;padding:4px 0;color:var(--ink3)}
+  .seg>div.on{background:#fff;border-radius:7px;color:var(--ink);font-weight:600}
+  .kpi{display:flex;gap:6px;padding:9px 12px 0}
+  .kpi>div{flex:1;background:var(--page);border-radius:10px;padding:7px}
+  .kpi .k{font-size:11px;color:var(--ink2)}
+  .kpi .v{font-size:14px;font-weight:600;margin-top:2px}
+  .exp{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);
+       border-radius:11px;padding:8px 10px}
+  .exp .ic{width:26px;height:26px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .exp .nm{font-size:12px}
+  .exp .tm{font-size:11px;color:var(--ink3);margin-top:1px}
+  .exp .amt{font-size:13px;font-weight:600;margin-left:auto}
+  .btnrow{display:flex;gap:7px}
+  .btnrow>div{flex:1;background:var(--page);border-radius:10px;text-align:center;font-size:12px;color:#444441;padding:8px 0}
+  .btnrow>div.danger{background:#FCEBEB;color:#A32D2D}
+  .tile{flex:1;background:var(--page);border-radius:12px;padding:9px 10px;display:flex;align-items:center;gap:7px;font-size:12px}
+  .panel{position:absolute;left:12px;right:12px;top:64px;background:#fff;border-radius:20px;
+         border:1px solid #D3D1C7;padding:14px}
+  .dot{width:20px;height:20px;border-radius:50%}
+  .dlbl{font-size:11px;color:var(--ink3)}
+  .cap{width:238px;text-align:center;font-size:12px;color:var(--ink2);margin-top:8px}
+  .q{background:#FFF8E8;border:1px solid #FAC775;border-radius:12px;padding:14px 18px;margin-bottom:14px}
+  .q h3{margin-top:0}
+  ul,ol{margin:8px 0;padding-left:22px}
+  li{margin-bottom:5px}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:900px){.cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>DailySchedule 改版方案 · Rev2</h1>
+<div class="meta">
+  来源：郗哥 2026-09-10《改进方案》+ 2026-10-01 补充说明与参考截图 &nbsp;·&nbsp;
+  状态：<span class="tag">代码已落地 · 编译 / 170 单测 / Android Lint / 打包全绿 · 待真机验收</span>
+</div>
+
+<h2>一、你的决策（已锁定）</h2>
+<div class="card">
+<table>
+  <tr><th style="width:34px">#</th><th style="width:26%">问题</th><th>结论</th><th style="width:24%">对实现的影响</th></tr>
+  <tr>
+    <td>1</td><td>「待办」与初版「项目」的关系</td>
+    <td><b>同一个东西</b>。旧名"项目"不易理解，改叫待办。</td>
+    <td>不新增实体，只改 UI 文案与呈现。<span class="tag">改动小</span></td>
+  </tr>
+  <tr>
+    <td>2</td><td>删除待办后，名下历史专注记录</td>
+    <td><b>全部保留，不做任何更改。</b></td>
+    <td>外键用 <code>SET NULL</code>（不是 CASCADE）；记录里项目字段可空，要能显示"已删除的待办"。<span class="tag amber">改数据模型</span></td>
+  </tr>
+  <tr>
+    <td>3</td><td>补录时长算新增还是修改</td>
+    <td><b>新增一条历史记录</b>，并在该条上标注「补录」字样。</td>
+    <td><code>FocusSession</code> 加一个来源/标记字段。<span class="tag amber">改数据模型</span></td>
+  </tr>
+  <tr>
+    <td>4</td><td>统计页「消费」段做对齐三件套</td>
+    <td>可以。</td>
+    <td>分类占比环 / 周支出柱 / 日·月趋势线。</td>
+  </tr>
+  <tr>
+    <td>5</td><td>「定目标 / 养习惯」两个选项</td>
+    <td><b>都不要</b>。只保留「普通番茄钟」这一种。</td>
+    <td>新建待办面板从三组选项收敛为两组。见 §4 关于游戏化。</td>
+  </tr>
+</table>
+</div>
+
+<h2>二、改动清单（含本轮新增）</h2>
+<div class="card">
+<table>
+  <tr><th style="width:34px">#</th><th style="width:26%">改动</th><th>内容</th><th style="width:16%">影响面</th></tr>
+  <tr><td>1</td><td>底部导航 4 → 3</td><td>待办 · 统计 · 记账</td><td><span class="tag warn">导航重构</span></td></tr>
+  <tr><td>2</td><td>记录页 + 项目页 → 合并进「待办」</td><td>计时与记账内部页面仍分开，结果只在统计里并列</td><td><span class="tag warn">信息架构</span></td></tr>
+  <tr><td>3</td><td>待办页补三种操作</td><td>补录时长（标「补录」）· 删除待办 · 修改某次专注时长</td><td><span class="tag">新功能</span></td></tr>
+  <tr><td>4</td><td>记账页补增删改</td><td>现状只有新增</td><td><span class="tag">新功能</span></td></tr>
+  <tr><td>5</td><td>统计页按参考图重做</td><td>分段切换 + 概览 + 环形 + 柱状 + 折线</td><td><span class="tag">重做页面</span></td></tr>
+  <tr><td>6</td><td><b>待办卡片瘦身</b>（本轮新定）</td><td>卡片<b>只留</b>左边待办名 + 右边「开始」（横向）。去掉「今日…」「累计…」副标题。</td><td><span class="tag">样式</span></td></tr>
+  <tr><td>7</td><td><b>待办详情面板</b>（本轮新定）</td><td>点卡片弹出：更换背景 · 编辑 / 排序 / 删除 · 专注历史记录 · 数据统计 · 周热力图 · 累计专注</td><td><span class="tag">新功能</span></td></tr>
+  <tr><td>8</td><td>今日页去掉「未开始计时」占位块</td><td>没有活动会话时<b>不渲染那张卡</b>，不是显示灰字提示。</td><td><span class="tag">样式</span></td></tr>
+  <tr><td>9</td><td><b>导出 Excel</b>（本轮新增要求）</td><td>全部专注记录、全部花费记录，分别导出。见 §5。</td><td><span class="tag warn">新功能</span></td></tr>
+</table>
+</div>
+
+<h2>三、概念图（已按本轮意见修正）</h2>
+
+<h3>3.1 待办卡片瘦身 + 详情面板</h3>
+<div class="row">
+
+  <div>
+  <div class="phone">
+    <div class="bar"><span>9:41</span><span>▪▪▪</span></div>
+    <div class="hd">
+      <div><div class="h1t">待办</div><div class="sub">点右侧「开始」进入本次专注</div></div>
+      <div style="display:flex;gap:8px">
+        <div class="plus">+</div>
+        <div style="width:26px;height:26px;border-radius:9px;background:var(--page);display:flex;align-items:center;justify-content:center">
+          <svg width="13" height="13" viewBox="0 0 13 13"><circle cx="6.5" cy="2.6" r="1.5" fill="#5F5E5A"/><circle cx="6.5" cy="6.5" r="1.5" fill="#5F5E5A"/><circle cx="6.5" cy="10.4" r="1.5" fill="#5F5E5A"/></svg>
+        </div>
+      </div>
+    </div>
+    <div style="padding:0 12px;display:flex;flex-direction:column;gap:9px">
+      <div class="todo" style="background:#0F6E56"><b>高等数学</b><span>开始</span></div>
+      <div class="todo" style="background:#185FA5"><b>专业课 408</b><span>开始</span></div>
+      <div class="todo" style="background:#993C1D"><b>英语</b><span>开始</span></div>
+      <div class="todo" style="background:#444441"><b>政治</b><span>开始</span></div>
+      <div class="todo" style="background:#EAF3DE;color:#27500A"><b>整理、规划与复盘</b><span>开始</span></div>
+    </div>
+    <div class="nav">
+      <div class="on"><svg width="17" height="17" viewBox="0 0 17 17"><rect x="2" y="2.5" width="13" height="2.4" rx="1.2" fill="#0F6E56"/><rect x="2" y="7.3" width="13" height="2.4" rx="1.2" fill="#0F6E56"/><rect x="2" y="12.1" width="8" height="2.4" rx="1.2" fill="#0F6E56"/></svg><span>待办</span></div>
+      <div><svg width="17" height="17" viewBox="0 0 17 17"><rect x="2" y="9" width="3" height="6" rx="1" fill="#B4B2A9"/><rect x="7" y="5" width="3" height="10" rx="1" fill="#B4B2A9"/><rect x="12" y="7" width="3" height="8" rx="1" fill="#B4B2A9"/></svg><span>统计</span></div>
+      <div><svg width="17" height="17" viewBox="0 0 17 17"><rect x="1.5" y="4" width="14" height="9.5" rx="2" fill="none" stroke="#B4B2A9" stroke-width="1.4"/><circle cx="11.5" cy="8.8" r="1.5" fill="#B4B2A9"/></svg><span>记账</span></div>
+    </div>
+  </div>
+  <div class="cap">卡片只剩「待办名 + 开始」，整体变矮，一屏能放更多</div>
+  </div>
+
+  <div>
+  <div class="phone">
+    <div class="bar"><span>9:41</span><span>▪▪▪</span></div>
+    <div class="hd"><div><div class="h1t">待办</div></div><div class="plus">+</div></div>
+    <div style="padding:0 12px;display:flex;flex-direction:column;gap:9px;opacity:.35">
+      <div style="background:#0F6E56;border-radius:14px;height:54px"></div>
+      <div style="background:#185FA5;border-radius:14px;height:54px"></div>
+      <div style="background:#993C1D;border-radius:14px;height:54px"></div>
+      <div style="background:#444441;border-radius:14px;height:54px"></div>
+    </div>
+    <div class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span style="font-size:16px;font-weight:600">高等数学</span>
+        <div style="width:40px;height:40px;border-radius:12px;background:var(--brand-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">
+          <svg width="14" height="14" viewBox="0 0 14 14"><rect x="1.5" y="2.5" width="11" height="9" rx="1.5" fill="none" stroke="#0F6E56" stroke-width="1.3"/><circle cx="5" cy="6" r="1.2" fill="#0F6E56"/><path d="M2 10l3-2.6 2.4 2 2-1.6 2.1 2.2" fill="none" stroke="#0F6E56" stroke-width="1.2"/></svg>
+          <span style="font-size:11px;color:#0F6E56">更换背景</span>
+        </div>
+      </div>
+      <div class="btnrow">
+        <div>编辑</div><div>排序</div><div class="danger">删除</div>
+      </div>
+      <div class="btnrow" style="margin-top:9px">
+        <div class="tile">
+          <svg width="14" height="14" viewBox="0 0 14 14"><rect x="1.5" y="3" width="11" height="2" rx="1" fill="#0F6E56"/><rect x="1.5" y="6.6" width="11" height="2" rx="1" fill="#0F6E56"/><rect x="1.5" y="10.2" width="7" height="2" rx="1" fill="#0F6E56"/></svg>专注历史记录
+        </div>
+        <div class="tile">
+          <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.4" fill="none" stroke="#0F6E56" stroke-width="1.4"/><path d="M7 7V3.4A3.6 3.6 0 0 1 10.6 7z" fill="#0F6E56"/></svg>数据统计
+        </div>
+      </div>
+      <div class="chart" style="margin:9px 0 0;background:var(--page)">
+        <div style="font-size:12px;color:#444441;margin-bottom:9px">周热力图</div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span class="dlbl">一</span><div class="dot" style="background:#0F6E56"></div></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span class="dlbl">二</span><div class="dot" style="background:#9FE1CB"></div></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span class="dlbl">三</span><div class="dot" style="background:#CECBF6"></div></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span class="dlbl">四</span><div class="dot" style="background:#0F6E56"></div></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span class="dlbl">五</span><div class="dot" style="background:var(--page);border:1px solid #D3D1C7"></div></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span class="dlbl">六</span><div class="dot" style="background:var(--page);border:1px solid #D3D1C7"></div></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span class="dlbl">日</span><div class="dot" style="background:var(--page);border:1px solid #D3D1C7"></div></div>
+        </div>
+      </div>
+      <div class="chart" style="margin:9px 0 0;background:var(--page)">
+        <div style="font-size:12px;color:#444441;margin-bottom:7px">累计专注</div>
+        <div style="display:flex;gap:26px;align-items:baseline">
+          <div><span style="font-size:22px;font-weight:600">90</span><span class="dlbl" style="margin-left:3px">次</span></div>
+          <div><span style="font-size:22px;font-weight:600">118</span><span class="dlbl" style="margin-left:2px">小时</span><span style="font-size:22px;font-weight:600;margin-left:6px">17</span><span class="dlbl" style="margin-left:2px">分钟</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="cap">点卡片弹出详情面板（结构照参考图，裁掉锁机相关项）</div>
+  </div>
+
+</div>
+
+<h3>3.2 三个主页面（其余两屏沿用上一版）</h3>
+<div class="row">
+  <div>
+  <div class="phone">
+    <div class="bar"><span>9:41</span><span>▪▪▪</span></div>
+    <div class="hd"><div><div class="h1t">统计</div></div></div>
+    <div class="seg"><div class="on">专注</div><div>消费</div></div>
+    <div class="kpi">
+      <div><div class="k">累计</div><div class="v">167</div></div>
+      <div><div class="k">总时长</div><div class="v">233:18</div></div>
+      <div><div class="k">均值</div><div class="v">3:42</div></div>
+    </div>
+    <div class="chart">
+      <div class="ct"><span>专注时长占比</span><span class="more">本周 ›</span></div>
+      <div style="display:flex;align-items:center;gap:11px;margin-top:8px">
+        <svg width="62" height="62" viewBox="0 0 62 62">
+          <circle cx="31" cy="31" r="21" fill="none" stroke="#CECBF6" stroke-width="11" pathLength="100" stroke-dasharray="38 100" stroke-dashoffset="25"/>
+          <circle cx="31" cy="31" r="21" fill="none" stroke="#0F6E56" stroke-width="11" pathLength="100" stroke-dasharray="62 100" stroke-dashoffset="25"/>
+        </svg>
+        <div style="font-size:11px;color:#444441">
+          <div style="margin-bottom:5px"><span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:#0F6E56;margin-right:5px"></span>高等数学 62%</div>
+          <div><span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:#CECBF6;margin-right:5px"></span>英语 38%</div>
+        </div>
+      </div>
+    </div>
+    <div class="chart">
+      <div class="ct" style="margin-bottom:7px"><span>本周专注分布</span><span class="more">本周 ›</span></div>
+      <svg width="100%" height="52" viewBox="0 0 152 52">
+        <rect x="10" y="26" width="11" height="22" rx="2" fill="#9FE1CB"/><rect x="23" y="18" width="11" height="30" rx="2" fill="#0F6E56"/>
+        <rect x="41" y="34" width="11" height="14" rx="2" fill="#9FE1CB"/><rect x="54" y="24" width="11" height="24" rx="2" fill="#0F6E56"/>
+        <rect x="72" y="12" width="11" height="36" rx="2" fill="#9FE1CB"/><rect x="85" y="28" width="11" height="20" rx="2" fill="#0F6E56"/>
+        <rect x="103" y="32" width="11" height="16" rx="2" fill="#9FE1CB"/><rect x="116" y="20" width="11" height="28" rx="2" fill="#0F6E56"/>
+        <rect x="134" y="30" width="11" height="18" rx="2" fill="#9FE1CB"/>
+      </svg>
+      <div style="display:flex;justify-content:space-between;padding:0 4px 0 8px;font-size:11px;color:#888780">
+        <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+      </div>
+    </div>
+    <div class="nav">
+      <div><svg width="17" height="17" viewBox="0 0 17 17"><rect x="2" y="2.5" width="13" height="2.4" rx="1.2" fill="#B4B2A9"/><rect x="2" y="7.3" width="13" height="2.4" rx="1.2" fill="#B4B2A9"/><rect x="2" y="12.1" width="8" height="2.4" rx="1.2" fill="#B4B2A9"/></svg><span>待办</span></div>
+      <div class="on"><svg width="17" height="17" viewBox="0 0 17 17"><rect x="2" y="9" width="3" height="6" rx="1" fill="#0F6E56"/><rect x="7" y="5" width="3" height="10" rx="1" fill="#0F6E56"/><rect x="12" y="7" width="3" height="8" rx="1" fill="#0F6E56"/></svg><span>统计</span></div>
+      <div><svg width="17" height="17" viewBox="0 0 17 17"><rect x="1.5" y="4" width="14" height="9.5" rx="2" fill="none" stroke="#B4B2A9" stroke-width="1.4"/><circle cx="11.5" cy="8.8" r="1.5" fill="#B4B2A9"/></svg><span>记账</span></div>
+    </div>
+  </div>
+  <div class="cap">统计：时间与钱在同一页分段切换</div>
+  </div>
+
+  <div>
+  <div class="phone">
+    <div class="bar"><span>9:41</span><span>▪▪▪</span></div>
+    <div class="hd">
+      <div><div class="h1t">记账</div><div class="sub">本月支出</div></div>
+      <div class="plus">+</div>
+    </div>
+    <div style="padding:0 12px;display:flex;flex-direction:column;gap:7px">
+      <div style="background:var(--page);border-radius:12px;padding:10px 12px">
+        <div style="font-size:20px;font-weight:600">¥ 1,284.50</div>
+        <div class="sub">较上月 ¥1,460.00 · 少 12%</div>
+      </div>
+      <div class="exp">
+        <div class="ic" style="background:#FAEEDA"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.5" fill="none" stroke="#BA7517" stroke-width="1.4"/></svg></div>
+        <div><div class="nm">餐饮</div><div class="tm">今天 12:30</div></div><div class="amt">-¥28.00</div>
+      </div>
+      <div class="exp">
+        <div class="ic" style="background:#E6F1FB"><svg width="12" height="12" viewBox="0 0 12 12"><rect x="1.5" y="4" width="9" height="5" rx="1.5" fill="none" stroke="#185FA5" stroke-width="1.3"/></svg></div>
+        <div><div class="nm">交通</div><div class="tm">今天 08:15</div></div><div class="amt">-¥6.00</div>
+      </div>
+      <div style="border-radius:11px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:9px;background:var(--page);padding:8px 10px">
+          <div class="ic" style="background:#EAF3DE"><svg width="12" height="12" viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8" rx="1.2" fill="none" stroke="#3B6D11" stroke-width="1.3"/></svg></div>
+          <div><div class="nm">学习</div><div class="tm">昨天 19:02</div></div><div class="amt">-¥128.00</div>
+        </div>
+        <div style="display:flex">
+          <div style="flex:1;background:#E6F1FB;text-align:center;font-size:11px;color:#185FA5;padding:6px 0">编辑</div>
+          <div style="flex:1;background:#FCEBEB;text-align:center;font-size:11px;color:#A32D2D;padding:6px 0">删除</div>
+        </div>
+      </div>
+      <div class="exp">
+        <div class="ic" style="background:#FBEAF0"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 4.5h6l-.6 5.2h-4.8z" fill="none" stroke="#993556" stroke-width="1.3"/><path d="M2.2 4.5h7.6" stroke="#993556" stroke-width="1.3"/></svg></div>
+        <div><div class="nm">购物</div><div class="tm">昨天 15:41</div></div><div class="amt">-¥59.90</div>
+      </div>
+    </div>
+    <div class="nav">
+      <div><svg width="17" height="17" viewBox="0 0 17 17"><rect x="2" y="2.5" width="13" height="2.4" rx="1.2" fill="#B4B2A9"/><rect x="2" y="7.3" width="13" height="2.4" rx="1.2" fill="#B4B2A9"/><rect x="2" y="12.1" width="8" height="2.4" rx="1.2" fill="#B4B2A9"/></svg><span>待办</span></div>
+      <div><svg width="17" height="17" viewBox="0 0 17 17"><rect x="2" y="9" width="3" height="6" rx="1" fill="#B4B2A9"/><rect x="7" y="5" width="3" height="10" rx="1" fill="#B4B2A9"/><rect x="12" y="7" width="3" height="8" rx="1" fill="#B4B2A9"/></svg><span>统计</span></div>
+      <div class="on"><svg width="17" height="17" viewBox="0 0 17 17"><rect x="1.5" y="4" width="14" height="9.5" rx="2" fill="none" stroke="#0F6E56" stroke-width="1.4"/><circle cx="11.5" cy="8.8" r="1.5" fill="#0F6E56"/></svg><span>记账</span></div>
+    </div>
+  </div>
+  <div class="cap">记账：行内左滑露出「编辑 / 删除」</div>
+  </div>
+
+  <div>
+  <div class="phone">
+    <div class="bar"><span>9:41</span><span>▪▪▪</span></div>
+    <div style="padding:8px 14px 10px;border-bottom:1px solid var(--line)"><div class="h1t">待办</div></div>
+    <div style="flex:1;background:var(--tint);position:relative">
+      <div style="padding:10px 12px;opacity:.45">
+        <div style="background:#0F6E56;border-radius:14px;height:54px"></div>
+        <div style="background:#185FA5;border-radius:14px;height:54px;margin-top:9px"></div>
+        <div style="background:#993C1D;border-radius:14px;height:54px;margin-top:9px"></div>
+      </div>
+      <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:20px 20px 0 0;padding:14px 16px 18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px">
+          <span style="font-size:14px;font-weight:600">添加待办</span>
+          <span style="font-size:14px;color:#888780">✓ &nbsp; ✕</span>
+        </div>
+        <div style="border-bottom:1px solid var(--ink);padding-bottom:5px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px;color:#B4B2A9">请输入待办名称</span><span style="font-size:12px;color:#B4B2A9">?</span>
+        </div>
+        <div style="margin-top:13px;display:flex;gap:6px">
+          <span style="font-size:11px;padding:4px 10px;border-radius:8px;background:var(--brand-soft);color:var(--brand)">普通番茄钟</span>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:6px">
+          <span style="font-size:11px;padding:4px 9px;border-radius:8px;background:#F1EFE8;color:#888780">倒计时</span>
+          <span style="font-size:11px;padding:4px 9px;border-radius:8px;background:var(--brand-soft);color:var(--brand)">正向计时</span>
+          <span style="font-size:11px;padding:4px 9px;border-radius:8px;background:#F1EFE8;color:#888780">不计时</span>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:6px">
+          <span style="font-size:11px;padding:4px 9px;border-radius:8px;background:#F1EFE8;color:#888780">25 分钟</span>
+          <span style="font-size:11px;padding:4px 9px;border-radius:8px;background:var(--brand-soft);color:var(--brand)">35 分钟</span>
+          <span style="font-size:11px;padding:4px 9px;border-radius:8px;background:#F1EFE8;color:#888780">自定义</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="cap">添加待办：类型收敛为「普通番茄钟」一种</div>
+  </div>
+</div>
+
+<div class="q" style="margin-top:26px">
+<h3>一个我替你定了、但你可以推翻的判断</h3>
+<p>原来「今日」页里的<b>三数字（学习时长 / 消费 / 专注次数）和今日时间轴</b>，我放进了<b>统计页</b>。</p>
+<p>依据：导航只剩三项，而你对统计的定义是「对今日专注的时长进行记录」——"今日"的结论本来就属于统计。参照的待办页里也没有任何数字摘要，只有卡片。</p>
+<p>如果你希望「今日」单独存在（比如从待办页顶部进入，或者作为统计页的第一屏），告诉我，我改回来。</p>
+</div>
+
+<h2>四、关于「不做游戏化」</h2>
+<div class="card">
+<p>你之前说"不做游戏化"，指的是<b>不引入一套与事实无关的虚拟状态来驱动你行动</b>。具体就是不做这些东西：</p>
+<div class="cols">
+<div>
+<h3>属于游戏化，已排除</h3>
+<ul>
+  <li>连续打卡天数 / 连击 streak（断一天归零）</li>
+  <li>等级、经验值、成长树</li>
+  <li>成就徽章、奖章墙</li>
+  <li>排行榜、好友对比、PK</li>
+  <li>积分、抽奖、虚拟奖励、皮肤解锁</li>
+  <li>目标完成率百分比 + 庆祝动画</li>
+  <li>未完成时的提醒/催促/惩罚提示</li>
+</ul>
+</div>
+<div>
+<h3>不属于游戏化，本来就该做</h3>
+<ul>
+  <li>今日/本周/本月的时长与金额汇总</li>
+  <li>占比环、趋势折线、分布柱状</li>
+  <li>周热力图（<b>只陈述"哪天有专注"</b>，不判好坏）</li>
+  <li>累计次数与累计时长</li>
+  <li>番茄钟到点提醒</li>
+</ul>
+</div>
+</div>
+<p style="margin-top:14px"><b>分界线在哪：</b>看这个数字会不会"反过来评价你"。</p>
+<ul>
+  <li>「本周专注 12 小时」——陈述事实，保留。</li>
+  <li>「本周目标达成 70%，非常出色！」——它在评判你，且"出色"的标准是凭空定的，属于游戏化，排除。</li>
+</ul>
+<p>这也正是你这次砍掉<b>「定目标 / 养习惯」</b>的原因：那两类待办的全部意义就是"达成率"，砍掉它们，整个 App 就没有任何地方需要虚拟评分了。</p>
+<p style="margin-top:10px"><span class="tag amber">一个边界情况</span> 你给的第二张参考图里，日历面板下方有个「70% 非常出色！」的庆祝卡。按上面的分界线，它属于游戏化。我按<b>不做</b>处理，如果你想要，单独说。</p>
+</div>
+
+<h2>五、新功能：导出 Excel</h2>
+<div class="card">
+<h3>技术上怎么做</h3>
+<table>
+  <tr><th style="width:22%">项</th><th>方案</th></tr>
+  <tr>
+    <td>文件格式</td>
+    <td><b>真 .xlsx</b>（OOXML）。不引 Apache POI —— POI 依赖 <code>java.awt</code>，在 Android 上跑不起来且方法数会炸。改用 <code>java.util.zip</code> 手写最小 xlsx（6 个 XML 部件），<b>零新增依赖、纯离线</b>。</td>
+  </tr>
+  <tr>
+    <td>文件组织</td>
+    <td>一个 .xlsx，两个工作表：<code>专注记录</code> / <code>花费记录</code>。理由：一次 SAF 授权就够，Excel 里天然分表，"两类数据不混在一起"的诉求也满足。<br>若你坚持要两个独立文件，改起来只多一次授权弹窗。</td>
+  </tr>
+  <tr>
+    <td>保存位置</td>
+    <td>SAF（<code>ACTION_CREATE_DOCUMENT</code>），由你选目录，App 不申请存储权限。</td>
+  </tr>
+  <tr>
+    <td>联网</td>
+    <td>不联网、不上传。仍然是纯本地。</td>
+  </tr>
+</table>
+
+<h3>列定义</h3>
+<div class="cols">
+<div>
+<table>
+  <tr><th colspan="2">专注记录</th></tr>
+  <tr><td>日期</td><td>按你的日切时刻归属</td></tr>
+  <tr><td>开始时间 / 结束时间</td><td>HH:mm</td></tr>
+  <tr><td>待办名称</td><td>待办已删除则留空并标注</td></tr>
+  <tr><td>时长（分钟）</td><td>小数一位</td></tr>
+  <tr><td>状态</td><td>已完成 / 已中断</td></tr>
+  <tr><td>来源</td><td>正常 / <b>补录</b></td></tr>
+  <tr><td>备注</td><td>可空</td></tr>
+</table>
+</div>
+<div>
+<table>
+  <tr><th colspan="2">花费记录</th></tr>
+  <tr><td>日期 / 时间</td><td>同上</td></tr>
+  <tr><td>分类</td><td>餐饮、交通…</td></tr>
+  <tr><td>金额（元）</td><td>两位小数</td></tr>
+  <tr><td>待办名称</td><td>可空（消费可挂待办）</td></tr>
+  <tr><td>备注</td><td>可空</td></tr>
+</table>
+</div>
+</div>
+
+<div class="q" style="margin-top:18px">
+<h3>必须点破的一件事：Excel 不能当备份</h3>
+<p>Excel 是<b>单向导出</b>——只能出，不能进。换手机、丢手机之后，你没法把这份 xlsx 还原回数据库。</p>
+<p>而「JSON 导出 / 导入」那条<b>数据逃生通道，目前仍然是空的</b>（09-09 排查时标的 P0 缺口）。</p>
+<p>两者解决的是不同问题：</p>
+<ul>
+  <li><b>Excel 导出</b> —— 给你看、给你分析、能拿去别处用。<b>本次已实现。</b></li>
+  <li><b>JSON 导出 / 导入</b> —— 保命。换机不丢数据。<b>本次不做。</b></li>
+</ul>
+<p><b>为什么不一起做：</b>JSON 备份要连「导入」一起做才算数，而导入意味着版本校验、外键重建、
+部分失败的原子性——那是一整套写库逻辑，和「写一个 xlsx」不是同一件事。
+把它塞进这次改动里，会让一个本来可以稳定交付的功能被一个高风险功能拖住。
+所以这次只交付 Excel，JSON 排在下一批，并且在界面上用红字明确写出「这不是备份」，
+避免你把「导出成功」误读成「数据安全了」。</p>
+</div>
+</div>
+
+<h2>六、我按参考图裁剪掉的东西（含裁决）</h2>
+<div class="card">
+<p>你给的第 4 张图（详情面板）里有几项，我按既有取舍做了判断：</p>
+<table>
+  <tr><th style="width:22%">参考项</th><th style="width:16%">处理</th><th>理由</th></tr>
+  <tr><td>更换背景</td><td><span class="tag">改为内置背景</span></td><td><b>不读手机相册。</b>改成从 App 内置的一组背景色/纹理里选。这样既留下了这个面板项，又不需要申请相册权限——为了一个纯装饰功能去要「读取你的全部照片」，代价和收益不成比例。</td></tr>
+  <tr><td>编辑 / 排序 / 删除</td><td><span class="tag">做</span></td><td><code>ProjectEntity.sortOrder</code> 与 <code>reorder()</code> 已经存在，不需要新增字段。</td></tr>
+  <tr><td>专注历史记录</td><td><span class="tag">做</span></td><td>该项目下的全部专注记录，可改时长、可删——正好覆盖需求 3（补录）。</td></tr>
+  <tr><td>数据统计 / 周热力图 / 累计专注</td><td><span class="tag">做</span></td><td>都是陈述事实，不属于游戏化。</td></tr>
+  <tr><td>定时功能（定时提醒）</td><td><span class="tag warn">不做</span></td><td><b>裁决：不做。</b>理由有两条：一是「几点提醒我去学习」系统日历/闹钟已经做得比我们好；二是精确到点的提醒要申请 <code>SCHEDULE_EXACT_ALARM</code>，在国产 ROM 上还要额外加白名单，为一个小功能引一堆后台调度问题，不划算。</td></tr>
+  <tr><td>独立白名单 / 锁机 / 学霸模式</td><td><span class="tag warn">不做</span></td><td>你早就定了不做锁机，这里保持一致。</td></tr>
+  <tr><td>参考图的 5 项底部导航<br>（待办 / 待办集 / 锁机 / 统计数据 / 我的）</td><td><span class="tag warn">不照搬</span></td><td>你定的是 3 项。参考图是别的产品，只借它的卡片和面板样式。</td></tr>
+</table>
+</div>
+
+<h2>七、裁决与进度</h2>
+<div class="card">
+<p>上一版列的四条开放问题，不再反过来问你，我按下面的理由直接定了：</p>
+<table>
+  <tr><th style="width:26%">问题</th><th style="width:18%">结论</th><th>依据</th></tr>
+  <tr>
+    <td>今日页的去向</td>
+    <td><span class="tag">并进统计</span></td>
+    <td>底栏只有 3 格。今日的三个数字（学习/花费/专注次数）本来就是统计的「今日」区间，
+        单独占一个 Tab 会和统计页重复；而时间轴属于「今天发生了什么」，跟统计放一页更顺。</td>
+  </tr>
+  <tr>
+    <td>Excel 之外是否顺带做 JSON 备份</td>
+    <td><span class="tag warn">本次不做</span></td>
+    <td>见 §5 末尾。JSON 备份必须连导入一起做才有意义，属于另一个量级的改动，排在下一批。</td>
+  </tr>
+  <tr>
+    <td>定时功能（提醒，不是锁机）</td>
+    <td><span class="tag warn">不做</span></td>
+    <td>见 §6。</td>
+  </tr>
+  <tr>
+    <td>相册权限加不加</td>
+    <td><span class="tag warn">不加</span></td>
+    <td>「更换背景」改为内置背景，于是不需要相册权限，这个面板项也不会丢。</td>
+  </tr>
+</table>
+
+<h3 style="margin-top:18px">本次已经落到代码里的</h3>
+<table>
+  <tr><th style="width:30%">改动</th><th style="width:34%">落在哪</th><th>说明</th></tr>
+  <tr>
+    <td>Excel 导出（专注 + 花费）</td>
+    <td><code>core/export/</code>、<code>data/export/</code>、<code>feature/transfer/</code></td>
+    <td>零第三方依赖手写 OOXML（POI 依赖 <code>java.awt</code>，在 Android 上直接崩）。
+        单文件双工作表，走 SAF 让用户自己选位置，不申请任何存储权限。</td>
+  </tr>
+  <tr>
+    <td>待办卡片瘦身 + 横排「开始」</td>
+    <td><code>feature/projects/ProjectsScreen.kt</code></td>
+    <td>只留「项目名 + 开始」。今日/累计/本月三个数字移入详情面板。
+        计时进行中时全部卡片按钮置灰，不让你点下去才吃一个报错。</td>
+  </tr>
+  <tr>
+    <td>设置页入口</td>
+    <td><code>SettingsScreen.kt</code> → <code>DataTransferScreen</code></td>
+    <td>「数据 → 导出数据（Excel）」。</td>
+  </tr>
+  <tr>
+    <td>底部导航 4 → 3</td>
+    <td><code>navigation/</code>、<code>feature/expense/</code></td>
+    <td>待办 / 统计 / 记账。计时并进待办页顶部，记账独立成「列表 + 增删改」；
+        删掉旧的 <code>feature/record/</code> 整个包。</td>
+  </tr>
+  <tr>
+    <td>待办详情面板</td>
+    <td><code>feature/projects/ProjectDetailSheet.kt</code></td>
+    <td>内置背景（不读相册）、编辑 / 排序 / 删除、专注历史记录、数据统计、
+        周热力图、累计专注。详情从卡片弹出，不再单独占一个路由。</td>
+  </tr>
+  <tr>
+    <td>补录标记 + 导出来源列</td>
+    <td><code>SessionSource</code>、迁移 v1→v2、<code>ExportTableFactory</code></td>
+    <td>补录走「新增一条 + 标来源」，不是改某条历史。列表页带「补录」角标，
+        导出表第 8 列为「来源（正常 / 补录）」。</td>
+  </tr>
+  <tr>
+    <td>记账增删改</td>
+    <td><code>feature/expense/</code></td>
+    <td>按月列表 + 行内左滑露出「编辑 / 删除」+ 与上月对比。</td>
+  </tr>
+  <tr>
+    <td>统计页重做</td>
+    <td><code>core/stats/</code>、<code>core/ui/component/DsCharts.kt</code>、<code>feature/stats/</code></td>
+    <td>专注 / 消费分段切换；环形（占比）、柱状（周分布）、折线（日 / 月趋势）三图全部手写
+        <code>Canvas</code>，零依赖。占比用最大余数法保证加起来正好 100。</td>
+  </tr>
+  <tr>
+    <td>质量门禁第一次真正跑通</td>
+    <td><code>local.properties</code>、<code>feature/stats/StatsScreen.kt</code></td>
+    <td>此前 <code>lintDebug</code> 只在 09-10 留下一个失败日志、<code>ktlint</code> 插件根本没扫 <code>.kt</code>。
+        本轮把两条都跑起来：Android Lint 报 2 处 error，均已修 ——
+        (1) <code>sdk.dir</code> 里 Windows 盘符冒号未转义；
+        (2) 统计页图例用 <code>LocalContext.current.getString</code> 取百分比文案，
+        配置变更时可能取到变更前的旧资源，改为 inline lambda 内直接用 <code>stringResource</code>。
+        修后 <code>lintDebug</code> 0 error / 54 warning，170 单测全绿，APK 重打。</td>
+  </tr>
+</table>
+
+<h3 style="margin-top:18px">还没动的（下一批）</h3>
+<ol>
+  <li><b>真机验收</b> <span class="tag">阻塞：无设备</span> —— 验收脚本
+      <code>D:/toolchain/verify_device.sh</code> 已就绪（含 MIUI 防 Doze、
+      <code>--no-streaming</code> 安装、冷启动计时、崩溃扫描、数据库落盘检查）。
+      本机 <code>adb devices</code> 为空；SDK 内也未安装 <code>emulator</code> 与
+      <code>system-images</code>，且模拟器覆盖不到 MIUI 的 Doze / 安装拦截行为，
+      故不做模拟器替代。需接入一台 Android 真机后跑。</li>
+  <li><b>版本控制</b> —— <code>D:/DailySchedule</code> 下没有 git 仓库（<code>git status</code>
+      报 not a repository），任何批量改动都不可回滚。同时 git 全局
+      <code>user.name</code> / <code>user.email</code> 未配置，首次提交前需要先落身份。
+      这是下面两项清理的前置条件。</li>
+  <li><b>ktlint 存量风格债</b> —— 全量扫描 1469 处、涉及 124 个文件。前两类占 64%：
+      <code>function-signature</code> 504 处、<code>multiline-expression-wrapping</code> 438 处。
+      属历史代码与 ktlint 1.0 默认规则的差异，本轮未改（避免在有验收对象的情况下
+      制造跨 124 文件的大 diff）。完整报告见
+      <code>docs/quality/quality-gate.log</code>。</li>
+  <li><b>未使用字符串资源</b> —— Android Lint 报 26 处 <code>UnusedResources</code>
+      （旧版设置页入口、旧计时状态的遗留文案），未删。</li>
+  <li><b>JSON 导出 / 导入</b>（P0 缺口，见 §5）。</li>
+</ol>
+</div>
+
+</div>
+</body>
+</html>

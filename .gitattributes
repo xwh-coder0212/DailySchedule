@@ -1,0 +1,22 @@
+# 默认按文本处理并统一为 LF，避免 Windows / macOS 协作时整文件 diff
+* text=auto eol=lf
+
+# Windows 批处理必须保留 CRLF，否则 cmd 解析出错
+*.bat text eol=crlf
+*.cmd text eol=crlf
+gradlew text eol=lf
+
+# 二进制，不做换行符转换
+*.jar   binary
+*.apk   binary
+*.aar   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.webp  binary
+*.ttf   binary
+*.keystore binary
+*.jks   binary
+
+# 文档与资源单独标注，方便 GitHub 语言统计
+*.xlsx binary

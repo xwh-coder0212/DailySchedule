@@ -1,0 +1,35 @@
+# ── Android / Gradle 构建产物 ──
+.gradle/
+.kotlin/
+/build/
+/app/build/
+/captures/
+*.iml
+
+# ── 本机配置，不入库 ──
+local.properties
+/.idea/
+.DS_Store
+
+# ── 签名材料，绝不入库 ──
+*.jks
+*.keystore
+key.properties
+release/
+
+# ── 原生构建 ──
+.externalNativeBuild/
+.cxx/
+
+# ── Room schema 的临时备份 ──
+/app/schemas/version_*.json.bak
+
+# ── 根目录下的临时草稿（下划线前缀，非项目内容） ──
+/_*.md
+
+# ── 会话与工具状态，不属于项目内容 ──
+.workbuddy/
+
+# ── 其他 ──
+*.hprof
+

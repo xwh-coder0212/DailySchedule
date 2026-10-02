@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DailySchedule</string>
+
+    <string name="tab_home">今日</string>
+    <string name="tab_stats">统计</string>
+    <string name="tab_expense">记账</string>
+    <string name="tab_projects">待办</string>
+
+    <string name="cd_settings">设置</string>
+    <string name="cd_back">返回</string>
+
+    <!-- 预置消费分类。写库后即为数据，用户可改名；此处只是初始来源 -->
+    <string name="preset_category_food">餐饮</string>
+    <string name="preset_category_transport">交通</string>
+    <string name="preset_category_shopping">购物</string>
+    <string name="preset_category_entertainment">娱乐</string>
+    <string name="preset_category_study">学习</string>
+    <string name="preset_category_medical">医疗</string>
+    <string name="preset_category_other">其他</string>
+
+    <!-- 通知通道 -->
+    <string name="notif_channel_active_timer">计时常驻</string>
+    <string name="notif_channel_active_timer_desc">计时进行时显示，可暂停或结束</string>
+    <string name="notif_channel_pomodoro_end">番茄到点</string>
+    <string name="notif_channel_pending_review">待确认会话</string>
+
+    <!-- 计时常驻通知 -->
+    <string name="timer_notif_title_anonymous">专注中</string>
+    <string name="timer_notif_title_with_project">正在学习 %1$s</string>
+    <string name="timer_notif_paused">已暂停</string>
+
+    <!-- 通知动作 -->
+    <string name="action_pause">暂停</string>
+    <string name="action_resume">继续</string>
+    <string name="action_stop">结束</string>
+
+    <!-- 通用 -->
+    <string name="common_loading">加载中</string>
+    <string name="common_save">保存</string>
+    <string name="common_edit">编辑</string>
+    <string name="common_delete">删除</string>
+    <string name="common_cancel">取消</string>
+    <string name="common_confirm">确定</string>
+
+    <!-- 星期简写。索引 = ISO 星期 - 1（1=周一）。周起始日可配，标签要跟着走 -->
+    <string-array name="weekday_short">
+        <item>一</item>
+        <item>二</item>
+        <item>三</item>
+        <item>四</item>
+        <item>五</item>
+        <item>六</item>
+        <item>日</item>
+    </string-array>
+
+    <!-- 项目 -->
+    <string name="project_create">新建项目</string>
+    <string name="project_select">选择项目</string>
+    <string name="project_edit">编辑项目</string>
+    <string name="project_empty">还没有项目。点右下角 + 创建第一个，比如「考研数学」。</string>
+    <string name="project_archived_section">已归档</string>
+    <string name="project_name_label">项目名称</string>
+    <string name="project_color_label">颜色</string>
+    <string name="project_icon_label">图标</string>
+    <string name="project_target_label">每日目标（分钟，可留空）</string>
+    <string name="project_target_daily">每日目标 %1$d 分钟</string>
+    <string name="project_today_total">今日 %1$s · 累计 %2$s</string>
+    <string name="project_archive">归档</string>
+    <string name="project_restore">恢复</string>
+    <string name="project_recent_sessions">最近会话</string>
+
+    <!-- 统计周期 -->
+    <string name="stats_period_today">今日</string>
+    <string name="stats_period_week">本周</string>
+    <string name="stats_period_month">本月</string>
+    <string name="stats_period_year">本年</string>
+    <string name="stats_period_total">累计</string>
+    <string name="stats_time_section">时间</string>
+    <string name="stats_money_section">金钱</string>
+    <string name="stats_expense_total">支出合计</string>
+
+    <!-- 统计页：分段与图表 -->
+    <string name="stats_segment_focus">专注</string>
+    <string name="stats_segment_expense">消费</string>
+    <string name="stats_total_duration">总时长</string>
+    <string name="stats_average">均值</string>
+    <string name="stats_focus_share">专注时长占比</string>
+    <string name="stats_focus_distribution">专注分布</string>
+    <string name="stats_category_share">分类占比</string>
+    <string name="stats_expense_distribution">消费分布</string>
+    <string name="stats_expense_trend">消费趋势</string>
+    <string name="stats_trend_by_day">按天</string>
+    <string name="stats_trend_by_month">按月</string>
+    <string name="stats_percent">%1$d%%</string>
+    <string name="stats_center_total">合计</string>
+    <string name="stats_share_other">其他</string>
+    <string name="stats_chart_empty">这个周期还没有数据。</string>
+
+    <!-- 待办页 -->
+    <string name="projects_subtitle">点右侧「开始」进入本次专注</string>
+    <string name="projects_active_label">正在专注</string>
+    <string name="projects_active_paused">已暂停</string>
+
+    <!-- 记账页 -->
+    <string name="expense_month_total">本月支出</string>
+    <string name="expense_month_total_named">%1$d 月支出</string>
+    <string name="expense_month_label">%1$d年%2$d月</string>
+    <string name="expense_prev_month">上一月</string>
+    <string name="expense_next_month">下一月</string>
+    <string name="date_today">今天</string>
+    <string name="date_yesterday">昨天</string>
+    <string name="date_before_yesterday">前天</string>
+    <string name="date_month_day">%1$d月%2$d日</string>
+    <string name="date_year_month_day">%1$d年%2$d月%3$d日</string>
+    <string name="expense_vs_last_month">较上月 %1$s · %2$s</string>
+    <string name="expense_vs_more">多 %1$d%%</string>
+    <string name="expense_vs_less">少 %1$d%%</string>
+    <string name="expense_vs_flat">持平</string>
+    <string name="expense_vs_unknown">上月无记录</string>
+    <string name="expense_empty">本月还没有记账。点右下角 + 记第一笔。</string>
+    <string name="expense_add">记一笔</string>
+    <string name="expense_edit">编辑</string>
+    <string name="expense_edit_title">编辑这一笔</string>
+    <string name="expense_delete">删除</string>
+    <string name="expense_delete_title">删除这一笔？</string>
+    <string name="expense_delete_body">%1$s %2$s，删除后无法恢复。</string>
+    <string name="expense_save_changes">保存修改</string>
+    <string name="expense_not_found">这笔账不存在，可能已被删除。</string>
+    <string name="expense_no_category">分类已删除</string>
+    <string name="expense_pick_category">选一个分类，然后点「保存修改」</string>
+    <string name="expense_error_amount">请先输入金额</string>
+    <string name="expense_error_category">分类不可用，请重新选择</string>
+    <string name="expense_error_unknown">保存失败，请重试</string>
+
+    <!-- 记录页 -->
+    <string name="record_no_project">未指定项目</string>
+    <string name="record_pause">暂停</string>
+    <string name="record_resume">继续</string>
+    <string name="record_stop">结束</string>
+    <string name="record_tap_category">选择分类即完成记录</string>
+    <string name="record_amount_hint">输入金额</string>
+    <string name="record_note_label">备注（可选）</string>
+    <string name="record_saved">已记录</string>
+
+    <!-- 首页 -->
+    <string name="home_label_study">学习</string>
+    <string name="home_label_expense">消费</string>
+    <string name="home_label_focus">专注</string>
+    <string name="home_no_session">未开始计时</string>
+    <string name="home_timeline_empty">今天还没有记录。</string>
+
+    <!-- 重启 / 时间异常 -->
+    <string name="timer_reboot_title">检测到手机重启</string>
+    <string name="timer_reboot_text">%1$s 已在 %2$s 结束，时长 %3$s</string>
+    <string name="timer_tampered_title">计时需要你确认</string>
+    <string name="timer_tampered_text">系统时间被改动过，这段时长的结束时间无法确定</string>
+
+    <!-- 设置 -->
+    <string name="settings_title">设置</string>
+    <string name="settings_appearance">外观</string>
+    <string name="settings_theme_mode">主题模式</string>
+    <string name="settings_theme_pack">主题风格</string>
+    <string name="settings_theme_system">跟随系统</string>
+    <string name="settings_theme_light">浅色</string>
+    <string name="settings_theme_dark">深色</string>
+    <string name="settings_dynamic_color">动态取色</string>
+    <string name="settings_dynamic_color_desc">按壁纸自动配色</string>
+    <string name="settings_dynamic_color_off">关闭后使用「主题风格」自带色板</string>
+    <string name="settings_dynamic_color_unsupported">当前系统版本不支持动态取色</string>
+    <string name="settings_day_start">日切时刻</string>
+    <string name="settings_day_start_desc">此时刻之前的记录归属前一天</string>
+    <string name="settings_week_start">周起始日</string>
+    <string name="settings_category_manage">消费分类管理</string>
+    <string name="settings_data">数据</string>
+    <string name="settings_export_excel">导出数据（Excel）</string>
+    <string name="settings_export">导出备份</string>
+    <string name="settings_import">导入备份</string>
+    <string name="settings_health_check">数据体检</string>
+    <string name="settings_about">关于</string>
+
+    <!-- 数据导出（Excel） -->
+    <string name="export_title">数据导出</string>
+    <string name="export_desc">把全部专注记录与花费记录导出为一个 Excel 文件，内含「专注记录」「花费记录」两张工作表。文件保存到你选择的位置，App 自身不联网、不上传。</string>
+    <string name="export_focus_sheet">专注记录</string>
+    <string name="export_expense_sheet">花费记录</string>
+    <string name="export_count">共 %1$d 条</string>
+    <string name="export_action">导出为 Excel</string>
+    <string name="export_in_progress">正在导出…</string>
+    <string name="export_success">已导出：%1$s</string>
+    <string name="export_failed">导出失败：%1$s</string>
+    <string name="export_file_name">DailySchedule_导出_%1$s.xlsx</string>
+    <string name="export_notice_title">这不是备份</string>
+    <string name="export_notice_body">Excel 是给人看和存档用的，导不回 App。能用来恢复数据的备份格式（导出 + 导入）尚未实现。</string>
+
+    <!-- 待办卡片 -->
+    <string name="project_card_start">开始</string>
+    <string name="project_card_running">进行中</string>
+
+    <!-- 待办详情面板 -->
+    <string name="project_detail_change_background">更换背景</string>
+    <string name="project_detail_background_hint">背景色就是卡片底色。挑一个深色的，白字自动换成黑字。</string>
+    <string name="project_detail_reorder">排序</string>
+    <string name="project_detail_sessions">专注历史记录</string>
+    <string name="project_detail_stats">数据统计</string>
+    <string name="project_detail_heatmap">周热力图</string>
+    <string name="project_detail_heatmap_hint">只表示哪天有专注，不评价多少</string>
+    <string name="project_detail_total">累计专注</string>
+    <string name="project_detail_times">%1$d 次</string>
+    <string name="project_detail_hours">%1$d 小时</string>
+    <string name="project_detail_minutes">%1$d 分钟</string>
+    <string name="project_detail_delete_title">删除「%1$s」？</string>
+    <string name="project_detail_delete_body">待办会被删除，但它名下的专注记录全部保留 —— 那些记录会显示成「未指定待办」，统计口径不变。</string>
+    <string name="project_detail_stats_title">数据统计 · %1$s</string>
+
+    <!-- 排序 -->
+    <string name="reorder_title">调整顺序</string>
+    <string name="reorder_hint">点箭头移动，松手即保存</string>
+    <string name="reorder_move_up">上移</string>
+    <string name="reorder_move_down">下移</string>
+    <string name="reorder_empty">没有可排序的待办。</string>
+    <string name="reorder_failed">排序没保存成功：%1$s</string>
+
+    <!-- 专注历史记录 -->
+    <string name="session_history_title">专注历史记录</string>
+    <string name="session_history_empty">这个待办还没有专注记录。点右下角可以补录一段。</string>
+    <string name="session_history_manual_badge">补录</string>
+    <string name="session_history_edit_title">修改时长</string>
+    <string name="session_history_delete_title">删除这条记录？</string>
+    <string name="session_history_delete_body">%1$s・%2$s，删除后无法恢复。</string>
+    <string name="session_history_delete_failed">删除失败：%1$s</string>
+    <string name="session_history_update_failed">修改失败：%1$s</string>
+
+    <!-- 补录 -->
+    <string name="session_add_action">补录</string>
+    <string name="session_add_title">补录一段专注</string>
+    <string name="session_add_duration_label">时长（分钟）</string>
+    <string name="session_add_day_label">哪一天</string>
+    <string name="session_add_day_today">今天</string>
+    <string name="session_add_day_yesterday">昨天</string>
+    <string name="session_add_day_before">前天</string>
+    <string name="session_add_confirm">补录</string>
+    <string name="session_add_invalid_duration">时长需在 1 到 1440 分钟之间</string>
+    <string name="session_add_no_room">这一天放不下这么长，换成前一天或缩短时长</string>
+    <string name="session_add_failed">补录失败：%1$s</string>
+    <string name="session_duration_unit">%1$s</string>
+
+    <!-- 分类管理 -->
+    <string name="category_manage_title">消费分类</string>
+    <string name="category_add">新增分类</string>
+    <string name="category_preset_hint">预置分类不可删除，可停用</string>
+    <string name="category_disable">停用</string>
+    <string name="category_enable">启用</string>
+    <string name="category_in_use">已有 %1$d 笔账，不能删除</string>
+</resources>

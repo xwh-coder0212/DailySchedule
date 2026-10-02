@@ -1,0 +1,56 @@
+package com.dailyschedule.app.data.db
+
+import androidx.room.Database
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.dailyschedule.app.core.log.AppLogger
+import com.dailyschedule.app.data.db.dao.CategoryDao
+import com.dailyschedule.app.data.db.dao.ExpenseDao
+import com.dailyschedule.app.data.db.dao.ProjectDao
+import com.dailyschedule.app.data.db.dao.SessionDao
+import com.dailyschedule.app.data.db.entity.CategoryEntity
+import com.dailyschedule.app.data.db.entity.ExpenseEntity
+import com.dailyschedule.app.data.db.entity.FocusSessionEntity
+import com.dailyschedule.app.data.db.entity.ProjectEntity
+
+@Database(
+    entities = [
+        ProjectEntity::class,
+        FocusSessionEntity::class,
+        ExpenseEntity::class,
+        CategoryEntity::class,
+    ],
+    version = 2,
+    exportSchema = true,
+)
+@TypeConverters(Converters::class)
+abstract class AppDatabase : RoomDatabase() {
+
+    abstract fun projectDao(): ProjectDao
+
+    abstract fun sessionDao(): SessionDao
+
+    abstract fun expenseDao(): ExpenseDao
+
+    abstract fun categoryDao(): CategoryDao
+}
+
+/**
+ * 新建数据库时的额外安装步骤。
+ *
+ * 只有一个职责：装上「同一时刻最多一个活动会话」的数据库层守卫。
+ * 具体 SQL 与它为什么是触发器而不是部分唯一索引，见 [SessionUniquenessGuard]。
+ *
+ * ## 注意 onCreate 与迁移是两条路
+ * 全新安装走这里；已有数据的库走 `MIGRATION_1_2`。两边都必须调用同一个
+ * [SessionUniquenessGuard.install]，否则会出现「新装用户有守卫、升级用户没有」
+ * 这种没有任何测试能发现的偏差。
+ */
+class DatabaseCallback : RoomDatabase.Callback() {
+
+    override fun onCreate(db: SupportSQLiteDatabase) {
+        super.onCreate(db)
+        SessionUniquenessGuard.install(db)
+    }
+}
