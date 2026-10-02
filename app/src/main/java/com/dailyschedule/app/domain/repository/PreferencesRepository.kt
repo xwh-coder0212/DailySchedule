@@ -4,7 +4,6 @@ import com.dailyschedule.app.domain.model.AppPreferences
 import kotlinx.coroutines.flow.Flow
 
 interface PreferencesRepository {
-
     fun observe(): Flow<AppPreferences>
 
     suspend fun get(): AppPreferences

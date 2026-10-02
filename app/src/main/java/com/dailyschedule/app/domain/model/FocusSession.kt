@@ -15,31 +15,24 @@ data class FocusSession(
     val projectId: Long? = null,
     val status: SessionStatus,
     val needsReview: Boolean = false,
-
     // ── 双时钟 ──
     val startElapsedMs: Long,
     val startWallClockMs: Long,
     val endElapsedMs: Long? = null,
     val endWallClockMs: Long? = null,
-
     val accumulatedPauseMs: Long = 0,
     /** 非 null 即表示此刻正在暂停 */
     val pauseStartElapsedMs: Long? = null,
-
     val mode: SessionMode = SessionMode.STOPWATCH,
     val targetDurationMs: Long? = null,
-
     /** 计时器产生还是用户补录。补录的记录在列表页会带「补录」角标 */
     val source: SessionSource = SessionSource.DEFAULT,
-
     /** 权威时长；未结束为 null */
     val durationMs: Long? = null,
     val note: String? = null,
-
     val createdAt: Long,
     val updatedAt: Long,
 ) {
-
     val isActive: Boolean get() = status in SessionStatus.ACTIVE
 
     /** 当前是否已处于暂停中（而不是"累计暂停过"） */
@@ -58,9 +51,10 @@ data class FocusSession(
      * 就会出现「暂停了但秒数还在涨」。收进模型里，只有一处。
      */
     fun elapsedSinceStart(nowElapsedMs: Long): Long {
-        val pauseDelta = pauseStartElapsedMs
-            ?.let { (nowElapsedMs - it).coerceAtLeast(0L) }
-            ?: 0L
+        val pauseDelta =
+            pauseStartElapsedMs
+                ?.let { (nowElapsedMs - it).coerceAtLeast(0L) }
+                ?: 0L
         val raw = nowElapsedMs - startElapsedMs - accumulatedPauseMs - pauseDelta
         return raw.coerceAtLeast(0L)
     }
@@ -82,7 +76,10 @@ data class FocusSession(
      * 前置条件 `durationMs > 0` 由调用方（用例）校验，这里用 require 兜底，
      * 因为传 0 进来是不可恢复的业务错误，不是可以静默兜底的输入。
      */
-    fun withDuration(durationMs: Long, nowWallClockMs: Long): FocusSession {
+    fun withDuration(
+        durationMs: Long,
+        nowWallClockMs: Long,
+    ): FocusSession {
         require(durationMs > 0L) { "时长必须大于 0，调用方应先校验" }
         return copy(
             durationMs = durationMs,
@@ -93,7 +90,6 @@ data class FocusSession(
     }
 
     companion object {
-
         /**
          * 新建一个活动会话。调用方必须传 clock 取到的两个时间，不许自己取系统时间。
          */
@@ -103,16 +99,17 @@ data class FocusSession(
             targetDurationMs: Long?,
             startElapsedMs: Long,
             startWallClockMs: Long,
-        ): FocusSession = FocusSession(
-            projectId = projectId,
-            status = SessionStatus.RUNNING,
-            mode = mode,
-            targetDurationMs = targetDurationMs,
-            startElapsedMs = startElapsedMs,
-            startWallClockMs = startWallClockMs,
-            createdAt = startWallClockMs,
-            updatedAt = startWallClockMs,
-        )
+        ): FocusSession =
+            FocusSession(
+                projectId = projectId,
+                status = SessionStatus.RUNNING,
+                mode = mode,
+                targetDurationMs = targetDurationMs,
+                startElapsedMs = startElapsedMs,
+                startWallClockMs = startWallClockMs,
+                createdAt = startWallClockMs,
+                updatedAt = startWallClockMs,
+            )
 
         /**
          * 用户补录一条已经完成的历史记录。

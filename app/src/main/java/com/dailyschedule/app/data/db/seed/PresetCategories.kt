@@ -18,7 +18,6 @@ import com.dailyschedule.app.data.db.entity.CategoryEntity
  * 解析在 Repository 层用 `resources.getString(res)` 完成。
  */
 object PresetCategories {
-
     data class Seed(
         @param:StringRes val nameRes: Int,
         /** 图标名取自 Material Icons 命名，运行时映射到 ImageVector */
@@ -26,15 +25,16 @@ object PresetCategories {
         val colorHex: String,
     )
 
-    val seeds: List<Seed> = listOf(
-        Seed(R.string.preset_category_food, "restaurant", "#E0705A"),
-        Seed(R.string.preset_category_transport, "directions_bus", "#3D84D6"),
-        Seed(R.string.preset_category_shopping, "shopping_bag", "#E8A33D"),
-        Seed(R.string.preset_category_entertainment, "sports_esports", "#9A6BD1"),
-        Seed(R.string.preset_category_study, "menu_book", "#2FA37B"),
-        Seed(R.string.preset_category_medical, "local_hospital", "#D9534F"),
-        Seed(R.string.preset_category_other, "more_horiz", "#8A8F98"),
-    )
+    val seeds: List<Seed> =
+        listOf(
+            Seed(R.string.preset_category_food, "restaurant", "#E0705A"),
+            Seed(R.string.preset_category_transport, "directions_bus", "#3D84D6"),
+            Seed(R.string.preset_category_shopping, "shopping_bag", "#E8A33D"),
+            Seed(R.string.preset_category_entertainment, "sports_esports", "#9A6BD1"),
+            Seed(R.string.preset_category_study, "menu_book", "#2FA37B"),
+            Seed(R.string.preset_category_medical, "local_hospital", "#D9534F"),
+            Seed(R.string.preset_category_other, "more_horiz", "#8A8F98"),
+        )
 
     /** @param nameResolver 通常是 `resources::getString` */
     fun entities(nameResolver: (Int) -> String): List<CategoryEntity> =

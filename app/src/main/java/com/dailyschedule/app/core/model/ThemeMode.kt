@@ -10,7 +10,6 @@ enum class ThemeMode {
     ;
 
     companion object {
-        fun fromRaw(value: String?): ThemeMode =
-            entries.firstOrNull { it.name == value } ?: SYSTEM
+        fun fromRaw(value: String?): ThemeMode = entries.firstOrNull { it.name == value } ?: SYSTEM
     }
 }

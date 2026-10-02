@@ -4,11 +4,11 @@ import android.content.Context
 import com.dailyschedule.app.core.log.AppLogger
 import com.dailyschedule.app.core.transfer.BackupCodec
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 /**
  * 导入前的自动本地备份。**导入会清空全库**，这是它唯一的存在理由。
@@ -32,68 +32,76 @@ import kotlinx.coroutines.withContext
  * "反正有自动备份"。
  */
 @Singleton
-class PreImportBackupKeeper @Inject constructor(
-    @param:ApplicationContext private val context: Context,
-) {
+class PreImportBackupKeeper
+    @Inject
+    constructor(
+        @param:ApplicationContext private val context: Context,
+    ) {
+        /** 保留份数。见类注释里为什么是 3 而不是 1 或 10 */
+        private val directory: File
+            get() = File(context.filesDir, DIR_NAME)
 
-    /** 保留份数。见类注释里为什么是 3 而不是 1 或 10 */
-    private val directory: File
-        get() = File(context.filesDir, DIR_NAME)
+        /**
+         * 存一份导入前的快照。
+         *
+         * @return 落盘的文件名，写进回执给用户看
+         */
+        suspend fun keep(
+            json: String,
+            stamp: String,
+        ): String =
+            withContext(Dispatchers.IO) {
+                val dir = directory
+                if (!dir.exists() && !dir.mkdirs()) {
+                    // 存不下就抛错，让导入流程中止。
+                    // 这里不能"记个日志继续导" —— 那样用户会在一个没有退路的
+                    // 状态下完成清库操作，而这正是本类要防的事。
+                    error("无法创建自动备份目录：${dir.absolutePath}")
+                }
+                val name = "$PREFIX$stamp.${BackupCodec.FILE_EXTENSION}"
+                File(dir, name).writeText(json)
+                prune()
+                name
+            }
 
-    /**
-     * 存一份导入前的快照。
-     *
-     * @return 落盘的文件名，写进回执给用户看
-     */
-    suspend fun keep(json: String, stamp: String): String = withContext(Dispatchers.IO) {
-        val dir = directory
-        if (!dir.exists() && !dir.mkdirs()) {
-            // 存不下就抛错，让导入流程中止。
-            // 这里不能"记个日志继续导" —— 那样用户会在一个没有退路的
-            // 状态下完成清库操作，而这正是本类要防的事。
-            error("无法创建自动备份目录：${dir.absolutePath}")
-        }
-        val name = "$PREFIX$stamp.${BackupCodec.FILE_EXTENSION}"
-        File(dir, name).writeText(json)
-        prune()
-        name
-    }
+        /** 最近一次导入前备份的**内容**，没有则返回 null */
+        suspend fun latest(): String? =
+            withContext(Dispatchers.IO) {
+                newestFile()?.readText()
+            }
 
-    /** 最近一次导入前备份的**内容**，没有则返回 null */
-    suspend fun latest(): String? = withContext(Dispatchers.IO) {
-        newestFile()?.readText()
-    }
+        /** 最近一次导入前备份的文件名，用于在界面上说明"撤销会回到哪一份" */
+        suspend fun latestName(): String? = withContext(Dispatchers.IO) { newestFile()?.name }
 
-    /** 最近一次导入前备份的文件名，用于在界面上说明"撤销会回到哪一份" */
-    suspend fun latestName(): String? = withContext(Dispatchers.IO) { newestFile()?.name }
+        private fun newestFile(): File? =
+            directory
+                .listFiles { file -> file.isFile && file.name.startsWith(PREFIX) }
+                // 文件名里的时间戳是 yyyyMMdd_HHmm，字典序即时间序，不必解析
+                ?.maxByOrNull { it.name }
 
-    private fun newestFile(): File? = directory
-        .listFiles { file -> file.isFile && file.name.startsWith(PREFIX) }
-        // 文件名里的时间戳是 yyyyMMdd_HHmm，字典序即时间序，不必解析
-        ?.maxByOrNull { it.name }
-
-    private fun prune() {
-        val all = directory
-            .listFiles { file -> file.isFile && file.name.startsWith(PREFIX) }
-            ?.sortedByDescending { it.name }
-            ?: return
-        all.drop(KEEP).forEach { stale ->
-            if (!stale.delete()) {
-                // 删不掉不影响本次导入的正确性，只影响占用。
-                // 记一笔就好，不要因为这个把导入搞失败。
-                AppLogger.w(TAG, "旧的自动备份删不掉：${stale.name}")
+        private fun prune() {
+            val all =
+                directory
+                    .listFiles { file -> file.isFile && file.name.startsWith(PREFIX) }
+                    ?.sortedByDescending { it.name }
+                    ?: return
+            all.drop(KEEP).forEach { stale ->
+                if (!stale.delete()) {
+                    // 删不掉不影响本次导入的正确性，只影响占用。
+                    // 记一笔就好，不要因为这个把导入搞失败。
+                    AppLogger.w(TAG, "旧的自动备份删不掉：${stale.name}")
+                }
             }
         }
+
+        private companion object {
+            const val TAG = "PreImportBackup"
+
+            const val DIR_NAME = "pre-import-backup"
+
+            /** 前缀。用于识别"哪些是本类产生的文件"，别去删目录里其他东西 */
+            const val PREFIX = "pre-import-"
+
+            const val KEEP = 3
+        }
     }
-
-    private companion object {
-        const val TAG = "PreImportBackup"
-
-        const val DIR_NAME = "pre-import-backup"
-
-        /** 前缀。用于识别"哪些是本类产生的文件"，别去删目录里其他东西 */
-        const val PREFIX = "pre-import-"
-
-        const val KEEP = 3
-    }
-}

@@ -31,15 +31,16 @@ import com.dailyschedule.app.core.model.SessionSource
  * 两边不一致同样会抛 `Migration didn't properly handle`。
  * 这条由 `Migration1To2Test` 守着。
  */
-val MIGRATION_1_2 = object : Migration(1, 2) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL(
-            "ALTER TABLE `focus_sessions` ADD COLUMN `source` TEXT NOT NULL " +
-                "DEFAULT '${SessionSource.DEFAULT.name}'"
-        )
-        SessionUniquenessGuard.install(db)
+val MIGRATION_1_2 =
+    object : Migration(1, 2) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE `focus_sessions` ADD COLUMN `source` TEXT NOT NULL " +
+                    "DEFAULT '${SessionSource.DEFAULT.name}'",
+            )
+            SessionUniquenessGuard.install(db)
+        }
     }
-}
 
 /** 供 [com.dailyschedule.app.di.DatabaseModule] 一次性注册，避免以后加迁移时漏挂 */
 val ALL_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2)

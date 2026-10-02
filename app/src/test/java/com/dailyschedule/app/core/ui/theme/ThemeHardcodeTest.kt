@@ -2,8 +2,8 @@ package com.dailyschedule.app.core.ui.theme
 
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
-import java.io.File
 import org.junit.Test
+import java.io.File
 
 /**
  * 源码扫描：页面里不许硬编码颜色。
@@ -20,7 +20,6 @@ import org.junit.Test
  *   它的兜底色定义在 theme 包内，不违反本规则
  */
 class ThemeHardcodeTest {
-
     @Test
     fun `页面不得硬编码颜色字面量`() {
         val srcRoot = File("src/main/java")
@@ -28,26 +27,27 @@ class ThemeHardcodeTest {
             .that(srcRoot.exists())
             .isTrue()
 
-        val violations = srcRoot.walkTopDown()
-            .filter { it.isFile && it.extension == "kt" }
-            .filterNot { it.invariantSeparatorsPath.contains("core/ui/theme") }
-            .flatMap { file ->
-                file.readLines().mapIndexedNotNull { index, line ->
-                    val trimmed = line.trim()
-                    val isComment = trimmed.startsWith("//") || trimmed.startsWith("*")
-                    if (!isComment && COLOR_LITERAL.containsMatchIn(trimmed)) {
-                        "${file.invariantSeparatorsPath}:${index + 1}: $trimmed"
-                    } else {
-                        null
+        val violations =
+            srcRoot.walkTopDown()
+                .filter { it.isFile && it.extension == "kt" }
+                .filterNot { it.invariantSeparatorsPath.contains("core/ui/theme") }
+                .flatMap { file ->
+                    file.readLines().mapIndexedNotNull { index, line ->
+                        val trimmed = line.trim()
+                        val isComment = trimmed.startsWith("//") || trimmed.startsWith("*")
+                        if (!isComment && COLOR_LITERAL.containsMatchIn(trimmed)) {
+                            "${file.invariantSeparatorsPath}:${index + 1}: $trimmed"
+                        } else {
+                            null
+                        }
                     }
                 }
-            }
-            .toList()
+                .toList()
 
         assertWithMessage(
             "发现 ${violations.size} 处硬编码颜色。请改用 MaterialTheme.colorScheme.* " +
                 "语义 token，或把色值移入 core/ui/theme：\n" +
-                violations.joinToString("\n")
+                violations.joinToString("\n"),
         )
             .that(violations)
             .isEmpty()

@@ -1,0 +1,42 @@
+# ktlint 存量的清理与门禁收紧 —— 过程记录
+#
+# 顺序是 b → a，即先建基线、再批量格式化、最后把基线收紧到 0：
+#   (b) ./gradlew :app:ktlintBaseline   ← 记录存量，让门禁对新代码先生效
+#   (a) ./gradlew :app:ktlintFormatAll  ← ktlint -F 批量重排
+#       ./gradlew :app:ktlintBaseline   ← 刷新并收紧
+#       ./gradlew :app:ktlintGate       ← 确认通过
+#
+# 阅读提示（重要）：
+#   下面这次 ktlintFormatAll 只花了 12 秒、只执行了 1 个任务，
+#   因为它是**最后一遍幂等空跑**——此时 137 个文件已经排好版了。
+#   真正那次改写 137 个文件的运行，证据在 git diff 本身：
+#       137 files changed,6877 insertions(+),8984 deletions(-)
+#   而「这次重排没有改动任何语义」的独立验证见：
+#       ktlint-reformat-neutrality.txt
+#
+#   之所以把空跑也留下来，是因为它和紧随其后的门禁输出是同一个 shell 会话，
+#   能证明「格式化之后再跑门禁是通过的」这个因果顺序。
+
+================================================================================
+$ gradle --no-daemon :app:ktlintFormatAll
+================================================================================
+> Task :app:ktlintFormatAll
+
+BUILD SUCCESSFUL in 12s
+1 actionable task: 1 executed
+FORMAT_EXIT=0
+
+================================================================================
+$ gradle --no-daemon :app:ktlintSources :app:ktlintBaseline :app:ktlintGate
+================================================================================
+> Task :app:ktlintSources
+
+> Task :app:ktlintBaseline
+ktlint 基线已刷新：0 个 (文件, 规则) 组合，共 0 处违规
+
+> Task :app:ktlintGate
+ktlint 门禁通过：本次改动没有引入新的风格违规（基线共 0 处存量）
+
+BUILD SUCCESSFUL in 30s
+3 actionable tasks: 3 executed
+GATE_EXIT=0

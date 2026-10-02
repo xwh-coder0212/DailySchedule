@@ -9,7 +9,6 @@ enum class ThemePack {
     ;
 
     companion object {
-        fun fromRaw(value: String?): ThemePack =
-            entries.firstOrNull { it.name == value } ?: GRAPHITE_TEAL
+        fun fromRaw(value: String?): ThemePack = entries.firstOrNull { it.name == value } ?: GRAPHITE_TEAL
     }
 }

@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.Flow
  * 或让 SQL 出现 `date('now')`。累计口径 = `(0, Long.MAX_VALUE)`。
  */
 interface SessionRepository {
-
     /** 当前活动会话（RUNNING 或 PAUSED），没有则发射 null */
     fun observeActive(): Flow<FocusSession?>
 
@@ -20,15 +19,27 @@ interface SessionRepository {
     suspend fun getById(id: Long): FocusSession?
 
     /** 时间轴：已完成会话，按开始时间升序 */
-    fun observeTimeline(startMs: Long, endMs: Long): Flow<List<FocusSession>>
+    fun observeTimeline(
+        startMs: Long,
+        endMs: Long,
+    ): Flow<List<FocusSession>>
 
     /** 历史列表：已完成会话，按开始时间倒序 */
-    fun observeInRange(startMs: Long, endMs: Long): Flow<List<FocusSession>>
+    fun observeInRange(
+        startMs: Long,
+        endMs: Long,
+    ): Flow<List<FocusSession>>
 
     /** 已完成会话的总时长。**不含正在跑的会话** */
-    fun observeTotalDuration(startMs: Long, endMs: Long): Flow<Long>
+    fun observeTotalDuration(
+        startMs: Long,
+        endMs: Long,
+    ): Flow<Long>
 
-    fun observeCompletedCount(startMs: Long, endMs: Long): Flow<Int>
+    fun observeCompletedCount(
+        startMs: Long,
+        endMs: Long,
+    ): Flow<Int>
 
     /** 指定项目的已完成次数。累计口径同样是 `(0, Long.MAX_VALUE)` */
     fun observeCompletedCountOfProject(
@@ -37,7 +48,10 @@ interface SessionRepository {
         endMs: Long,
     ): Flow<Int>
 
-    fun observeDurationByProject(startMs: Long, endMs: Long): Flow<List<ProjectDuration>>
+    fun observeDurationByProject(
+        startMs: Long,
+        endMs: Long,
+    ): Flow<List<ProjectDuration>>
 
     fun observeTotalDurationOfProject(
         projectId: Long,
@@ -47,7 +61,10 @@ interface SessionRepository {
 
     fun observeNeedsReview(): Flow<List<FocusSession>>
 
-    fun observeByProject(projectId: Long, limit: Int): Flow<List<FocusSession>>
+    fun observeByProject(
+        projectId: Long,
+        limit: Int,
+    ): Flow<List<FocusSession>>
 
     suspend fun insert(session: FocusSession): Long
 

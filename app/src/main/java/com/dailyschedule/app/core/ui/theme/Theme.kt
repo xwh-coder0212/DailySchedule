@@ -30,10 +30,11 @@ import com.dailyschedule.app.core.model.ThemePack
  * 等宽数字。所有时长与金额必须套用，否则秒数从 1 跳到 8 时
  * 数字串宽度会变，整个界面左右抖动。
  */
-val TabularNumbers = TextStyle(
-    fontFeatureSettings = "tnum",
-    fontWeight = FontWeight.Medium,
-)
+val TabularNumbers =
+    TextStyle(
+        fontFeatureSettings = "tnum",
+        fontWeight = FontWeight.Medium,
+    )
 
 /** 首屏三个大数字 */
 val DisplayNumberStyle = TabularNumbers.copy(fontSize = 34.sp)
@@ -60,12 +61,13 @@ fun DailyScheduleTheme(
     val useDynamic = dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val context = LocalContext.current
 
-    val colorScheme = when {
-        useDynamic && darkTheme -> dynamicDarkColorScheme(context)
-        useDynamic -> dynamicLightColorScheme(context)
-        darkTheme -> spec.dark
-        else -> spec.light
-    }
+    val colorScheme =
+        when {
+            useDynamic && darkTheme -> dynamicDarkColorScheme(context)
+            useDynamic -> dynamicLightColorScheme(context)
+            darkTheme -> spec.dark
+            else -> spec.light
+        }
 
     MaterialTheme(
         colorScheme = colorScheme,

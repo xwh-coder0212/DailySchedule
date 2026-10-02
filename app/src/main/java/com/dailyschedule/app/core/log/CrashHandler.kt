@@ -13,11 +13,13 @@ import android.content.Context
 class CrashHandler(
     private val context: Context,
 ) : Thread.UncaughtExceptionHandler {
-
     private val defaultHandler: Thread.UncaughtExceptionHandler? =
         Thread.getDefaultUncaughtExceptionHandler()
 
-    override fun uncaughtException(thread: Thread, throwable: Throwable) {
+    override fun uncaughtException(
+        thread: Thread,
+        throwable: Throwable,
+    ) {
         AppLogger.e(TAG, "Uncaught exception on thread=${thread.name}", throwable)
         AppLogger.writeCrash(context.filesDir, throwable)
         defaultHandler?.uncaughtException(thread, throwable)

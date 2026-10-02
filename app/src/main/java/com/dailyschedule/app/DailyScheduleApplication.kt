@@ -7,16 +7,16 @@ import com.dailyschedule.app.domain.usecase.bootstrap.AppStartupUseCase
 import com.dailyschedule.app.domain.usecase.bootstrap.EnsureSeedDataUseCase
 import com.dailyschedule.app.timer.TimerNotifications
 import dagger.hilt.android.HiltAndroidApp
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltAndroidApp
 class DailyScheduleApplication : Application() {
-
     @Inject lateinit var appStartup: AppStartupUseCase
+
     @Inject lateinit var ensureSeedData: EnsureSeedDataUseCase
 
     private val appScope = CoroutineScope(Dispatchers.IO + SupervisorJob())

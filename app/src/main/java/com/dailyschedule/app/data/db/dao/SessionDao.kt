@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.Flow
  */
 @Dao
 interface SessionDao {
-
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(entity: FocusSessionEntity): Long
 
@@ -50,7 +49,7 @@ interface SessionDao {
         SELECT * FROM focus_sessions
         WHERE status IN ('RUNNING', 'PAUSED')
         LIMIT 1
-        """
+        """,
     )
     fun observeActive(): Flow<FocusSessionEntity?>
 
@@ -60,7 +59,7 @@ interface SessionDao {
         SELECT * FROM focus_sessions
         WHERE status IN ('RUNNING', 'PAUSED')
         LIMIT 1
-        """
+        """,
     )
     suspend fun getActiveOnce(): FocusSessionEntity?
 
@@ -71,9 +70,12 @@ interface SessionDao {
         WHERE status = 'COMPLETED'
           AND startWallClockMs >= :startMs AND startWallClockMs < :endMs
         ORDER BY startWallClockMs ASC
-        """
+        """,
     )
-    fun observeTimeline(startMs: Long, endMs: Long): Flow<List<FocusSessionEntity>>
+    fun observeTimeline(
+        startMs: Long,
+        endMs: Long,
+    ): Flow<List<FocusSessionEntity>>
 
     /** 历史列表（倒序） */
     @Query(
@@ -82,9 +84,12 @@ interface SessionDao {
         WHERE status = 'COMPLETED'
           AND startWallClockMs >= :startMs AND startWallClockMs < :endMs
         ORDER BY startWallClockMs DESC
-        """
+        """,
     )
-    fun observeCompletedInRange(startMs: Long, endMs: Long): Flow<List<FocusSessionEntity>>
+    fun observeCompletedInRange(
+        startMs: Long,
+        endMs: Long,
+    ): Flow<List<FocusSessionEntity>>
 
     /**
      * 已完成会话的时长总和。
@@ -97,9 +102,12 @@ interface SessionDao {
         SELECT COALESCE(SUM(durationMs), 0) FROM focus_sessions
         WHERE status = 'COMPLETED'
           AND startWallClockMs >= :startMs AND startWallClockMs < :endMs
-        """
+        """,
     )
-    fun observeTotalDuration(startMs: Long, endMs: Long): Flow<Long>
+    fun observeTotalDuration(
+        startMs: Long,
+        endMs: Long,
+    ): Flow<Long>
 
     /** 专注次数 */
     @Query(
@@ -107,9 +115,12 @@ interface SessionDao {
         SELECT COUNT(*) FROM focus_sessions
         WHERE status = 'COMPLETED'
           AND startWallClockMs >= :startMs AND startWallClockMs < :endMs
-        """
+        """,
     )
-    fun observeCompletedCount(startMs: Long, endMs: Long): Flow<Int>
+    fun observeCompletedCount(
+        startMs: Long,
+        endMs: Long,
+    ): Flow<Int>
 
     /**
      * 指定项目的专注次数。"累计专注 90 次"那个数字。
@@ -123,9 +134,13 @@ interface SessionDao {
         WHERE status = 'COMPLETED'
           AND projectId = :projectId
           AND startWallClockMs >= :startMs AND startWallClockMs < :endMs
-        """
+        """,
     )
-    fun observeCompletedCountOfProject(projectId: Long, startMs: Long, endMs: Long): Flow<Int>
+    fun observeCompletedCountOfProject(
+        projectId: Long,
+        startMs: Long,
+        endMs: Long,
+    ): Flow<Int>
 
     /** 指定项目在指定区间内的时长（项目的今日/本周/本月/累计共用此查询） */
     @Query(
@@ -134,9 +149,13 @@ interface SessionDao {
         WHERE status = 'COMPLETED'
           AND projectId = :projectId
           AND startWallClockMs >= :startMs AND startWallClockMs < :endMs
-        """
+        """,
     )
-    fun observeTotalDurationOfProject(projectId: Long, startMs: Long, endMs: Long): Flow<Long>
+    fun observeTotalDurationOfProject(
+        projectId: Long,
+        startMs: Long,
+        endMs: Long,
+    ): Flow<Long>
 
     /**
      * 项目排行。
@@ -154,9 +173,12 @@ interface SessionDao {
           AND f.startWallClockMs >= :startMs AND f.startWallClockMs < :endMs
         GROUP BY p.id
         ORDER BY totalDurationMs DESC
-        """
+        """,
     )
-    fun observeDurationByProject(startMs: Long, endMs: Long): Flow<List<ProjectDurationRow>>
+    fun observeDurationByProject(
+        startMs: Long,
+        endMs: Long,
+    ): Flow<List<ProjectDurationRow>>
 
     /**
      * 待确认会话。与 status 无关 —— "是否在运行"和"要不要人工看一眼"是两件事。
@@ -172,9 +194,12 @@ interface SessionDao {
         WHERE projectId = :projectId AND status = 'COMPLETED'
         ORDER BY startWallClockMs DESC
         LIMIT :limit
-        """
+        """,
     )
-    fun observeRecentOfProject(projectId: Long, limit: Int): Flow<List<FocusSessionEntity>>
+    fun observeRecentOfProject(
+        projectId: Long,
+        limit: Int,
+    ): Flow<List<FocusSessionEntity>>
 
     /**
      * 把某个项目的会话 projectId 置空（"删除项目但保留历史"的另一条路径）。
@@ -191,7 +216,7 @@ interface SessionDao {
           AND endElapsedMs IS NOT NULL
           AND durationMs IS NOT NULL
           AND durationMs != (endElapsedMs - startElapsedMs - accumulatedPauseMs)
-        """
+        """,
     )
     suspend fun findInconsistentDurations(): List<FocusSessionEntity>
 
@@ -231,7 +256,7 @@ interface SessionDao {
         SELECT * FROM focus_sessions
         WHERE status NOT IN ('RUNNING', 'PAUSED')
         ORDER BY id ASC
-        """
+        """,
     )
     suspend fun getAllSettledOnce(): List<FocusSessionEntity>
 

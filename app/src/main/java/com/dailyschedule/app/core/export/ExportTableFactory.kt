@@ -24,7 +24,6 @@ import java.time.ZoneId
  *    把「合计」两个字下面填满空字符串，看起来会像缺数据；留空格才对。
  */
 object ExportTableFactory {
-
     const val FOCUS_SHEET_NAME = "专注记录"
     const val EXPENSE_SHEET_NAME = "花费记录"
 
@@ -48,9 +47,10 @@ object ExportTableFactory {
         projectNames: Map<Long, String>,
         zoneId: ZoneId = ZoneId.systemDefault(),
     ): ExportTable {
-        val ordered = sessions
-            .filter { it.status == SessionStatus.COMPLETED }
-            .sortedBy { it.startWallClockMs }
+        val ordered =
+            sessions
+                .filter { it.status == SessionStatus.COMPLETED }
+                .sortedBy { it.startWallClockMs }
 
         val rows = ArrayList<List<Cell>>(ordered.size + 1)
         var totalMinutes = 0.0
@@ -59,29 +59,32 @@ object ExportTableFactory {
             val durationMs = session.durationMs ?: 0L
             val minutes = durationMs / MS_PER_MINUTE
             totalMinutes += minutes
-            rows += listOf(
-                Cell.Number((index + 1).toDouble()),
-                Cell.Text(dateOf(session.startWallClockMs, zoneId)),
-                Cell.Text(timeOf(session.startWallClockMs, zoneId)),
-                Cell.Text(session.endWallClockMs?.let { timeOf(it, zoneId) }.orEmpty()),
-                Cell.Text(DurationFormatter.duration(durationMs)),
-                Cell.Number(minutes, NumberFormat.ONE_DECIMAL),
-                Cell.Text(session.projectId?.let { projectNames[it] } ?: NO_PROJECT),
-                Cell.Text(sourceLabel(session)),
-                Cell.Text(session.note.orEmpty()),
-            )
+            rows +=
+                listOf(
+                    Cell.Number((index + 1).toDouble()),
+                    Cell.Text(dateOf(session.startWallClockMs, zoneId)),
+                    Cell.Text(timeOf(session.startWallClockMs, zoneId)),
+                    Cell.Text(session.endWallClockMs?.let { timeOf(it, zoneId) }.orEmpty()),
+                    Cell.Text(DurationFormatter.duration(durationMs)),
+                    Cell.Number(minutes, NumberFormat.ONE_DECIMAL),
+                    Cell.Text(session.projectId?.let { projectNames[it] } ?: NO_PROJECT),
+                    Cell.Text(sourceLabel(session)),
+                    Cell.Text(session.note.orEmpty()),
+                )
         }
 
         if (ordered.isNotEmpty()) {
-            rows += totalRow(
-                label = "合计",
-                columnCount = FOCUS_HEADERS.size,
-                sumColumnIndex = FOCUS_MINUTES_COLUMN,
-                formula = "SUM(${columnLetter(FOCUS_MINUTES_COLUMN)}2:" +
-                    "${columnLetter(FOCUS_MINUTES_COLUMN)}${ordered.size + 1})",
-                total = totalMinutes,
-                format = NumberFormat.ONE_DECIMAL,
-            )
+            rows +=
+                totalRow(
+                    label = "合计",
+                    columnCount = FOCUS_HEADERS.size,
+                    sumColumnIndex = FOCUS_MINUTES_COLUMN,
+                    formula =
+                        "SUM(${columnLetter(FOCUS_MINUTES_COLUMN)}2:" +
+                            "${columnLetter(FOCUS_MINUTES_COLUMN)}${ordered.size + 1})",
+                    total = totalMinutes,
+                    format = NumberFormat.ONE_DECIMAL,
+                )
         }
 
         return ExportTable(
@@ -107,16 +110,17 @@ object ExportTableFactory {
         ordered.forEachIndexed { index, expense ->
             val yuan = expense.amountCents / CENTS_PER_YUAN
             if (expense.type == ExpenseType.EXPENSE) totalExpenseYuan += yuan
-            rows += listOf(
-                Cell.Number((index + 1).toDouble()),
-                Cell.Text(dateOf(expense.occurredAt, zoneId)),
-                Cell.Text(timeOf(expense.occurredAt, zoneId)),
-                Cell.Text(typeLabel(expense.type)),
-                Cell.Number(yuan, NumberFormat.TWO_DECIMAL),
-                Cell.Text(categoryNames[expense.categoryId] ?: UNKNOWN_CATEGORY),
-                Cell.Text(expense.projectId?.let { projectNames[it] } ?: NO_PROJECT),
-                Cell.Text(expense.note.orEmpty()),
-            )
+            rows +=
+                listOf(
+                    Cell.Number((index + 1).toDouble()),
+                    Cell.Text(dateOf(expense.occurredAt, zoneId)),
+                    Cell.Text(timeOf(expense.occurredAt, zoneId)),
+                    Cell.Text(typeLabel(expense.type)),
+                    Cell.Number(yuan, NumberFormat.TWO_DECIMAL),
+                    Cell.Text(categoryNames[expense.categoryId] ?: UNKNOWN_CATEGORY),
+                    Cell.Text(expense.projectId?.let { projectNames[it] } ?: NO_PROJECT),
+                    Cell.Text(expense.note.orEmpty()),
+                )
         }
 
         if (ordered.isNotEmpty()) {
@@ -124,15 +128,17 @@ object ExportTableFactory {
             val typeColumn = columnLetter(TYPE_COLUMN)
             // 用 SUMIF 而不是 SUM：数据库里预留了 INCOME，
             // 直接全列求和会把收入也加进「花费合计」，是个不会报错的错误答案
-            rows += totalRow(
-                label = "合计(支出)",
-                columnCount = EXPENSE_HEADERS.size,
-                sumColumnIndex = EXPENSE_AMOUNT_COLUMN,
-                formula = "SUMIF($typeColumn\$2:$typeColumn\$${ordered.size + 1}," +
-                    "\"${typeLabel(ExpenseType.EXPENSE)}\",$amountColumn\$2:$amountColumn\$${ordered.size + 1})",
-                total = totalExpenseYuan,
-                format = NumberFormat.TWO_DECIMAL,
-            )
+            rows +=
+                totalRow(
+                    label = "合计(支出)",
+                    columnCount = EXPENSE_HEADERS.size,
+                    sumColumnIndex = EXPENSE_AMOUNT_COLUMN,
+                    formula =
+                        "SUMIF($typeColumn\$2:$typeColumn\$${ordered.size + 1}," +
+                            "\"${typeLabel(ExpenseType.EXPENSE)}\",$amountColumn\$2:$amountColumn\$${ordered.size + 1})",
+                    total = totalExpenseYuan,
+                    format = NumberFormat.TWO_DECIMAL,
+                )
         }
 
         return ExportTable(
@@ -166,35 +172,44 @@ object ExportTableFactory {
         formula: String,
         total: Double,
         format: NumberFormat,
-    ): List<Cell> = List(columnCount) { index ->
-        when (index) {
-            0 -> Cell.Text(label, bold = true)
-            sumColumnIndex -> Cell.Formula(formula, cached = total, format = format, bold = true)
-            else -> Cell.Blank
+    ): List<Cell> =
+        List(columnCount) { index ->
+            when (index) {
+                0 -> Cell.Text(label, bold = true)
+                sumColumnIndex -> Cell.Formula(formula, cached = total, format = format, bold = true)
+                else -> Cell.Blank
+            }
         }
-    }
 
     private fun columnLetter(index: Int): String = XlsxWriter.columnLetter(index)
 
-    private fun dateOf(wallClockMs: Long, zoneId: ZoneId): String {
+    private fun dateOf(
+        wallClockMs: Long,
+        zoneId: ZoneId,
+    ): String {
         val local = localOf(wallClockMs, zoneId)
         return "%04d-%02d-%02d".format(local.year, local.monthValue, local.dayOfMonth)
     }
 
-    private fun timeOf(wallClockMs: Long, zoneId: ZoneId): String {
+    private fun timeOf(
+        wallClockMs: Long,
+        zoneId: ZoneId,
+    ): String {
         val local = localOf(wallClockMs, zoneId)
         return "%02d:%02d".format(local.hour, local.minute)
     }
 
-    private fun localOf(wallClockMs: Long, zoneId: ZoneId): LocalDateTime =
-        LocalDateTime.ofInstant(Instant.ofEpochMilli(wallClockMs), zoneId)
+    private fun localOf(
+        wallClockMs: Long,
+        zoneId: ZoneId,
+    ): LocalDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(wallClockMs), zoneId)
 
-    private fun typeLabel(type: ExpenseType): String = when (type) {
-        ExpenseType.EXPENSE -> "支出"
-        ExpenseType.INCOME -> "收入"
-    }
+    private fun typeLabel(type: ExpenseType): String =
+        when (type) {
+            ExpenseType.EXPENSE -> "支出"
+            ExpenseType.INCOME -> "收入"
+        }
 
     /** 来源列：补录的记录标出来，纯计时产生的标「正常」 */
-    private fun sourceLabel(session: FocusSession): String =
-        if (session.isManual) SOURCE_MANUAL else SOURCE_TIMER
+    private fun sourceLabel(session: FocusSession): String = if (session.isManual) SOURCE_MANUAL else SOURCE_TIMER
 }

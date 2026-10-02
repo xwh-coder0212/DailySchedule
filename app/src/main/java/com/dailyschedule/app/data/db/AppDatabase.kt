@@ -4,7 +4,6 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.dailyschedule.app.core.log.AppLogger
 import com.dailyschedule.app.data.db.dao.CategoryDao
 import com.dailyschedule.app.data.db.dao.ExpenseDao
 import com.dailyschedule.app.data.db.dao.ProjectDao
@@ -26,7 +25,6 @@ import com.dailyschedule.app.data.db.entity.ProjectEntity
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
-
     abstract fun projectDao(): ProjectDao
 
     abstract fun sessionDao(): SessionDao
@@ -36,7 +34,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
 
     companion object {
-
         /**
          * Room schema 版本。
          *
@@ -61,7 +58,6 @@ abstract class AppDatabase : RoomDatabase() {
  * 这种没有任何测试能发现的偏差。
  */
 class DatabaseCallback : RoomDatabase.Callback() {
-
     override fun onCreate(db: SupportSQLiteDatabase) {
         super.onCreate(db)
         SessionUniquenessGuard.install(db)

@@ -24,7 +24,6 @@ data class RestoreReport(
  * 抛异常会让"预期内的拒绝"和"真的崩了"在调用方看来长得一样。
  */
 sealed interface RestoreOutcome {
-
     data class Restored(val report: RestoreReport) : RestoreOutcome
 
     /**

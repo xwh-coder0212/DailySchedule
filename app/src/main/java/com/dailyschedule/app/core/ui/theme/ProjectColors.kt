@@ -12,7 +12,6 @@ import androidx.compose.ui.graphics.Color
  * 同一个坏数据在不同页面会显示成不同颜色，排查时无从下手。
  */
 object ProjectColors {
-
     /** 解析失败的兜底色。中性灰，在浅色与深色主题下都可见。 */
     val Fallback = Color(0xFF8A8F98)
 
@@ -36,11 +35,12 @@ object ProjectColors {
      * 「更换背景」是两个入口，各存一份色板迟早会出现"编辑页有这个色、
      * 换背景没有"。色板是主题的一部分，本来也不该放在某个页面里。
      */
-    val Palette: List<String> = listOf(
-        "#2FA37B", "#0F6E56", "#3D84D6", "#5A5F7A",
-        "#9A6BD1", "#D9534F", "#E0705A", "#E8A33D",
-        "#C9A227", "#7BA05B", "#4B8B8B", "#8A8F98",
-    )
+    val Palette: List<String> =
+        listOf(
+            "#2FA37B", "#0F6E56", "#3D84D6", "#5A5F7A",
+            "#9A6BD1", "#D9534F", "#E0705A", "#E8A33D",
+            "#C9A227", "#7BA05B", "#4B8B8B", "#8A8F98",
+        )
 
     /**
      * 解析 `#RRGGBB`。失败返回 [Fallback]。
@@ -80,18 +80,18 @@ object ProjectColors {
      * 那样每个页面都要写一遍颜色字面量，而颜色字面量在页面里是被
      * `ThemeHardcodeTest` 明令禁止的（换主题风格时那处不会跟着变）。
      */
-    fun contentOn(hex: String?): Color =
-        if (prefersDarkContentOn(hex)) ContentOnLight else ContentOnDark
+    fun contentOn(hex: String?): Color = if (prefersDarkContentOn(hex)) ContentOnLight else ContentOnDark
 
     /** "#RRGGBB" / "#AARRGGBB" → (r, g, b)。解析失败返回 null。 */
     private fun rgbOf(hex: String?): Triple<Int, Int, Int>? {
         if (hex == null) return null
         val cleaned = hex.removePrefix("#")
-        val rgb = when (cleaned.length) {
-            6 -> cleaned
-            8 -> cleaned.substring(2) // 丢掉 alpha：对比度只看 RGB
-            else -> return null
-        }
+        val rgb =
+            when (cleaned.length) {
+                6 -> cleaned
+                8 -> cleaned.substring(2) // 丢掉 alpha：对比度只看 RGB
+                else -> return null
+            }
         val value = rgb.toLongOrNull(16) ?: return null
         return Triple(
             ((value shr 16) and 0xFF).toInt(),
@@ -100,8 +100,11 @@ object ProjectColors {
         )
     }
 
-    private fun relativeLuminance(r: Int, g: Int, b: Int): Double =
-        0.2126 * channelToLinear(r) + 0.7152 * channelToLinear(g) + 0.0722 * channelToLinear(b)
+    private fun relativeLuminance(
+        r: Int,
+        g: Int,
+        b: Int,
+    ): Double = 0.2126 * channelToLinear(r) + 0.7152 * channelToLinear(g) + 0.0722 * channelToLinear(b)
 
     private fun channelToLinear(channel: Int): Double {
         val c = channel / 255.0

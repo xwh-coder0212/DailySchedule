@@ -15,22 +15,24 @@ import org.junit.Test
  * 理由搞错会让用户按错误的提示去修一个不存在的问题。
  */
 class BackupValidatorTest {
-
     @Test
     fun `结构完整且引用自洽的备份通过`() {
-        val document = BackupFixtures.document(
-            categories = listOf(BackupFixtures.category(1), BackupFixtures.category(2)),
-            projects = listOf(BackupFixtures.project(10, dailyTargetMinutes = 120)),
-            sessions = listOf(
-                session(100, projectId = 10),
-                // 项目被删过：projectId 为 null 是正常的历史数据，不是坏引用
-                session(101, projectId = null),
-            ),
-            expenses = listOf(
-                BackupFixtures.expense(200, categoryId = 1, projectId = 10),
-                BackupFixtures.expense(201, categoryId = 2, projectId = null),
-            ),
-        )
+        val document =
+            BackupFixtures.document(
+                categories = listOf(BackupFixtures.category(1), BackupFixtures.category(2)),
+                projects = listOf(BackupFixtures.project(10, dailyTargetMinutes = 120)),
+                sessions =
+                    listOf(
+                        session(100, projectId = 10),
+                        // 项目被删过：projectId 为 null 是正常的历史数据，不是坏引用
+                        session(101, projectId = null),
+                    ),
+                expenses =
+                    listOf(
+                        BackupFixtures.expense(200, categoryId = 1, projectId = 10),
+                        BackupFixtures.expense(201, categoryId = 2, projectId = null),
+                    ),
+            )
 
         val result = BackupValidator.validate(document)
 
@@ -42,13 +44,15 @@ class BackupValidatorTest {
     fun `活动会话被计数但不算拒绝`() {
         // 活动会话不会被恢复（理由见 BackupValidator 的注释），
         // 但文件本身是合法的 —— 报错会拦住一次本来完全正常的恢复。
-        val document = BackupFixtures.document(
-            sessions = listOf(
-                session(1, projectId = 1),
-                session(2, projectId = 1, status = SessionStatus.RUNNING),
-                session(3, projectId = 1, status = SessionStatus.PAUSED),
-            ),
-        )
+        val document =
+            BackupFixtures.document(
+                sessions =
+                    listOf(
+                        session(1, projectId = 1),
+                        session(2, projectId = 1, status = SessionStatus.RUNNING),
+                        session(3, projectId = 1, status = SessionStatus.PAUSED),
+                    ),
+            )
 
         val result = BackupValidator.validate(document)
 
@@ -57,9 +61,10 @@ class BackupValidatorTest {
 
     @Test
     fun `format 不匹配时拒绝`() {
-        val result = BackupValidator.validate(
-            BackupFixtures.document(format = "some.other.app"),
-        )
+        val result =
+            BackupValidator.validate(
+                BackupFixtures.document(format = "some.other.app"),
+            )
 
         assertThat(rejectionOf(result)).isEqualTo(BackupRejection.NOT_A_BACKUP)
     }
@@ -68,9 +73,10 @@ class BackupValidatorTest {
     fun `结构版本比本版新时拒绝`() {
         // 放过它等于用旧代码去解释新字段：新版本加的非空字段会被当成缺失，
         // 或者更糟 —— 被静默丢掉。
-        val result = BackupValidator.validate(
-            BackupFixtures.document(schemaVersion = BackupCodec.SCHEMA_VERSION + 1),
-        )
+        val result =
+            BackupValidator.validate(
+                BackupFixtures.document(schemaVersion = BackupCodec.SCHEMA_VERSION + 1),
+            )
 
         assertThat(rejectionOf(result)).isEqualTo(BackupRejection.TOO_NEW)
     }
@@ -86,10 +92,11 @@ class BackupValidatorTest {
     fun `声明的条数与实际不符时拒绝 —— 截断的文件`() {
         // 网盘同步到一半、传输中断，都会留下一个"仍是合法 JSON、只是短了一截"的文件。
         // 没有这条校验，用户会以为恢复成功，然后发现三个月的历史只剩一半。
-        val document = BackupFixtures.document(
-            sessions = listOf(session(1, projectId = 1), session(2, projectId = 1)),
-            counts = BackupCounts(projects = 1, categories = 1, sessions = 5, expenses = 1),
-        )
+        val document =
+            BackupFixtures.document(
+                sessions = listOf(session(1, projectId = 1), session(2, projectId = 1)),
+                counts = BackupCounts(projects = 1, categories = 1, sessions = 5, expenses = 1),
+            )
 
         assertThat(rejectionOf(BackupValidator.validate(document)))
             .isEqualTo(BackupRejection.COUNT_MISMATCH)
@@ -99,9 +106,10 @@ class BackupValidatorTest {
     fun `同一张表里 id 重复时拒绝`() {
         // 主键冲突会在事务写到一半时发生。虽然会回滚，但那时候
         // 用户已经盯着进度条等了很久，而问题在动数据库之前就能查出来。
-        val document = BackupFixtures.document(
-            projects = listOf(BackupFixtures.project(7), BackupFixtures.project(7, name = "重名")),
-        )
+        val document =
+            BackupFixtures.document(
+                projects = listOf(BackupFixtures.project(7), BackupFixtures.project(7, name = "重名")),
+            )
 
         assertThat(rejectionOf(BackupValidator.validate(document)))
             .isEqualTo(BackupRejection.DUPLICATE_ID)
@@ -109,10 +117,11 @@ class BackupValidatorTest {
 
     @Test
     fun `会话引用了不存在的项目时拒绝`() {
-        val document = BackupFixtures.document(
-            projects = listOf(BackupFixtures.project(1)),
-            sessions = listOf(session(1, projectId = 999)),
-        )
+        val document =
+            BackupFixtures.document(
+                projects = listOf(BackupFixtures.project(1)),
+                sessions = listOf(session(1, projectId = 999)),
+            )
 
         assertThat(rejectionOf(BackupValidator.validate(document)))
             .isEqualTo(BackupRejection.DANGLING_REFERENCE)
@@ -120,10 +129,11 @@ class BackupValidatorTest {
 
     @Test
     fun `消费引用了不存在的分类时拒绝`() {
-        val document = BackupFixtures.document(
-            categories = listOf(BackupFixtures.category(1)),
-            expenses = listOf(BackupFixtures.expense(1, categoryId = 999)),
-        )
+        val document =
+            BackupFixtures.document(
+                categories = listOf(BackupFixtures.category(1)),
+                expenses = listOf(BackupFixtures.expense(1, categoryId = 999)),
+            )
 
         assertThat(rejectionOf(BackupValidator.validate(document)))
             .isEqualTo(BackupRejection.DANGLING_REFERENCE)
@@ -131,10 +141,11 @@ class BackupValidatorTest {
 
     @Test
     fun `消费引用了不存在的项目时拒绝`() {
-        val document = BackupFixtures.document(
-            projects = listOf(BackupFixtures.project(1)),
-            expenses = listOf(BackupFixtures.expense(1, categoryId = 1, projectId = 999)),
-        )
+        val document =
+            BackupFixtures.document(
+                projects = listOf(BackupFixtures.project(1)),
+                expenses = listOf(BackupFixtures.expense(1, categoryId = 1, projectId = 999)),
+            )
 
         assertThat(rejectionOf(BackupValidator.validate(document)))
             .isEqualTo(BackupRejection.DANGLING_REFERENCE)
@@ -144,9 +155,10 @@ class BackupValidatorTest {
     fun `金额不大于 0 时拒绝`() {
         // 整数分是权威值，0 分或负数没有业务含义。
         // 放过它的后果不是崩溃，而是统计里多一笔永远算不清的账。
-        val document = BackupFixtures.document(
-            expenses = listOf(BackupFixtures.expense(1, categoryId = 1, amountCents = 0L)),
-        )
+        val document =
+            BackupFixtures.document(
+                expenses = listOf(BackupFixtures.expense(1, categoryId = 1, amountCents = 0L)),
+            )
 
         assertThat(rejectionOf(BackupValidator.validate(document)))
             .isEqualTo(BackupRejection.INVALID_VALUES)
@@ -165,9 +177,10 @@ class BackupValidatorTest {
 
     @Test
     fun `项目名称为空时拒绝`() {
-        val document = BackupFixtures.document(
-            projects = listOf(BackupFixtures.project(1, name = "  ")),
-        )
+        val document =
+            BackupFixtures.document(
+                projects = listOf(BackupFixtures.project(1, name = "  ")),
+            )
 
         assertThat(rejectionOf(BackupValidator.validate(document)))
             .isEqualTo(BackupRejection.INVALID_VALUES)
@@ -175,10 +188,11 @@ class BackupValidatorTest {
 
     @Test
     fun `拒绝时会带上可供排查的细节`() {
-        val document = BackupFixtures.document(
-            projects = listOf(BackupFixtures.project(1)),
-            sessions = listOf(session(42, projectId = 999)),
-        )
+        val document =
+            BackupFixtures.document(
+                projects = listOf(BackupFixtures.project(1)),
+                sessions = listOf(session(42, projectId = 999)),
+            )
 
         val rejected = BackupValidator.validate(document) as BackupValidation.Rejected
 
@@ -187,6 +201,5 @@ class BackupValidatorTest {
         assertThat(rejected.detail).contains("999")
     }
 
-    private fun rejectionOf(result: BackupValidation): BackupRejection? =
-        (result as? BackupValidation.Rejected)?.reason
+    private fun rejectionOf(result: BackupValidation): BackupRejection? = (result as? BackupValidation.Rejected)?.reason
 }

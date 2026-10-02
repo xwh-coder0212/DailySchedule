@@ -16,7 +16,6 @@ enum class SessionMode {
     ;
 
     companion object {
-        fun fromRaw(value: String?): SessionMode? =
-            entries.firstOrNull { it.name == value }
+        fun fromRaw(value: String?): SessionMode? = entries.firstOrNull { it.name == value }
     }
 }

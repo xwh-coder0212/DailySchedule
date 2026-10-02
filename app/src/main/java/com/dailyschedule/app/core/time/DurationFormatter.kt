@@ -9,7 +9,6 @@ data class LocalDateParts(val year: Int, val month: Int, val day: Int)
  * 时长与金额一律返回等宽数字友好格式（配合 `tnum` 使用）。
  */
 object DurationFormatter {
-
     private const val MS_PER_MINUTE = 60_000L
     private const val MS_PER_HOUR = 3_600_000L
 
@@ -77,11 +76,15 @@ object DurationFormatter {
     }
 
     /** 一天中的时刻 → "08:30"。 */
-    fun timeOfDay(wallClockMs: Long, zoneId: java.time.ZoneId = java.time.ZoneId.systemDefault()): String {
-        val local = java.time.LocalDateTime.ofInstant(
-            java.time.Instant.ofEpochMilli(wallClockMs),
-            zoneId,
-        )
+    fun timeOfDay(
+        wallClockMs: Long,
+        zoneId: java.time.ZoneId = java.time.ZoneId.systemDefault(),
+    ): String {
+        val local =
+            java.time.LocalDateTime.ofInstant(
+                java.time.Instant.ofEpochMilli(wallClockMs),
+                zoneId,
+            )
         return "%02d:%02d".format(local.hour, local.minute)
     }
 
@@ -110,6 +113,5 @@ object DurationFormatter {
         return LocalDateParts(local.year, local.monthValue, local.dayOfMonth)
     }
 
-    private fun groupThousands(value: Long): String =
-        value.toString().reversed().chunked(3).joinToString(",").reversed()
+    private fun groupThousands(value: Long): String = value.toString().reversed().chunked(3).joinToString(",").reversed()
 }

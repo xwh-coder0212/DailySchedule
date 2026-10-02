@@ -54,9 +54,10 @@ fun AppNavHost() {
 
     // 顶层 Tab 才显示顶部栏与底栏；详情页自带自己的 TopAppBar，
     // 这样返回箭头与标题归各页面自己管，不用在这里拼路由判断。
-    val currentTopLevel = TopLevelDestination.entries.firstOrNull { dest ->
-        backStackEntry?.destination?.hierarchy?.any { it.hasRoute(dest.route::class) } == true
-    }
+    val currentTopLevel =
+        TopLevelDestination.entries.firstOrNull { dest ->
+            backStackEntry?.destination?.hierarchy?.any { it.hasRoute(dest.route::class) } == true
+        }
 
     Scaffold(
         topBar = {
@@ -158,8 +159,9 @@ private fun DailyScheduleBottomBar(
 ) {
     NavigationBar {
         TopLevelDestination.entries.forEach { destination ->
-            val selected = backStackEntry?.destination?.hierarchy
-                ?.any { it.hasRoute(destination.route::class) } == true
+            val selected =
+                backStackEntry?.destination?.hierarchy
+                    ?.any { it.hasRoute(destination.route::class) } == true
 
             NavigationBarItem(
                 selected = selected,
@@ -171,10 +173,11 @@ private fun DailyScheduleBottomBar(
                     )
                 },
                 label = { Text(text = stringResource(destination.labelRes)) },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                ),
+                colors =
+                    NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    ),
             )
         }
     }

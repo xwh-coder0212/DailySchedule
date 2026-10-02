@@ -45,9 +45,11 @@ import androidx.compose.ui.unit.dp
  * `ThemeHardcodeTest` 禁止在 `core/ui/theme` 之外写 `Color(0x…)` 字面量，
  * 而图表恰好是最容易顺手写死颜色的地方。数据色（项目色/分类色）来自用户数据，
  * 主题色来自 `MaterialTheme.colorScheme`，两者都在调用点决定。
+ *
+ * ## 输入类型
+ * [DonutSlice] 是环图的一瓣：`value <= 0` 的瓣会被跳过，不画出一条零宽的线。
  */
 
-/** 环图的一瓣。`value <= 0` 的瓣会被跳过，不画出一条零宽的线。 */
 data class DonutSlice(val value: Long, val color: Color)
 
 /**
@@ -93,10 +95,11 @@ fun DsDonutChart(
                 val sweep = slice.value.toFloat() / total.toFloat() * FULL_CIRCLE
                 // 每瓣尾部收掉一个固定角度当间隙。瓣本身比间隙还窄时收成 0，
                 // 不让 coerce 出负数 —— 负 sweep 会反向画出一段重叠的弧
-                val drawnSweep = when {
-                    visible.size == 1 -> sweep
-                    else -> (sweep - SLICE_GAP_DEGREES).coerceAtLeast(0f)
-                }
+                val drawnSweep =
+                    when {
+                        visible.size == 1 -> sweep
+                        else -> (sweep - SLICE_GAP_DEGREES).coerceAtLeast(0f)
+                    }
                 if (drawnSweep > 0f) {
                     drawArc(
                         color = slice.color,
@@ -116,10 +119,11 @@ fun DsDonutChart(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = centerValue,
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.Medium,
-                        fontFeatureSettings = "tnum",
-                    ),
+                    style =
+                        MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.Medium,
+                            fontFeatureSettings = "tnum",
+                        ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -181,10 +185,11 @@ fun DsLegendGrid(
                         )
                         Text(
                             text = item.valueText,
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontWeight = FontWeight.Medium,
-                                fontFeatureSettings = "tnum",
-                            ),
+                            style =
+                                MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    fontFeatureSettings = "tnum",
+                                ),
                             maxLines = 1,
                         )
                     }
@@ -232,9 +237,10 @@ fun DsBarChart(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(chartHeight),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(chartHeight),
                     contentAlignment = Alignment.BottomCenter,
                 ) {
                     if (bar.value <= 0L) {
@@ -298,27 +304,30 @@ fun DsLineChart(
             val stepX = if (points.size == 1) 0f else size.width / (points.size - 1).toFloat()
             val usableHeight = size.height - STROKE_PX
 
-            val offsets = points.mapIndexed { index, value ->
-                val x = stepX * index
-                val ratio = value.toFloat() / maxValue.toFloat()
-                val y = usableHeight - (usableHeight * ratio.coerceIn(0f, 1f)) + STROKE_PX / 2f
-                Offset(x, y)
-            }
-
-            val linePath = Path().apply {
-                offsets.forEachIndexed { index, point ->
-                    if (index == 0) moveTo(point.x, point.y) else lineTo(point.x, point.y)
+            val offsets =
+                points.mapIndexed { index, value ->
+                    val x = stepX * index
+                    val ratio = value.toFloat() / maxValue.toFloat()
+                    val y = usableHeight - (usableHeight * ratio.coerceIn(0f, 1f)) + STROKE_PX / 2f
+                    Offset(x, y)
                 }
-            }
+
+            val linePath =
+                Path().apply {
+                    offsets.forEachIndexed { index, point ->
+                        if (index == 0) moveTo(point.x, point.y) else lineTo(point.x, point.y)
+                    }
+                }
 
             // 面积：折线 + 回到左下/右下。用闭合路径而不是两条线，
             // 否则渐变要自己裁，边缘会出现一条没填满的缝
-            val areaPath = Path().apply {
-                addPath(linePath)
-                lineTo(offsets.last().x, size.height)
-                lineTo(offsets.first().x, size.height)
-                close()
-            }
+            val areaPath =
+                Path().apply {
+                    addPath(linePath)
+                    lineTo(offsets.last().x, size.height)
+                    lineTo(offsets.first().x, size.height)
+                    close()
+                }
             drawPath(
                 path = areaPath,
                 brush = Brush.verticalGradient(listOf(fillColor, Color.Transparent)),
@@ -334,9 +343,10 @@ fun DsLineChart(
         }
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 6.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 6.dp),
         ) {
             xLabels.forEach { label ->
                 Text(

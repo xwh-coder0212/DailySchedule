@@ -55,7 +55,10 @@ fun ProjectReorderSheet(
     // 等回流的话连点两次会读到同一个旧列表，第二次点击就被吞掉。
     var order by remember(orderedIds) { mutableStateOf(orderedIds) }
 
-    fun move(from: Int, to: Int) {
+    fun move(
+        from: Int,
+        to: Int,
+    ) {
         if (from !in order.indices || to !in order.indices) return
         val next = order.toMutableList().apply { add(to, removeAt(from)) }
         order = next
@@ -64,9 +67,10 @@ fun ProjectReorderSheet(
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
@@ -91,9 +95,10 @@ fun ProjectReorderSheet(
             } else {
                 order.forEachIndexed { index, id ->
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(

@@ -16,3 +16,16 @@ trim_trailing_whitespace = false
 
 [*.{xml,html}]
 indent_size = 2
+
+# ── ktlint ──
+# ktlint 读本文件来决定规则集，所以这里的每一行都会改变门禁的判定基准。
+#
+# Compose 的函数名必须是 PascalCase（`ProjectsScreen`、`DonutSliceRow`……），
+# 这是 Compose 编译器自己的约定：一个返回 Unit 的 @Composable 若以小写字母开头，
+# 编译器会直接报错。而 ktlint 的 function-naming 只看名字本身，不认识 @Composable，
+# 于是把项目里每一个 Composable 都报成"应以小写字母开头"——共 65 处全是误报。
+#
+# 配置里点名 `Composable` 一个注解，而不是整个关掉 function-naming：
+# 关掉等于连真正的命名问题一起放过。这样普通函数仍然照查。
+[*.{kt,kts}]
+ktlint_function_naming_ignore_when_annotated_with = Composable

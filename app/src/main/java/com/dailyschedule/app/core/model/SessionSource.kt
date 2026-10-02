@@ -19,8 +19,7 @@ enum class SessionSource {
     ;
 
     companion object {
-        fun fromRaw(value: String?): SessionSource? =
-            entries.firstOrNull { it.name == value }
+        fun fromRaw(value: String?): SessionSource? = entries.firstOrNull { it.name == value }
 
         /** 旧数据没有这一列，迁移时一律按 TIMER 处理 —— 那时候还没有补录功能 */
         val DEFAULT: SessionSource = TIMER

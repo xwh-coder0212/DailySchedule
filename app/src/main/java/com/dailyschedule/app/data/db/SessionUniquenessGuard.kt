@@ -37,7 +37,6 @@ import com.dailyschedule.app.core.log.AppLogger
  * 触发器直接由 `status` 推导，语义没有任何转移。
  */
 object SessionUniquenessGuard {
-
     /** 触发器中断时抛给上层的消息。测试直接断言它，确保是我们的守卫拦下的，而不是别的约束 */
     const val ABORT_MESSAGE = "已有正在进行的会话，数据库层拒绝写入第二个"
 
@@ -69,7 +68,7 @@ object SessionUniquenessGuard {
                     SELECT 1 FROM focus_sessions WHERE status IN ($ACTIVE_STATUSES)
                   );
                 END
-                """.trimIndent()
+                """.trimIndent(),
             )
 
             db.execSQL(
@@ -84,7 +83,7 @@ object SessionUniquenessGuard {
                     WHERE status IN ($ACTIVE_STATUSES) AND id != NEW.id
                   );
                 END
-                """.trimIndent()
+                """.trimIndent(),
             )
         }.onFailure { t ->
             // 守卫没装上 = 唯一性只剩应用层保证。不能静默：

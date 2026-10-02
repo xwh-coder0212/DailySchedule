@@ -4,7 +4,6 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
 class DurationFormatterTest {
-
     private val minute = 60_000L
     private val hour = 3_600_000L
 

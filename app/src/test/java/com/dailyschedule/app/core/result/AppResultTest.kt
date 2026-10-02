@@ -4,7 +4,6 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
 class AppResultTest {
-
     @Test
     fun `appCatching 成功时返回 Success`() {
         val result = appCatching { 42 }

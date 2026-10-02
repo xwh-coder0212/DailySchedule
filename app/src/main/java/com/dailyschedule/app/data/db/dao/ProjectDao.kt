@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ProjectDao {
-
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(entity: ProjectEntity): Long
 

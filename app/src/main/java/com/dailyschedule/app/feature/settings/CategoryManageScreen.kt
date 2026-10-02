@@ -46,11 +46,12 @@ import com.dailyschedule.app.R
 import com.dailyschedule.app.domain.model.Category
 
 /** 新增分类时可选的色板，与项目页保持一致的 12 色。 */
-private val CATEGORY_COLORS = listOf(
-    "#2FA37B", "#0F6E56", "#3D84D6", "#5A5F7A",
-    "#9A6BD1", "#D9534F", "#E0705A", "#E8A33D",
-    "#C9A227", "#7BA05B", "#4B8B8B", "#8A8F98",
-)
+private val CATEGORY_COLORS =
+    listOf(
+        "#2FA37B", "#0F6E56", "#3D84D6", "#5A5F7A",
+        "#9A6BD1", "#D9534F", "#E0705A", "#E8A33D",
+        "#C9A227", "#7BA05B", "#4B8B8B", "#8A8F98",
+    )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,89 +83,93 @@ fun CategoryManageScreen(
         },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-        // 一次性提示
-        message?.let { (resId, count) ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                ),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+            // 一次性提示
+            message?.let { (resId, count) ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                        ),
                 ) {
-                    Text(
-                        text = stringResource(resId, count),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.weight(1f),
-                    )
-                    TextButton(onClick = viewModel::consumeMessage) {
-                        Text(stringResource(R.string.common_confirm))
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(resId, count),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.weight(1f),
+                        )
+                        TextButton(onClick = viewModel::consumeMessage) {
+                            Text(stringResource(R.string.common_confirm))
+                        }
                     }
                 }
             }
-        }
 
-        // 新增
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
-                value = newName,
-                onValueChange = { if (it.length <= 10) newName = it },
-                label = { Text(stringResource(R.string.category_add)) },
-                singleLine = true,
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
+            // 新增
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = newName,
+                    onValueChange = { if (it.length <= 10) newName = it },
+                    label = { Text(stringResource(R.string.category_add)) },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                )
+                Button(
+                    onClick = {
+                        if (newName.isNotBlank()) {
+                            viewModel.addCategory(newName.trim(), newColor, "more_horiz")
+                            newName = ""
+                        }
+                    },
+                    enabled = newName.isNotBlank(),
+                    modifier = Modifier.padding(start = 8.dp),
+                ) {
+                    Text(stringResource(R.string.common_save))
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                CATEGORY_COLORS.forEach { hex ->
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(if (hex == newColor) 30.dp else 24.dp)
+                                .clip(CircleShape)
+                                .background(Color(android.graphics.Color.parseColor(hex)))
+                                .clickable { newColor = hex },
+                    )
+                }
+            }
+
+            Text(
+                text = stringResource(R.string.category_preset_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Button(
-                onClick = {
-                    if (newName.isNotBlank()) {
-                        viewModel.addCategory(newName.trim(), newColor, "more_horiz")
-                        newName = ""
-                    }
-                },
-                enabled = newName.isNotBlank(),
-                modifier = Modifier.padding(start = 8.dp),
-            ) {
-                Text(stringResource(R.string.common_save))
-            }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            CATEGORY_COLORS.forEach { hex ->
-                Box(
-                    modifier = Modifier
-                        .size(if (hex == newColor) 30.dp else 24.dp)
-                        .clip(CircleShape)
-                        .background(Color(android.graphics.Color.parseColor(hex)))
-                        .clickable { newColor = hex },
-                )
-            }
-        }
 
-        Text(
-            text = stringResource(R.string.category_preset_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(state.categories, key = { it.id }) { category ->
-                CategoryRow(
-                    category = category,
-                    onToggle = { viewModel.toggleCategory(category) },
-                    onDelete = { viewModel.deleteCategory(category) },
-                )
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(state.categories, key = { it.id }) { category ->
+                    CategoryRow(
+                        category = category,
+                        onToggle = { viewModel.toggleCategory(category) },
+                        onDelete = { viewModel.deleteCategory(category) },
+                    )
+                }
             }
-        }
         }
     }
 }
@@ -178,43 +183,49 @@ private fun CategoryRow(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (category.isEnabled) {
-                MaterialTheme.colorScheme.surfaceContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerLow
-            },
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    if (category.isEnabled) {
+                        MaterialTheme.colorScheme.surfaceContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerLow
+                    },
+            ),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(
-                        runCatching {
-                            Color(android.graphics.Color.parseColor(category.colorHex))
-                        }.getOrDefault(MaterialTheme.colorScheme.primary)
-                    ),
+                modifier =
+                    Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(
+                            runCatching {
+                                Color(android.graphics.Color.parseColor(category.colorHex))
+                            }.getOrDefault(MaterialTheme.colorScheme.primary),
+                        ),
             )
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 12.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .padding(horizontal = 12.dp),
             ) {
                 Text(
                     text = category.name,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = if (category.isEnabled) {
-                        MaterialTheme.colorScheme.onSurface
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
+                    color =
+                        if (category.isEnabled) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                 )
                 if (category.isPreset) {
                     Text(
@@ -227,8 +238,8 @@ private fun CategoryRow(
             TextButton(onClick = onToggle) {
                 Text(
                     stringResource(
-                        if (category.isEnabled) R.string.category_disable else R.string.category_enable
-                    )
+                        if (category.isEnabled) R.string.category_disable else R.string.category_enable,
+                    ),
                 )
             }
             if (!category.isPreset) {

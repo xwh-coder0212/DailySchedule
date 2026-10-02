@@ -7,11 +7,11 @@ import com.dailyschedule.app.core.model.ThemePack
 import com.dailyschedule.app.domain.model.AppPreferences
 import com.dailyschedule.app.domain.repository.PreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /**
  * 只管主题，给 MainActivity 用。
@@ -21,22 +21,24 @@ import kotlinx.coroutines.launch
  * 只依赖 PreferencesRepository，别把 CategoryRepository 也拖进来。
  */
 @HiltViewModel
-class ThemeViewModel @Inject constructor(
-    private val preferencesRepository: PreferencesRepository,
-) : ViewModel() {
+class ThemeViewModel
+    @Inject
+    constructor(
+        private val preferencesRepository: PreferencesRepository,
+    ) : ViewModel() {
+        val preferences: StateFlow<AppPreferences> =
+            preferencesRepository.observe()
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), AppPreferences())
 
-    val preferences: StateFlow<AppPreferences> = preferencesRepository.observe()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), AppPreferences())
+        fun setThemeMode(mode: ThemeMode) {
+            viewModelScope.launch { preferencesRepository.setThemeMode(mode) }
+        }
 
-    fun setThemeMode(mode: ThemeMode) {
-        viewModelScope.launch { preferencesRepository.setThemeMode(mode) }
+        fun setThemePack(pack: ThemePack) {
+            viewModelScope.launch { preferencesRepository.setThemePack(pack) }
+        }
+
+        fun setDynamicColor(enabled: Boolean) {
+            viewModelScope.launch { preferencesRepository.setDynamicColor(enabled) }
+        }
     }
-
-    fun setThemePack(pack: ThemePack) {
-        viewModelScope.launch { preferencesRepository.setThemePack(pack) }
-    }
-
-    fun setDynamicColor(enabled: Boolean) {
-        viewModelScope.launch { preferencesRepository.setDynamicColor(enabled) }
-    }
-}

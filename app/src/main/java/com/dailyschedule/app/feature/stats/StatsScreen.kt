@@ -60,10 +60,11 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
     val weekdayLabels = stringArrayResource(R.array.weekday_short).toList()
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         SegmentSelector(
@@ -87,7 +88,10 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
 // ── 专注分段 ──
 
 @Composable
-private fun FocusSection(state: StatsUiState, weekdayLabels: List<String>) {
+private fun FocusSection(
+    state: StatsUiState,
+    weekdayLabels: List<String>,
+) {
     SectionCard(title = stringResource(R.string.stats_time_section)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -111,13 +115,14 @@ private fun FocusSection(state: StatsUiState, weekdayLabels: List<String>) {
     if (state.sessionCount <= 0) {
         EmptyHint()
     } else {
-        val rows = state.byProject
-            .filter { it.totalDurationMs > 0L }
-            .map { ShareRow(it.projectName, ProjectColors.parse(it.colorHex), it.totalDurationMs) }
-            .withUnassigned(
-                total = state.studyMs,
-                label = stringResource(R.string.stats_share_other),
-            )
+        val rows =
+            state.byProject
+                .filter { it.totalDurationMs > 0L }
+                .map { ShareRow(it.projectName, ProjectColors.parse(it.colorHex), it.totalDurationMs) }
+                .withUnassigned(
+                    total = state.studyMs,
+                    label = stringResource(R.string.stats_share_other),
+                )
         if (rows.isNotEmpty()) {
             ShareCard(
                 title = stringResource(R.string.stats_focus_share),
@@ -140,7 +145,10 @@ private fun FocusSection(state: StatsUiState, weekdayLabels: List<String>) {
 // ── 消费分段 ──
 
 @Composable
-private fun ExpenseSection(state: StatsUiState, weekdayLabels: List<String>) {
+private fun ExpenseSection(
+    state: StatsUiState,
+    weekdayLabels: List<String>,
+) {
     SectionCard(title = stringResource(R.string.stats_money_section)) {
         BigStatCell(
             label = stringResource(R.string.stats_expense_total),
@@ -151,13 +159,14 @@ private fun ExpenseSection(state: StatsUiState, weekdayLabels: List<String>) {
     if (state.expenseCents <= 0L) {
         EmptyHint()
     } else {
-        val rows = state.byCategory
-            .filter { it.totalCents > 0L }
-            .map { ShareRow(it.categoryName, ProjectColors.parse(it.colorHex), it.totalCents) }
-            .withUnassigned(
-                total = state.expenseCents,
-                label = stringResource(R.string.stats_share_other),
-            )
+        val rows =
+            state.byCategory
+                .filter { it.totalCents > 0L }
+                .map { ShareRow(it.categoryName, ProjectColors.parse(it.colorHex), it.totalCents) }
+                .withUnassigned(
+                    total = state.expenseCents,
+                    label = stringResource(R.string.stats_share_other),
+                )
         if (rows.isNotEmpty()) {
             ShareCard(
                 title = stringResource(R.string.stats_category_share),
@@ -181,10 +190,11 @@ private fun ExpenseSection(state: StatsUiState, weekdayLabels: List<String>) {
             SectionCard(title = stringResource(R.string.stats_expense_trend)) {
                 Column {
                     Text(
-                        text = when (state.trendUnit) {
-                            TrendUnit.DAY -> stringResource(R.string.stats_trend_by_day)
-                            TrendUnit.MONTH -> stringResource(R.string.stats_trend_by_month)
-                        },
+                        text =
+                            when (state.trendUnit) {
+                                TrendUnit.DAY -> stringResource(R.string.stats_trend_by_day)
+                                TrendUnit.MONTH -> stringResource(R.string.stats_trend_by_month)
+                            },
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -229,14 +239,15 @@ private fun ShareCard(
     // mapIndexed 是 inline 函数，它的 lambda 会被内联进本 Composable，
     // 所以这里可以直接用 stringResource；比 LocalContext.current.getString 严格更优：
     // 前者跟随 Configuration 变化重新取值，后者可能拿到变更前的旧资源
-    val legendItems = rows.mapIndexed { index, row ->
-        LegendItem(
-            label = row.label,
-            // percentShares 与 rows 等长，下标必定安全
-            valueText = stringResource(R.string.stats_percent, shares[index]),
-            color = row.color,
-        )
-    }
+    val legendItems =
+        rows.mapIndexed { index, row ->
+            LegendItem(
+                label = row.label,
+                // percentShares 与 rows 等长，下标必定安全
+                valueText = stringResource(R.string.stats_percent, shares[index]),
+                color = row.color,
+            )
+        }
 
     SectionCard(title = title) {
         Row(
@@ -262,9 +273,10 @@ private fun ShareCard(
 @Composable
 private fun EmptyHint() {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 32.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 32.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -286,40 +298,44 @@ private fun SegmentSelector(
     selected: StatsSegment,
     onSelected: (StatsSegment) -> Unit,
 ) {
-    val items = listOf(
-        StatsSegment.FOCUS to R.string.stats_segment_focus,
-        StatsSegment.EXPENSE to R.string.stats_segment_expense,
-    )
+    val items =
+        listOf(
+            StatsSegment.FOCUS to R.string.stats_segment_focus,
+            StatsSegment.EXPENSE to R.string.stats_segment_expense,
+        )
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-            .padding(4.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         items.forEach { (segment, labelRes) ->
             val isSelected = segment == selected
             Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(11.dp))
-                    .background(
-                        if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent,
-                    )
-                    .clickable { onSelected(segment) }
-                    .padding(vertical = 10.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(11.dp))
+                        .background(
+                            if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent,
+                        )
+                        .clickable { onSelected(segment) }
+                        .padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = stringResource(labelRes),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (isSelected) {
-                        MaterialTheme.colorScheme.onSurface
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
+                    color =
+                        if (isSelected) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                 )
             }
         }
@@ -331,42 +347,46 @@ private fun PeriodSelector(
     selected: StatsPeriod,
     onSelected: (StatsPeriod) -> Unit,
 ) {
-    val items = listOf(
-        StatsPeriod.TODAY to R.string.stats_period_today,
-        StatsPeriod.WEEK to R.string.stats_period_week,
-        StatsPeriod.MONTH to R.string.stats_period_month,
-        StatsPeriod.YEAR to R.string.stats_period_year,
-    )
+    val items =
+        listOf(
+            StatsPeriod.TODAY to R.string.stats_period_today,
+            StatsPeriod.WEEK to R.string.stats_period_week,
+            StatsPeriod.MONTH to R.string.stats_period_month,
+            StatsPeriod.YEAR to R.string.stats_period_year,
+        )
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .padding(4.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         items.forEach { (period, labelRes) ->
             val isSelected = period == selected
             Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(9.dp))
-                    .background(
-                        if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                    )
-                    .clickable { onSelected(period) }
-                    .padding(vertical = 8.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(
+                            if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        )
+                        .clickable { onSelected(period) }
+                        .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = stringResource(labelRes),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
-                    color = if (isSelected) {
-                        MaterialTheme.colorScheme.onPrimary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
+                    color =
+                        if (isSelected) {
+                            MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                 )
             }
         }
@@ -381,9 +401,10 @@ private fun SectionCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            ),
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(
@@ -397,14 +418,18 @@ private fun SectionCard(
 }
 
 @Composable
-private fun BigStatCell(label: String, value: String) {
+private fun BigStatCell(
+    label: String,
+    value: String,
+) {
     Column {
         Text(
             text = value,
-            style = MaterialTheme.typography.headlineSmall.copy(
-                fontWeight = FontWeight.Medium,
-                fontFeatureSettings = "tnum",
-            ),
+            style =
+                MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.Medium,
+                    fontFeatureSettings = "tnum",
+                ),
         )
         Text(
             text = label,
@@ -424,7 +449,10 @@ private fun BigStatCell(label: String, value: String) {
  *
  * 差额为 0 时不加这一行：一个恒为 0 的「其他」比不显示更让人困惑。
  */
-private fun List<ShareRow>.withUnassigned(total: Long, label: String): List<ShareRow> {
+private fun List<ShareRow>.withUnassigned(
+    total: Long,
+    label: String,
+): List<ShareRow> {
     val accounted = sumOf { it.value }
     val missing = total - accounted
     return if (missing > 0L) this + ShareRow(label, ProjectColors.Fallback, missing) else this
@@ -437,13 +465,12 @@ private fun List<ShareRow>.withUnassigned(total: Long, label: String): List<Shar
  * 而聚合层保证 key 恒为 1..7（周一到周日），两边口径一致。
  * 越界时留空串而不是抛异常 —— 标签错一格是显示问题，崩溃是可用性问题。
  */
-private fun List<StatBucket>.toBars(
-    weekdayLabels: List<String>,
-): List<BarDatum> = map { bucket ->
-    BarDatum(
-        label = weekdayLabels.getOrElse(bucket.key - 1) { "" },
-        value = bucket.value,
-    )
-}
+private fun List<StatBucket>.toBars(weekdayLabels: List<String>): List<BarDatum> =
+    map { bucket ->
+        BarDatum(
+            label = weekdayLabels.getOrElse(bucket.key - 1) { "" },
+            value = bucket.value,
+        )
+    }
 
 private const val AREA_ALPHA = 0.22f

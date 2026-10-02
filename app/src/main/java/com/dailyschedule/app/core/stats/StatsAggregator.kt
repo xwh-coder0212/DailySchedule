@@ -26,7 +26,6 @@ import java.time.LocalDate
  * 而这种错不会崩溃，只会让人怀疑数据。
  */
 object StatsAggregator {
-
     /** ISO 星期号范围：1=周一 … 7=周日。展示顺序固定周一起，不跟 weekStartDay 走。 */
     val WEEKDAYS: IntRange = 1..7
 
@@ -108,8 +107,10 @@ object StatsAggregator {
      * 均值。次数为 0 时返回 0 而不是抛异常 ——
      * 「这个周期还没专注过」是正常状态，界面要显示 0，不是崩掉。
      */
-    fun average(totalMs: Long, count: Int): Long =
-        if (count <= 0) 0L else totalMs / count
+    fun average(
+        totalMs: Long,
+        count: Int,
+    ): Long = if (count <= 0) 0L else totalMs / count
 
     /**
      * 把一长串刻度标签抽稀到 [maxLabels] 个左右，抽掉的位置留空串。
@@ -121,7 +122,10 @@ object StatsAggregator {
      * 首尾一定保留 —— 横轴的两端是"这段数据从哪到哪"，比中间的刻度更重要。
      * 也正因为要保住末位，实际条数可能比 [maxLabels] 多一条。
      */
-    fun sparseLabels(labels: List<String>, maxLabels: Int): List<String> {
+    fun sparseLabels(
+        labels: List<String>,
+        maxLabels: Int,
+    ): List<String> {
         require(maxLabels > 0) { "刻度上限必须为正，实际为 $maxLabels" }
         if (labels.size <= maxLabels) return labels
         val step = (labels.size + maxLabels - 1) / maxLabels

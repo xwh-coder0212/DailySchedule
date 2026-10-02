@@ -13,13 +13,13 @@ import com.dailyschedule.app.domain.repository.ExpenseRepository
 import com.dailyschedule.app.domain.usecase.expense.AddExpenseUseCase
 import com.dailyschedule.app.domain.usecase.expense.UpdateExpenseUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /**
  * 记账表单状态。
@@ -58,160 +58,173 @@ data class ExpenseEditUiState(
  *   因为编辑常常要同时改金额和分类，点一下分类就写库会把中间态也写进去。
  */
 @HiltViewModel
-class ExpenseEditViewModel @Inject constructor(
-    private val categoryRepository: CategoryRepository,
-    private val expenseRepository: ExpenseRepository,
-    private val addExpense: AddExpenseUseCase,
-    private val updateExpense: UpdateExpenseUseCase,
-    private val clock: Clock,
-) : ViewModel() {
+class ExpenseEditViewModel
+    @Inject
+    constructor(
+        private val categoryRepository: CategoryRepository,
+        private val expenseRepository: ExpenseRepository,
+        private val addExpense: AddExpenseUseCase,
+        private val updateExpense: UpdateExpenseUseCase,
+        private val clock: Clock,
+    ) : ViewModel() {
+        val categories: StateFlow<List<Category>> =
+            categoryRepository.observeEnabled()
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), emptyList())
 
-    val categories: StateFlow<List<Category>> = categoryRepository.observeEnabled()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), emptyList())
+        private val _state = MutableStateFlow(ExpenseEditUiState())
+        val state: StateFlow<ExpenseEditUiState> = _state.asStateFlow()
 
-    private val _state = MutableStateFlow(ExpenseEditUiState())
-    val state: StateFlow<ExpenseEditUiState> = _state.asStateFlow()
+        /** 编辑模式下被改的那一笔。改的是它的副本，`id` / `createdAt` 原样带回去 */
+        private var original: Expense? = null
 
-    /** 编辑模式下被改的那一笔。改的是它的副本，`id` / `createdAt` 原样带回去 */
-    private var original: Expense? = null
-
-    /** 进入编辑模式时把既有一笔读进表单。`id` 为 null 时什么都不做（新增模式） */
-    fun load(expenseId: Long?) {
-        if (expenseId == null) {
-            original = null
-            _state.value = ExpenseEditUiState()
-            return
-        }
-        _state.value = _state.value.copy(isLoading = true)
-        viewModelScope.launch {
-            val existing = expenseRepository.getById(expenseId)
-            if (existing == null) {
+        /** 进入编辑模式时把既有一笔读进表单。`id` 为 null 时什么都不做（新增模式） */
+        fun load(expenseId: Long?) {
+            if (expenseId == null) {
                 original = null
-                _state.value = ExpenseEditUiState(isLoading = false, notFound = true)
-                return@launch
+                _state.value = ExpenseEditUiState()
+                return
             }
-            original = existing
-            _state.value = ExpenseEditUiState(
-                amountText = AmountInput.toEditableText(existing.amountCents),
-                selectedCategoryId = existing.categoryId,
-                note = existing.note.orEmpty(),
-                isEditing = true,
-                isLoading = false,
-            )
-        }
-    }
-
-    fun onKey(key: String) {
-        val current = _state.value.amountText
-        when {
-            key == "." -> {
-                // 不允许多个小数点，也不允许以小数点开头
-                if (current.contains(".")) return
-                _state.value = _state.value.copy(
-                    amountText = if (current.isEmpty()) "0." else "$current.",
-                    errorMessage = null,
-                )
-            }
-            key == "del" -> {
-                _state.value = _state.value.copy(
-                    amountText = current.dropLast(1),
-                    errorMessage = null,
-                )
-            }
-            else -> {
-                // 最多两位小数，总长不超过 9
-                val dotIndex = current.indexOf('.')
-                if (dotIndex >= 0 && current.length - dotIndex - 1 >= 2) return
-                if (current.length >= 9) return
-                // 避免 "0" 开头后直接跟数字（"05"）
-                if (current == "0") {
-                    _state.value = _state.value.copy(amountText = key, errorMessage = null)
-                    return
+            _state.value = _state.value.copy(isLoading = true)
+            viewModelScope.launch {
+                val existing = expenseRepository.getById(expenseId)
+                if (existing == null) {
+                    original = null
+                    _state.value = ExpenseEditUiState(isLoading = false, notFound = true)
+                    return@launch
                 }
-                _state.value = _state.value.copy(
-                    amountText = current + key,
-                    errorMessage = null,
-                )
+                original = existing
+                _state.value =
+                    ExpenseEditUiState(
+                        amountText = AmountInput.toEditableText(existing.amountCents),
+                        selectedCategoryId = existing.categoryId,
+                        note = existing.note.orEmpty(),
+                        isEditing = true,
+                        isLoading = false,
+                    )
             }
         }
-    }
 
-    fun onNoteChange(note: String) {
-        if (note.length <= MAX_NOTE_LENGTH) _state.value = _state.value.copy(note = note)
-    }
-
-    /**
-     * 选中一个分类。
-     *
-     * 新增模式：直接落库。编辑模式：只改选中态，等「保存修改」。
-     */
-    fun onCategorySelected(categoryId: Long) {
-        if (_state.value.isEditing) {
-            _state.value = _state.value.copy(selectedCategoryId = categoryId, errorMessage = null)
-            return
-        }
-        val amountCents = AmountInput.parseCents(_state.value.amountText)
-        if (amountCents == null || amountCents <= 0L) {
-            _state.value = _state.value.copy(errorMessage = ERROR_AMOUNT)
-            return
-        }
-        viewModelScope.launch {
-            val result = addExpense(
-                amountCents = amountCents,
-                categoryId = categoryId,
-                note = _state.value.note.takeIf { it.isNotBlank() },
-                occurredAt = clock.wallClockMillis(),
-            )
-            _state.value = when (result) {
-                is AppResult.Success -> ExpenseEditUiState(
-                    savedTick = _state.value.savedTick + 1,
-                )
-                is AppResult.Failure -> _state.value.copy(
-                    errorMessage = result.error.toErrorKey(),
-                )
+        fun onKey(key: String) {
+            val current = _state.value.amountText
+            when {
+                key == "." -> {
+                    // 不允许多个小数点，也不允许以小数点开头
+                    if (current.contains(".")) return
+                    _state.value =
+                        _state.value.copy(
+                            amountText = if (current.isEmpty()) "0." else "$current.",
+                            errorMessage = null,
+                        )
+                }
+                key == "del" -> {
+                    _state.value =
+                        _state.value.copy(
+                            amountText = current.dropLast(1),
+                            errorMessage = null,
+                        )
+                }
+                else -> {
+                    // 最多两位小数，总长不超过 9
+                    val dotIndex = current.indexOf('.')
+                    if (dotIndex >= 0 && current.length - dotIndex - 1 >= 2) return
+                    if (current.length >= 9) return
+                    // 避免 "0" 开头后直接跟数字（"05"）
+                    if (current == "0") {
+                        _state.value = _state.value.copy(amountText = key, errorMessage = null)
+                        return
+                    }
+                    _state.value =
+                        _state.value.copy(
+                            amountText = current + key,
+                            errorMessage = null,
+                        )
+                }
             }
         }
-    }
 
-    /** 编辑模式下的「保存修改」 */
-    fun saveEdits() {
-        val current = original ?: return
-        val amountCents = AmountInput.parseCents(_state.value.amountText)
-        if (amountCents == null || amountCents <= 0L) {
-            _state.value = _state.value.copy(errorMessage = ERROR_AMOUNT)
-            return
+        fun onNoteChange(note: String) {
+            if (note.length <= MAX_NOTE_LENGTH) _state.value = _state.value.copy(note = note)
         }
-        val categoryId = _state.value.selectedCategoryId
-        if (categoryId == null) {
-            _state.value = _state.value.copy(errorMessage = ERROR_CATEGORY)
-            return
-        }
-        viewModelScope.launch {
-            val result = updateExpense(
-                current.copy(
-                    amountCents = amountCents,
-                    categoryId = categoryId,
-                    note = _state.value.note.takeIf { it.isNotBlank() },
-                ),
-            )
-            _state.value = when (result) {
-                is AppResult.Success -> _state.value.copy(finished = true, errorMessage = null)
-                is AppResult.Failure -> _state.value.copy(errorMessage = result.error.toErrorKey())
+
+        /**
+         * 选中一个分类。
+         *
+         * 新增模式：直接落库。编辑模式：只改选中态，等「保存修改」。
+         */
+        fun onCategorySelected(categoryId: Long) {
+            if (_state.value.isEditing) {
+                _state.value = _state.value.copy(selectedCategoryId = categoryId, errorMessage = null)
+                return
+            }
+            val amountCents = AmountInput.parseCents(_state.value.amountText)
+            if (amountCents == null || amountCents <= 0L) {
+                _state.value = _state.value.copy(errorMessage = ERROR_AMOUNT)
+                return
+            }
+            viewModelScope.launch {
+                val result =
+                    addExpense(
+                        amountCents = amountCents,
+                        categoryId = categoryId,
+                        note = _state.value.note.takeIf { it.isNotBlank() },
+                        occurredAt = clock.wallClockMillis(),
+                    )
+                _state.value =
+                    when (result) {
+                        is AppResult.Success ->
+                            ExpenseEditUiState(
+                                savedTick = _state.value.savedTick + 1,
+                            )
+                        is AppResult.Failure ->
+                            _state.value.copy(
+                                errorMessage = result.error.toErrorKey(),
+                            )
+                    }
             }
         }
-    }
 
-    private fun AppError.toErrorKey(): String = when (this) {
-        is AppError.Validation -> ERROR_AMOUNT
-        is AppError.NotFound -> ERROR_CATEGORY
-        else -> ERROR_UNKNOWN
-    }
+        /** 编辑模式下的「保存修改」 */
+        fun saveEdits() {
+            val current = original ?: return
+            val amountCents = AmountInput.parseCents(_state.value.amountText)
+            if (amountCents == null || amountCents <= 0L) {
+                _state.value = _state.value.copy(errorMessage = ERROR_AMOUNT)
+                return
+            }
+            val categoryId = _state.value.selectedCategoryId
+            if (categoryId == null) {
+                _state.value = _state.value.copy(errorMessage = ERROR_CATEGORY)
+                return
+            }
+            viewModelScope.launch {
+                val result =
+                    updateExpense(
+                        current.copy(
+                            amountCents = amountCents,
+                            categoryId = categoryId,
+                            note = _state.value.note.takeIf { it.isNotBlank() },
+                        ),
+                    )
+                _state.value =
+                    when (result) {
+                        is AppResult.Success -> _state.value.copy(finished = true, errorMessage = null)
+                        is AppResult.Failure -> _state.value.copy(errorMessage = result.error.toErrorKey())
+                    }
+            }
+        }
 
-    companion object {
-        const val ERROR_AMOUNT = "amount"
-        const val ERROR_CATEGORY = "category"
-        const val ERROR_UNKNOWN = "unknown"
+        private fun AppError.toErrorKey(): String =
+            when (this) {
+                is AppError.Validation -> ERROR_AMOUNT
+                is AppError.NotFound -> ERROR_CATEGORY
+                else -> ERROR_UNKNOWN
+            }
 
-        private const val MAX_NOTE_LENGTH = 50
+        companion object {
+            const val ERROR_AMOUNT = "amount"
+            const val ERROR_CATEGORY = "category"
+            const val ERROR_UNKNOWN = "unknown"
+
+            private const val MAX_NOTE_LENGTH = 50
+        }
     }
-}

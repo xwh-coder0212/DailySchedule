@@ -13,7 +13,6 @@ import com.dailyschedule.app.domain.repository.ProjectRepository
 import com.dailyschedule.app.domain.repository.SessionRepository
 import com.dailyschedule.app.timer.TimerController
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +20,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /** 时间轴上的一条：一个已完成会话 + 它的项目名（项目可能已被删除，故可空） */
 data class TimelineItem(
@@ -45,76 +45,90 @@ data class HomeUiState(
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
-class HomeViewModel @Inject constructor(
-    private val sessionRepository: SessionRepository,
-    private val expenseRepository: ExpenseRepository,
-    private val projectRepository: ProjectRepository,
-    private val preferencesRepository: PreferencesRepository,
-    private val timerController: TimerController,
-    private val clock: Clock,
-) : ViewModel() {
+class HomeViewModel
+    @Inject
+    constructor(
+        private val sessionRepository: SessionRepository,
+        private val expenseRepository: ExpenseRepository,
+        private val projectRepository: ProjectRepository,
+        private val preferencesRepository: PreferencesRepository,
+        private val timerController: TimerController,
+        private val clock: Clock,
+    ) : ViewModel() {
+        val state: StateFlow<HomeUiState> =
+            preferencesRepository.observe()
+                .flatMapLatest { prefs ->
+                    val boundary = DayBoundary(prefs.dayStartHour, prefs.weekStartDay)
+                    val now = clock.wallClockMillis()
+                    val today = boundary.rangeOf(boundary.businessDateOf(now))
 
-    val state: StateFlow<HomeUiState> = preferencesRepository.observe()
-        .flatMapLatest { prefs ->
-            val boundary = DayBoundary(prefs.dayStartHour, prefs.weekStartDay)
-            val now = clock.wallClockMillis()
-            val today = boundary.rangeOf(boundary.businessDateOf(now))
-
-            combine(
-                sessionRepository.observeActive(),
-                sessionRepository.observeTimeline(today.first, today.last + 1),
-                projectRepository.observeAll(),
-            ) { active, timeline, projects ->
-                // 项目名一次性映射，而不是每条会话单独查库
-                val nameById = projects.associate { it.id to it.name }
-                HomeUiState(
-                    activeSession = active,
-                    activeProjectName = active?.projectId?.let { nameById[it] },
-                    timeline = timeline.map { session ->
-                        TimelineItem(
-                            session = session,
-                            projectName = session.projectId?.let { nameById[it] },
+                    combine(
+                        sessionRepository.observeActive(),
+                        sessionRepository.observeTimeline(today.first, today.last + 1),
+                        projectRepository.observeAll(),
+                    ) { active, timeline, projects ->
+                        // 项目名一次性映射，而不是每条会话单独查库
+                        val nameById = projects.associate { it.id to it.name }
+                        HomeUiState(
+                            activeSession = active,
+                            activeProjectName = active?.projectId?.let { nameById[it] },
+                            timeline =
+                                timeline.map { session ->
+                                    TimelineItem(
+                                        session = session,
+                                        projectName = session.projectId?.let { nameById[it] },
+                                    )
+                                },
+                            isLoading = false,
                         )
-                    },
-                    isLoading = false,
-                )
-            }
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), HomeUiState())
+                    }
+                }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), HomeUiState())
 
-    /**
-     * 今日两个账本的汇总。
-     *
-     * 口径：**已完成**会话的 DB 总和，**不含正在跑的会话**。
-     * 正在跑的那部分由 UI 叠加实时 elapsed —— 同一个数字不能有两种含义，
-     * 否则排查时无从下手（Phase 4 §6）。
-     */
-    val todayTotals: StateFlow<DailyTotals> = preferencesRepository.observe()
-        .flatMapLatest { prefs ->
-            val boundary = DayBoundary(prefs.dayStartHour, prefs.weekStartDay)
-            val now = clock.wallClockMillis()
-            val today = boundary.rangeOf(boundary.businessDateOf(now))
-            combine(
-                sessionRepository.observeTotalDuration(today.first, today.last + 1),
-                sessionRepository.observeCompletedCount(today.first, today.last + 1),
-                expenseRepository.observeTotalCents(
-                    ExpenseType.EXPENSE, today.first, today.last + 1,
-                ),
-            ) { ms, count, cents ->
-                DailyTotals(
-                    completedStudyMs = ms,
-                    sessionCount = count,
-                    expenseCents = cents,
-                )
-            }
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), DailyTotals(0L, 0, 0L))
+        /**
+         * 今日两个账本的汇总。
+         *
+         * 口径：**已完成**会话的 DB 总和，**不含正在跑的会话**。
+         * 正在跑的那部分由 UI 叠加实时 elapsed —— 同一个数字不能有两种含义，
+         * 否则排查时无从下手（Phase 4 §6）。
+         */
+        val todayTotals: StateFlow<DailyTotals> =
+            preferencesRepository.observe()
+                .flatMapLatest { prefs ->
+                    val boundary = DayBoundary(prefs.dayStartHour, prefs.weekStartDay)
+                    val now = clock.wallClockMillis()
+                    val today = boundary.rangeOf(boundary.businessDateOf(now))
+                    combine(
+                        sessionRepository.observeTotalDuration(today.first, today.last + 1),
+                        sessionRepository.observeCompletedCount(today.first, today.last + 1),
+                        expenseRepository.observeTotalCents(
+                            ExpenseType.EXPENSE,
+                            today.first,
+                            today.last + 1,
+                        ),
+                    ) { ms, count, cents ->
+                        DailyTotals(
+                            completedStudyMs = ms,
+                            sessionCount = count,
+                            expenseCents = cents,
+                        )
+                    }
+                }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), DailyTotals(0L, 0, 0L))
 
-    fun start(projectId: Long?) {
-        viewModelScope.launch { timerController.start(projectId) }
+        fun start(projectId: Long?) {
+            viewModelScope.launch { timerController.start(projectId) }
+        }
+
+        fun pause() {
+            viewModelScope.launch { timerController.pause() }
+        }
+
+        fun resume() {
+            viewModelScope.launch { timerController.resume() }
+        }
+
+        fun stop() {
+            viewModelScope.launch { timerController.stop() }
+        }
     }
-
-    fun pause() { viewModelScope.launch { timerController.pause() } }
-    fun resume() { viewModelScope.launch { timerController.resume() } }
-    fun stop() { viewModelScope.launch { timerController.stop() } }
-}

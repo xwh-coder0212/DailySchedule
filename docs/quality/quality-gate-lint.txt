@@ -1,89 +1,217 @@
-To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
-Daemon will be stopped at the end of the build 
-Observed package id 'platforms;android-37.0' in inconsistent location 'D:\toolchain\android-sdk\platforms\android-37.0-2' (Expected 'D:\toolchain\android-sdk\platforms\android-37.0')
-> Task :app:preBuild UP-TO-DATE
-> Task :app:preDebugBuild UP-TO-DATE
-> Task :app:generateDebugBuildConfig UP-TO-DATE
-> Task :app:generateDebugResources UP-TO-DATE
-> Task :app:packageDebugResources UP-TO-DATE
-> Task :app:processDebugNavigationResources UP-TO-DATE
-> Task :app:parseDebugLocalResources UP-TO-DATE
-> Task :app:generateDebugRFile UP-TO-DATE
-> Task :app:kspDebugKotlin UP-TO-DATE
-> Task :app:compileDebugKotlin UP-TO-DATE
-> Task :app:javaPreCompileDebug UP-TO-DATE
-> Task :app:compileDebugJavaWithJavac UP-TO-DATE
-> Task :app:hiltCollectClassesDebug UP-TO-DATE
-> Task :app:hiltAggregateDepsDebug UP-TO-DATE
-> Task :app:hiltJavaCompileDebug UP-TO-DATE
-> Task :app:checkDebugAarMetadata UP-TO-DATE
-> Task :app:mapDebugSourceSetPaths UP-TO-DATE
-> Task :app:compileDebugNavigationResources UP-TO-DATE
-> Task :app:mergeDebugResources UP-TO-DATE
-> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
-> Task :app:extractDeepLinksDebug UP-TO-DATE
-> Task :app:processDebugMainManifest UP-TO-DATE
-> Task :app:processDebugManifest UP-TO-DATE
-> Task :app:processDebugManifestForPackage UP-TO-DATE
-> Task :app:processDebugResources UP-TO-DATE
-> Task :app:bundleDebugClassesToCompileJar UP-TO-DATE
-> Task :app:preDebugAndroidTestBuild SKIPPED
-> Task :app:generateDebugAndroidTestLintModel
-> Task :app:extractProguardFiles UP-TO-DATE
-> Task :app:generateDebugLintReportModel
-> Task :app:preDebugUnitTestBuild UP-TO-DATE
-> Task :app:generateDebugUnitTestLintModel
-> Task :app:lintAnalyzeDebug
-> Task :app:lintAnalyzeDebugAndroidTest
-> Task :app:lintAnalyzeDebugUnitTest
+# Android Lint 原始报告（lint-results-debug.txt，由 :app:lintDebug 生成）
+# 生成时间：2026-10-02 15:55:06
+# 命令：gradle --no-daemon :app:lintDebug
 
-> Task :app:lintReportDebug
-Wrote HTML report to file:///D:/DailySchedule/app/build/reports/lint-results-debug.html
-Wrote SARIF report to file:///D:/DailySchedule/app/build/reports/lint-results-debug.sarif
-Lint found 2 errors and 54 warnings. First failure:
-D:\DailySchedule\local.properties:1: Error: Windows file separators (\) and drive letter separators (':') must be escaped (\\) in property files; use D\:/toolchain/android-sdk [PropertyEscape]
-This issue has been automatically fixed.
-sdk.dir=D:/toolchain/android-sdk
-         ~
+D:\DailySchedule\app\build.gradle.kts:21: Warning: Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the android.os.Build.VERSION_CODES javadoc for details. [OldTargetApi]
+        targetSdk = libs.versions.targetSdk.get().toInt()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+D:\DailySchedule\gradle\libs.versions.toml:9: Warning: Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the android.os.Build.VERSION_CODES javadoc for details. [OldTargetApi]
+targetSdk = "36"
+            ~~~~
 
+   Explanation for issues of type "OldTargetApi":
+   When your application or sdk runs on a version of Android that is more
+   recent than your targetSdk specifies that it has been tested with, various
+   compatibility modes kick in. This ensures that your application continues
+   to work, but it may look out of place. For example, if the targetSdk is
+   less than 14, your app may get an option button in the UI.
 
-> Task :app:lintDebug FAILED
-Lint found 2 errors, 54 warnings. First failure:
+   To fix this issue, set the targetSdk to the highest available value. Then
+   test your app to make sure everything works correctly. You may want to
+   consult the compatibility notes to see what changes apply to each version
+   you are adding support for:
+   https://developer.android.com/reference/android/os/Build.VERSION_CODES.html
+   as well as follow this guide:
+   https://developer.android.com/distribute/best-practices/develop/target-sdk.
+   html
 
-D:\DailySchedule\local.properties:1: Error: Windows file separators (\) and drive letter separators (':') must be escaped (\\) in property files; use D\:/toolchain/android-sdk [PropertyEscape]
+   https://developer.android.com/distribute/best-practices/develop/target-sdk.html
 
-The full lint text report is located at:
-  D:\DailySchedule\app\build\intermediates\lint_intermediate_text_report\debug\lintReportDebug\lint-results-debug.txt
+D:\DailySchedule\gradle\wrapper\gradle-wrapper.properties:3: Warning: A newer version of Gradle than 9.5.0 is available: 9.8.0 [AndroidGradlePluginVersion]
+distributionUrl=https\://services.gradle.org/distributions/gradle-9.5.0-bin.zip
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-FAILURE: Build failed with an exception.
+   Explanation for issues of type "AndroidGradlePluginVersion":
+   This detector looks for usage of the Android Gradle Plugin where the
+   version you are using is not the current stable release. Using older
+   versions is fine, and there are cases where you deliberately want to stick
+   with an older version. However, you may simply not be aware that a more
+   recent version is available, and that is what this lint check helps find.
 
-* What went wrong:
-Execution failed for task ':app:lintDebug' (registered by plugin 'com.android.internal.application').
-> Lint found errors in the project; aborting build.
-  
-  Fix the issues identified by lint, or create a baseline to see only new errors.
-  To create a baseline, run `gradlew updateLintBaseline` after adding the following to the module's build.gradle file:
-  ```
-  android {
-      lint {
-          baseline = file("lint-baseline.xml")
-      }
-  }
-  ```
-  For more details, see https://developer.android.com/studio/write/lint#snapshot
-  
-  Lint found 2 errors, 54 warnings. First failure:
-  
-  D:\DailySchedule\local.properties:1: Error: Windows file separators (\) and drive letter separators (':') must be escaped (\\) in property files; use D\:/toolchain/android-sdk [PropertyEscape]
-  
-  The full lint text report is located at:
-    D:\DailySchedule\app\build\intermediates\lint_intermediate_text_report\debug\lintReportDebug\lint-results-debug.txt
+D:\DailySchedule\gradle\libs.versions.toml:16: Warning: A newer version of androidx.sqlite:sqlite-bundled than 2.6.1 is available: 2.6.2 [GradleDependency]
+sqlite = "2.6.1"
+         ~~~~~~~
+D:\DailySchedule\gradle\libs.versions.toml:37: Warning: A newer version of androidx.core:core-ktx than 1.17.0 is available: 1.18.0 [GradleDependency]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.17.0" }
+                                                                            ~~~~~~~~
 
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights from a Build Scan (powered by Develocity).
-> Get more help at https://help.gradle.org.
+   Explanation for issues of type "GradleDependency":
+   This detector looks for usages of libraries where the version you are using
+   is not the current stable release. Using older versions is fine, and there
+   are cases where you deliberately want to stick with an older version.
+   However, you may simply not be aware that a more recent version is
+   available, and that is what this lint check helps find.
 
-BUILD FAILED in 2m 36s
-32 actionable tasks: 8 executed, 24 up-to-date
+D:\DailySchedule\gradle\libs.versions.toml:3: Warning: A newer version of org.jetbrains.kotlin.android than 2.3.21 is available: 2.4.20 [NewerVersionAvailable]
+kotlin = "2.3.21"
+         ~~~~~~~~
+D:\DailySchedule\gradle\libs.versions.toml:3: Warning: A newer version of org.jetbrains.kotlin.plugin.compose than 2.3.21 is available: 2.4.20 [NewerVersionAvailable]
+kotlin = "2.3.21"
+         ~~~~~~~~
+D:\DailySchedule\gradle\libs.versions.toml:3: Warning: A newer version of org.jetbrains.kotlin.plugin.serialization than 2.3.21 is available: 2.4.20 [NewerVersionAvailable]
+kotlin = "2.3.21"
+         ~~~~~~~~
+D:\DailySchedule\gradle\libs.versions.toml:23: Warning: A newer version of org.jetbrains.kotlinx:kotlinx-coroutines-android than 1.10.2 is available: 1.11.0 [NewerVersionAvailable]
+kotlinxCoroutines = "1.10.2"
+                    ~~~~~~~~
+D:\DailySchedule\gradle\libs.versions.toml:23: Warning: A newer version of org.jetbrains.kotlinx:kotlinx-coroutines-test than 1.10.2 is available: 1.11.0 [NewerVersionAvailable]
+kotlinxCoroutines = "1.10.2"
+                    ~~~~~~~~
+D:\DailySchedule\gradle\libs.versions.toml:24: Warning: A newer version of org.jetbrains.kotlinx:kotlinx-serialization-json than 1.9.0 is available: 1.11.0 [NewerVersionAvailable]
+kotlinxSerialization = "1.9.0"
+                       ~~~~~~~
+D:\DailySchedule\gradle\libs.versions.toml:27: Warning: A newer version of com.google.truth:truth than 1.4.4 is available: 1.4.5 [NewerVersionAvailable]
+truth = "1.4.4"
+        ~~~~~~~
+D:\DailySchedule\gradle\libs.versions.toml:29: Warning: A newer version of io.mockk:mockk than 1.14.2 is available: 1.14.11 [NewerVersionAvailable]
+mockk = "1.14.2"
+        ~~~~~~~~
+D:\DailySchedule\gradle\libs.versions.toml:32: Warning: A newer version of org.robolectric:robolectric than 4.16 is available: 4.17 [NewerVersionAvailable]
+robolectric = "4.16"
+              ~~~~~~
+D:\DailySchedule\gradle\libs.versions.toml:33: Warning: A newer version of org.jlleitschuh.gradle.ktlint than 12.3.0 is available: 14.2.0 [NewerVersionAvailable]
+ktlintPlugin = "12.3.0"
+               ~~~~~~~~
+D:\DailySchedule\gradle\libs.versions.toml:34: Warning: A newer version of com.pinterest.ktlint:ktlint-cli than 1.0.1 is available: 1.8.0 [NewerVersionAvailable]
+ktlintCli = "1.0.1"
+            ~~~~~~~
+
+   Explanation for issues of type "NewerVersionAvailable":
+   This detector checks with a central repository to see if there are newer
+   versions available for the dependencies used by this project. This is
+   similar to the GradleDependency check, which checks for newer versions
+   available in the Android SDK tools and libraries, but this works with any
+   MavenCentral dependency, and connects to the library every time, which
+   makes it more flexible but also much slower.
+
+D:\DailySchedule\app\src\main\AndroidManifest.xml:45: Warning: Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios. [DiscouragedApi]
+            android:screenOrientation="portrait"
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "DiscouragedApi":
+   Discouraged APIs are allowed and are not deprecated, but they may be unfit
+   for common use (e.g. due to slow performance or subtle behavior).
+
+D:\DailySchedule\app\src\main\AndroidManifest.xml:33: Warning: The attribute android:allowBackup is deprecated from Android 12 and higher and may be removed in future versions. Consider adding the attribute android:dataExtractionRules specifying an @xml resource which configures cloud backups and device transfers on Android 12 and higher. [DataExtractionRules]
+        android:allowBackup="false"
+                             ~~~~~
+
+   Explanation for issues of type "DataExtractionRules":
+   Before Android 12, the attributes android:allowBackup and
+   android:fullBackupContent were used to configure all forms of backup,
+   including cloud backups, device-to-device transfers and adb backup.
+
+   In Android 12 and higher, these attributes have been deprecated and will
+   only apply to cloud backups. You should instead use the attribute
+   android:dataExtractionRules, specifying an @xml resource that configures
+   which files to back up, for cloud backups and for device-to-device
+   transfers, separately. If your minSdkVersion supports older versions,
+   you'll still want to specify an android:fullBackupContent resource if the
+   default behavior is not right for your app.
+
+   https://developer.android.com/about/versions/12/backup-restore#xml-changes
+   https://goo.gle/DataExtractionRules
+
+D:\DailySchedule\app\src\main\java\com\dailyschedule\app\timer\TimerForegroundService.kt:124: Warning: Unnecessary; SDK_INT is always >= 26 [ObsoleteSdkInt]
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+D:\DailySchedule\app\src\main\java\com\dailyschedule\app\timer\TimerForegroundService.kt:143: Warning: Unnecessary; SDK_INT is always >= 26 [ObsoleteSdkInt]
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+D:\DailySchedule\app\src\main\java\com\dailyschedule\app\timer\TimerNotifications.kt:35: Warning: Unnecessary; SDK_INT is never < 26 [ObsoleteSdkInt]
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+D:\DailySchedule\app\src\main\res\mipmap-anydpi-v26: Warning: This folder configuration (v26) is unnecessary; minSdkVersion is 26. Merge all the resources in this folder into mipmap-anydpi. [ObsoleteSdkInt]
+
+   Explanation for issues of type "ObsoleteSdkInt":
+   This check flags version checks that are not necessary, because the
+   minSdkVersion (or surrounding known API level) is already at least as high
+   as the version checked for.
+
+   Similarly, it also looks for resources in -vNN folders, such as values-v14
+   where the version qualifier is less than or equal to the minSdkVersion,
+   where the contents should be merged into the best folder.
+
+D:\DailySchedule\app\src\main\java\com\dailyschedule\app\feature\settings\CategoryManageScreen.kt:152: Warning: Use the KTX extension function String.toColorInt instead? [UseKtx]
+                                .background(Color(android.graphics.Color.parseColor(hex)))
+                                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+D:\DailySchedule\app\src\main\java\com\dailyschedule\app\feature\settings\CategoryManageScreen.kt:210: Warning: Use the KTX extension function String.toColorInt instead? [UseKtx]
+                                Color(android.graphics.Color.parseColor(category.colorHex))
+                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+D:\DailySchedule\app\src\main\java\com\dailyschedule\app\feature\expense\ExpenseEditScreen.kt:258: Warning: Use the KTX extension function String.toColorInt instead? [UseKtx]
+                                Color(android.graphics.Color.parseColor(category.colorHex))
+                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+D:\DailySchedule\app\src\main\java\com\dailyschedule\app\core\ui\theme\ProjectColors.kt:54: Warning: Use the KTX extension function String.toColorInt instead? [UseKtx]
+            Color(android.graphics.Color.parseColor(hex))
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+D:\DailySchedule\app\src\main\java\com\dailyschedule\app\feature\projects\ProjectEditScreen.kt:131: Warning: Use the KTX extension function String.toColorInt instead? [UseKtx]
+                                .background(Color(android.graphics.Color.parseColor(hex)))
+                                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "UseKtx":
+   The Android KTX libraries decorates the Android platform SDK as well as
+   various libraries with more convenient extension functions available from
+   Kotlin, allowing you to use default parameters, named parameters, and
+   more.
+
+   Available options:
+
+   **remove-defaults** (default is true):
+   Whether to skip arguments that match the defaults provided by the extension.
+
+   Extensions often provide default values for some of the parameters. For example:
+   ```kotlin
+   fun Path.readLines(charset: Charset = Charsets.UTF_8): List<String> { return Files.readAllLines(this, charset) }
+   ```
+   This lint check will by default automatically omit parameters that match the default, so if your code was calling
+
+   ```kotlin
+   Files.readAllLines(file, Charset.UTF_8)
+   ```
+   lint would replace this with
+   ```kotlin
+   file.readLines()
+   ```
+   rather than
+
+   ```kotlin
+   file.readLines(Charset.UTF_8
+   ```
+   You can turn this behavior off using this option.
+
+   To configure this option, use a `lint.xml` file with an <option> like this:
+
+   ```xml
+   <lint>
+       <issue id="UseKtx">
+           <option name="remove-defaults" value="true" />
+       </issue>
+   </lint>
+   ```
+
+   **require-present** (default is true):
+   Whether to only offer extensions already available.
+
+   This option lets you only have lint suggest extension replacements if those extensions are already available on the class path (in other words, you're already depending on the library containing the extension method.)
+
+   To configure this option, use a `lint.xml` file with an <option> like this:
+
+   ```xml
+   <lint>
+       <issue id="UseKtx">
+           <option name="require-present" value="true" />
+       </issue>
+   </lint>
+   ```
+
+0 errors, 27 warnings

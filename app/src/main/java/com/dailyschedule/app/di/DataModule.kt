@@ -33,15 +33,14 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class DataModule {
-
     @Binds
     @Singleton
     abstract fun bindCategoryRepository(impl: CategoryRepositoryImpl): CategoryRepository
@@ -74,35 +73,35 @@ abstract class DataModule {
 @Module
 @InstallIn(SingletonComponent::class)
 object DataStoreModule {
-
     @Provides
     @Singleton
     fun providePreferencesDataStore(
         @ApplicationContext context: Context,
-    ): DataStore<Preferences> = PreferenceDataStoreFactory.create(
-        scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
-        produceFile = { context.preferencesDataStoreFile("dailyschedule_prefs") },
-    )
+    ): DataStore<Preferences> =
+        PreferenceDataStoreFactory.create(
+            scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+            produceFile = { context.preferencesDataStoreFile("dailyschedule_prefs") },
+        )
 }
 
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
-
     @Provides
     @Singleton
     fun provideAppDatabase(
         @ApplicationContext context: Context,
-    ): AppDatabase = Room.databaseBuilder(
-        context,
-        AppDatabase::class.java,
-        "dailyschedule.db",
-    )
-        .addCallback(DatabaseCallback())
-        .addMigrations(*ALL_MIGRATIONS)
-        // 永远不用 fallbackToDestructiveMigration ——
-        // 本地数据是用户的事实记录，宁可迁移失败弹错，也不能被静默清空。
-        .build()
+    ): AppDatabase =
+        Room.databaseBuilder(
+            context,
+            AppDatabase::class.java,
+            "dailyschedule.db",
+        )
+            .addCallback(DatabaseCallback())
+            .addMigrations(*ALL_MIGRATIONS)
+            // 永远不用 fallbackToDestructiveMigration ——
+            // 本地数据是用户的事实记录，宁可迁移失败弹错，也不能被静默清空。
+            .build()
 
     @Provides
     @Singleton

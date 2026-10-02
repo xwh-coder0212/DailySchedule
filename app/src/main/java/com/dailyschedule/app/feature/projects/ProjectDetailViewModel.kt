@@ -11,7 +11,6 @@ import com.dailyschedule.app.domain.repository.SessionRepository
 import com.dailyschedule.app.domain.usecase.project.DeleteProjectUseCase
 import com.dailyschedule.app.domain.usecase.project.UpdateProjectUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,6 +20,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /**
  * 周热力图的一格。
@@ -55,102 +55,116 @@ data class ProjectDetailUiState(
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
-class ProjectDetailViewModel @Inject constructor(
-    private val projectRepository: ProjectRepository,
-    private val sessionRepository: SessionRepository,
-    private val preferencesRepository: PreferencesRepository,
-    private val updateProject: UpdateProjectUseCase,
-    private val deleteProject: DeleteProjectUseCase,
-    private val clock: Clock,
-) : ViewModel() {
+class ProjectDetailViewModel
+    @Inject
+    constructor(
+        private val projectRepository: ProjectRepository,
+        private val sessionRepository: SessionRepository,
+        private val preferencesRepository: PreferencesRepository,
+        private val updateProject: UpdateProjectUseCase,
+        private val deleteProject: DeleteProjectUseCase,
+        private val clock: Clock,
+    ) : ViewModel() {
+        private val openedProjectId = MutableStateFlow<Long?>(null)
 
-    private val openedProjectId = MutableStateFlow<Long?>(null)
+        fun open(projectId: Long) {
+            openedProjectId.value = projectId
+        }
 
-    fun open(projectId: Long) {
-        openedProjectId.value = projectId
-    }
+        fun close() {
+            openedProjectId.value = null
+        }
 
-    fun close() {
-        openedProjectId.value = null
-    }
+        val state: StateFlow<ProjectDetailUiState> =
+            combine(openedProjectId, preferencesRepository.observe()) { id, prefs -> id to prefs }
+                .flatMapLatest { (projectId, prefs) ->
+                    if (projectId == null) {
+                        return@flatMapLatest flowOf(ProjectDetailUiState())
+                    }
+                    val boundary = DayBoundary(prefs.dayStartHour, prefs.weekStartDay)
+                    val today = boundary.businessDateOf(clock.wallClockMillis())
+                    val todayRange = boundary.rangeOf(today)
+                    val weekRange = boundary.weekRangeOf(today)
+                    val monthRange = boundary.monthRangeOf(today)
+                    val weekStart = boundary.weekStartDateOf(today)
 
-    val state: StateFlow<ProjectDetailUiState> =
-        combine(openedProjectId, preferencesRepository.observe()) { id, prefs -> id to prefs }
-            .flatMapLatest { (projectId, prefs) ->
-                if (projectId == null) {
-                    return@flatMapLatest flowOf(ProjectDetailUiState())
+                    // 四个周期 + 累计次数：同样是 4 个聚合查询，不是 N 个
+                    val totalsFlow =
+                        combine(
+                            sessionRepository.observeTotalDurationOfProject(
+                                projectId,
+                                todayRange.first,
+                                todayRange.last + 1,
+                            ),
+                            sessionRepository.observeTotalDurationOfProject(
+                                projectId,
+                                weekRange.first,
+                                weekRange.last + 1,
+                            ),
+                            sessionRepository.observeTotalDurationOfProject(
+                                projectId,
+                                monthRange.first,
+                                monthRange.last + 1,
+                            ),
+                            sessionRepository.observeTotalDurationOfProject(projectId, 0L, Long.MAX_VALUE),
+                            sessionRepository.observeCompletedCountOfProject(projectId, 0L, Long.MAX_VALUE),
+                        ) { todayMs, weekMs, monthMs, totalMs, totalCount ->
+                            PeriodTotals(todayMs, weekMs, monthMs, totalMs, totalCount)
+                        }
+
+                    combine(
+                        totalsFlow,
+                        projectRepository.observeAll(),
+                        sessionRepository.observeInRange(weekRange.first, weekRange.last + 1),
+                    ) { totals, projects, weekSessions ->
+                        // 热力图的分日归组放在 Kotlin 层：SQL 里不允许出现日期函数，
+                        // 因为日切时刻是用户可配的，只有 DayBoundary 知道该怎么切。
+                        val byBusinessDate =
+                            weekSessions
+                                .filter { it.projectId == projectId }
+                                .groupBy { boundary.businessDateOf(it.startWallClockMs) }
+
+                        ProjectDetailUiState(
+                            project = projects.firstOrNull { it.id == projectId },
+                            todayMs = totals.todayMs,
+                            weekMs = totals.weekMs,
+                            monthMs = totals.monthMs,
+                            totalMs = totals.totalMs,
+                            totalCount = totals.totalCount,
+                            weekDays =
+                                (0..6).map { offset ->
+                                    val day = weekStart.plusDays(offset.toLong())
+                                    HeatDay(
+                                        weekday = day.dayOfWeek.value,
+                                        totalMs =
+                                            byBusinessDate[day].orEmpty()
+                                                .sumOf { it.durationMs ?: 0L },
+                                    )
+                                },
+                            isLoading = false,
+                        )
+                    }
                 }
-                val boundary = DayBoundary(prefs.dayStartHour, prefs.weekStartDay)
-                val today = boundary.businessDateOf(clock.wallClockMillis())
-                val todayRange = boundary.rangeOf(today)
-                val weekRange = boundary.weekRangeOf(today)
-                val monthRange = boundary.monthRangeOf(today)
-                val weekStart = boundary.weekStartDateOf(today)
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), ProjectDetailUiState())
 
-                // 四个周期 + 累计次数：同样是 4 个聚合查询，不是 N 个
-                val totalsFlow = combine(
-                    sessionRepository.observeTotalDurationOfProject(
-                        projectId, todayRange.first, todayRange.last + 1,
-                    ),
-                    sessionRepository.observeTotalDurationOfProject(
-                        projectId, weekRange.first, weekRange.last + 1,
-                    ),
-                    sessionRepository.observeTotalDurationOfProject(
-                        projectId, monthRange.first, monthRange.last + 1,
-                    ),
-                    sessionRepository.observeTotalDurationOfProject(projectId, 0L, Long.MAX_VALUE),
-                    sessionRepository.observeCompletedCountOfProject(projectId, 0L, Long.MAX_VALUE),
-                ) { todayMs, weekMs, monthMs, totalMs, totalCount ->
-                    PeriodTotals(todayMs, weekMs, monthMs, totalMs, totalCount)
-                }
+        /** 「更换背景」= 换卡片底色。卡片底色就是项目色，所以改的是 `colorHex`，不新增字段。 */
+        fun setBackground(
+            project: Project,
+            colorHex: String,
+        ) {
+            if (project.colorHex == colorHex) return
+            viewModelScope.launch { updateProject(project.copy(colorHex = colorHex)) }
+        }
 
-                combine(
-                    totalsFlow,
-                    projectRepository.observeAll(),
-                    sessionRepository.observeInRange(weekRange.first, weekRange.last + 1),
-                ) { totals, projects, weekSessions ->
-                    // 热力图的分日归组放在 Kotlin 层：SQL 里不允许出现日期函数，
-                    // 因为日切时刻是用户可配的，只有 DayBoundary 知道该怎么切。
-                    val byBusinessDate = weekSessions
-                        .filter { it.projectId == projectId }
-                        .groupBy { boundary.businessDateOf(it.startWallClockMs) }
+        fun delete(projectId: Long) {
+            viewModelScope.launch { deleteProject(projectId) }
+        }
 
-                    ProjectDetailUiState(
-                        project = projects.firstOrNull { it.id == projectId },
-                        todayMs = totals.todayMs,
-                        weekMs = totals.weekMs,
-                        monthMs = totals.monthMs,
-                        totalMs = totals.totalMs,
-                        totalCount = totals.totalCount,
-                        weekDays = (0..6).map { offset ->
-                            val day = weekStart.plusDays(offset.toLong())
-                            HeatDay(
-                                weekday = day.dayOfWeek.value,
-                                totalMs = byBusinessDate[day].orEmpty()
-                                    .sumOf { it.durationMs ?: 0L },
-                            )
-                        },
-                        isLoading = false,
-                    )
-                }
-            }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), ProjectDetailUiState())
-
-    /** 「更换背景」= 换卡片底色。卡片底色就是项目色，所以改的是 `colorHex`，不新增字段。 */
-    fun setBackground(project: Project, colorHex: String) {
-        if (project.colorHex == colorHex) return
-        viewModelScope.launch { updateProject(project.copy(colorHex = colorHex)) }
+        private data class PeriodTotals(
+            val todayMs: Long,
+            val weekMs: Long,
+            val monthMs: Long,
+            val totalMs: Long,
+            val totalCount: Int,
+        )
     }
-
-    fun delete(projectId: Long) {
-        viewModelScope.launch { deleteProject(projectId) }
-    }
-
-    private data class PeriodTotals(
-        val todayMs: Long,
-        val weekMs: Long,
-        val monthMs: Long,
-        val totalMs: Long,
-        val totalCount: Int,
-    )
-}

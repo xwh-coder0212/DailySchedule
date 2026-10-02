@@ -6,8 +6,8 @@ import com.dailyschedule.app.core.result.AppResult
 import com.dailyschedule.app.core.result.asFailure
 import com.dailyschedule.app.core.result.asSuccess
 import com.dailyschedule.app.domain.repository.ProjectRepository
-import javax.inject.Inject
 import kotlinx.coroutines.flow.first
+import javax.inject.Inject
 
 /**
  * 按新顺序重排待办。
@@ -20,28 +20,29 @@ import kotlinx.coroutines.flow.first
  *
  * 与其静默产生一个错序，不如拒绝，让界面重新读一次列表再排。
  */
-class ReorderProjectsUseCase @Inject constructor(
-    private val projectRepository: ProjectRepository,
-) {
+class ReorderProjectsUseCase
+    @Inject
+    constructor(
+        private val projectRepository: ProjectRepository,
+    ) {
+        suspend operator fun invoke(orderedIds: List<Long>): AppResult<Unit> {
+            if (orderedIds.isEmpty()) return Unit.asSuccess()
 
-    suspend operator fun invoke(orderedIds: List<Long>): AppResult<Unit> {
-        if (orderedIds.isEmpty()) return Unit.asSuccess()
+            if (orderedIds.size != orderedIds.distinct().size) {
+                return AppError.Validation("排序列表里有重复的待办").asFailure()
+            }
 
-        if (orderedIds.size != orderedIds.distinct().size) {
-            return AppError.Validation("排序列表里有重复的待办").asFailure()
+            val existingIds = projectRepository.observeAll().first().map { it.id }.toSet()
+            if (orderedIds.toSet() != existingIds) {
+                return AppError.Validation("待办列表已经变化，请重新打开排序").asFailure()
+            }
+
+            projectRepository.reorder(orderedIds)
+            AppLogger.i(TAG, "重排 ${orderedIds.size} 个待办")
+            return Unit.asSuccess()
         }
 
-        val existingIds = projectRepository.observeAll().first().map { it.id }.toSet()
-        if (orderedIds.toSet() != existingIds) {
-            return AppError.Validation("待办列表已经变化，请重新打开排序").asFailure()
+        private companion object {
+            const val TAG = "ReorderProjects"
         }
-
-        projectRepository.reorder(orderedIds)
-        AppLogger.i(TAG, "重排 ${orderedIds.size} 个待办")
-        return Unit.asSuccess()
     }
-
-    private companion object {
-        const val TAG = "ReorderProjects"
-    }
-}

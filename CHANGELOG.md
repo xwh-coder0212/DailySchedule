@@ -5,6 +5,69 @@
 
 ## [未发布]
 
+### 完整备份与恢复（2026-10-02）
+
+在此之前只有 Excel 导出，而 Excel 是导不回 App 的 —— 换手机等于丢数据。
+补上可恢复的备份格式。
+
+**Added**
+
+- **JSON 完整备份 / 恢复**。导出全库为一个 JSON 文件，可原样导回。
+  与 Excel 报表是两件事：报表给人看，备份给机器读。
+- **导入前校验**（`BackupValidator`）。全部在动数据库之前完成：
+  格式标识、结构版本、声明条数 vs 实际条数、重复 id、悬空外键、非法数值。
+  任一项不过就拒绝，数据一个字节不动。
+- **导入前自动本地备份**（`PreImportBackupKeeper`）。滚动保留 3 份，
+  并据此提供「撤销上次导入」。
+- 新增 36 个单测（编解码 8 / 校验 14 / 真实 Room 往返 9 / 自动备份 5），
+  合计 206 个。往返测试走真 SQLite，断言**逐字段一致**而不是只比条数 ——
+  条数对了但某条记录的 `projectId` 错位，正是"看起来恢复了、统计却全变了"的典型。
+
+**Changed**
+
+- 数据导出页改为「数据导出与恢复」，分两段：完整备份（JSON）与 Excel 报表。
+- 恢复是**整体替换**而非合并。合并需要一套 id 冲突消解规则
+  （同 id 谁赢？同名不同 id 算不算同一个项目？），猜错会把两段历史搅在一起，
+  且事后无法分辨。替换语义确定，配合自动备份 + 二次确认，用户始终有退路。
+- 活动会话（RUNNING / PAUSED）**不进备份也不恢复**：它的单调时钟只对当时那次
+  开机有效，换设备或重启后不对应任何真实时刻。事务内还会再查一次活动会话，
+  正在计时时拒绝恢复 —— 界面上的检查只为提示，这里的检查才是正确性保障。
+- 字符串资源：删除 26 处未被引用的条目，新增备份/恢复相关条目。
+
+**Fixed**
+
+- 设置页与消费分类页既没有标题栏也没有返回按钮，只能靠系统返回手势退出。
+  `CategoryManageScreen` 的 `onBack` 参数甚至从未被使用。
+  （`AppNavHost` 只给三个顶层 Tab 画顶部栏，这两页需要自己带。）
+
+### ktlint 存量债清理（2026-10-02）
+
+**Changed**
+
+- **存量风格违规 1469 处（124 个文件）→ 0**。分三步走：
+  1. 先建基线（`app/config/ktlint-baseline.txt`），让门禁对新代码立刻生效；
+  2. 再 `ktlint -F` 批量格式化；
+  3. 最后把基线收紧到 0，门禁按最严标准执行。
+- `ktlint` 新增三个任务并挂进 `check`：
+  - `ktlintSources` —— 扫描并输出报告
+  - `ktlintBaseline` —— 刷新基线
+  - `ktlintGate` —— 与基线比对，出现新增违规就失败
+  - `ktlintFormatAll` —— `ktlint -F` 批量修复（名字不能叫 `ktlintFormat`，
+    插件自己注册了同名任务）
+- 基线按 `(文件, 规则, 出现次数)` 记录，**不记行号**。行号会随任何一次编辑整体
+  位移，那种基线一改就满屏假警报，等于没有基线。
+- `.editorconfig` 增加 `ktlint_function_naming_ignore_when_annotated_with = Composable`。
+  Compose 要求 Composable 函数名 PascalCase（小写开头编译器直接报错），
+  而 ktlint 的 `function-naming` 不认识 `@Composable`，把项目里 65 个
+  Composable 全报成误报。只点名这一个注解，普通函数的命名仍然照查。
+- 格式化过程中自己造出的 5 处超长行（`max-line-length`，140 上限）一并修掉：
+  4 处是新写的单行构造器调用，1 处是老代码因缩进加深被顶过线。
+
+**Fixed**
+
+- 11 处 `discouraged-comment-location`（参数列表里的尾随注释）与
+  2 处 `no-consecutive-comments`（相邻注释）。
+
 ### 真机验收（2026-10-02）
 
 在 Redmi（`rothko` / 2407FRK8EC，Android 16，HyperOS V816）上完成首轮真机验收，
@@ -22,9 +85,8 @@
 
 **Known issues**
 
-- `SettingsScreen` / `CategoryManageScreen` 没有标题栏与返回按钮，只能靠系统返回手势退出。
-  同为设置入口的 `DataTransferScreen` 有标题栏，因此这是遗漏而非统一设计。
 - 补录角标未用真实数据验证（设备库内 4 条会话全部来自计时，无补录记录）。
+- ~~`SettingsScreen` / `CategoryManageScreen` 没有标题栏与返回按钮~~ —— 已修，见上文。
 
 ### 质量门禁补课（2026-10-02）
 
@@ -50,8 +112,12 @@
 **Known issues**
 
 - ktlint 存量风格违规 1469 处，分布在 124 个文件，未清理。
-  清单见 `docs/quality/quality-gate.log`。
+  清单见 `docs/quality/ktlint-violations-before-cleanup.log`。
+  （已于同日清理归零，见上文。）
 - Android Lint 54 条 warning（26 条为未使用的字符串资源）。
+  （26 条未使用资源已删除，现为 27 条；剩余全部是
+  `NewerVersionAvailable` / `GradleDependency` / `OldTargetApi` 一类的
+  「依赖或目标 SDK 版本偏旧」提示，没有代码缺陷。）
 
 ### Rev2 改版（2026-10-01）
 

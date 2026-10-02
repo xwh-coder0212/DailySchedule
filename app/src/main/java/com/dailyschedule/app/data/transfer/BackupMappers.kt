@@ -27,120 +27,126 @@ import com.dailyschedule.app.data.db.entity.ProjectEntity
  * 只有真正漏了字段才会编译失败。
  */
 
-// ── 分类 ──
+fun CategoryEntity.toRecord(): CategoryRecord =
+    CategoryRecord(
+        id = id,
+        name = name,
+        iconName = iconName,
+        colorHex = colorHex,
+        isPreset = isPreset,
+        isEnabled = isEnabled,
+        sortOrder = sortOrder,
+    )
 
-fun CategoryEntity.toRecord(): CategoryRecord = CategoryRecord(
-    id = id,
-    name = name,
-    iconName = iconName,
-    colorHex = colorHex,
-    isPreset = isPreset,
-    isEnabled = isEnabled,
-    sortOrder = sortOrder,
-)
-
-fun CategoryRecord.toEntity(): CategoryEntity = CategoryEntity(
-    id = id,
-    name = name,
-    iconName = iconName,
-    colorHex = colorHex,
-    isPreset = isPreset,
-    isEnabled = isEnabled,
-    sortOrder = sortOrder,
-)
+fun CategoryRecord.toEntity(): CategoryEntity =
+    CategoryEntity(
+        id = id,
+        name = name,
+        iconName = iconName,
+        colorHex = colorHex,
+        isPreset = isPreset,
+        isEnabled = isEnabled,
+        sortOrder = sortOrder,
+    )
 
 // ── 项目 ──
 
-fun ProjectEntity.toRecord(): ProjectRecord = ProjectRecord(
-    id = id,
-    name = name,
-    iconName = iconName,
-    colorHex = colorHex,
-    isArchived = isArchived,
-    dailyTargetMinutes = dailyTargetMinutes,
-    sortOrder = sortOrder,
-    createdAt = createdAt,
-    updatedAt = updatedAt,
-)
+fun ProjectEntity.toRecord(): ProjectRecord =
+    ProjectRecord(
+        id = id,
+        name = name,
+        iconName = iconName,
+        colorHex = colorHex,
+        isArchived = isArchived,
+        dailyTargetMinutes = dailyTargetMinutes,
+        sortOrder = sortOrder,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
 
-fun ProjectRecord.toEntity(): ProjectEntity = ProjectEntity(
-    id = id,
-    name = name,
-    iconName = iconName,
-    colorHex = colorHex,
-    isArchived = isArchived,
-    dailyTargetMinutes = dailyTargetMinutes,
-    sortOrder = sortOrder,
-    createdAt = createdAt,
-    updatedAt = updatedAt,
-)
+fun ProjectRecord.toEntity(): ProjectEntity =
+    ProjectEntity(
+        id = id,
+        name = name,
+        iconName = iconName,
+        colorHex = colorHex,
+        isArchived = isArchived,
+        dailyTargetMinutes = dailyTargetMinutes,
+        sortOrder = sortOrder,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
 
 // ── 会话 ──
 
-fun FocusSessionEntity.toRecord(): SessionRecord = SessionRecord(
-    id = id,
-    projectId = projectId,
-    status = status,
-    needsReview = needsReview,
-    startElapsedMs = startElapsedMs,
-    startWallClockMs = startWallClockMs,
-    endElapsedMs = endElapsedMs,
-    endWallClockMs = endWallClockMs,
-    accumulatedPauseMs = accumulatedPauseMs,
-    pauseStartElapsedMs = pauseStartElapsedMs,
-    mode = mode,
-    targetDurationMs = targetDurationMs,
-    source = source,
-    durationMs = durationMs,
-    note = note,
-    createdAt = createdAt,
-    updatedAt = updatedAt,
-)
+fun FocusSessionEntity.toRecord(): SessionRecord =
+    SessionRecord(
+        id = id,
+        projectId = projectId,
+        status = status,
+        needsReview = needsReview,
+        startElapsedMs = startElapsedMs,
+        startWallClockMs = startWallClockMs,
+        endElapsedMs = endElapsedMs,
+        endWallClockMs = endWallClockMs,
+        accumulatedPauseMs = accumulatedPauseMs,
+        pauseStartElapsedMs = pauseStartElapsedMs,
+        mode = mode,
+        targetDurationMs = targetDurationMs,
+        source = source,
+        durationMs = durationMs,
+        note = note,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
 
-fun SessionRecord.toEntity(): FocusSessionEntity = FocusSessionEntity(
-    id = id,
-    projectId = projectId,
-    status = status,
-    needsReview = needsReview,
-    startElapsedMs = startElapsedMs,
-    startWallClockMs = startWallClockMs,
-    endElapsedMs = endElapsedMs,
-    endWallClockMs = endWallClockMs,
-    accumulatedPauseMs = accumulatedPauseMs,
-    pauseStartElapsedMs = pauseStartElapsedMs,
-    mode = mode,
-    targetDurationMs = targetDurationMs,
-    source = source,
-    durationMs = durationMs,
-    note = note,
-    createdAt = createdAt,
-    updatedAt = updatedAt,
-)
+fun SessionRecord.toEntity(): FocusSessionEntity =
+    FocusSessionEntity(
+        id = id,
+        projectId = projectId,
+        status = status,
+        needsReview = needsReview,
+        startElapsedMs = startElapsedMs,
+        startWallClockMs = startWallClockMs,
+        endElapsedMs = endElapsedMs,
+        endWallClockMs = endWallClockMs,
+        accumulatedPauseMs = accumulatedPauseMs,
+        pauseStartElapsedMs = pauseStartElapsedMs,
+        mode = mode,
+        targetDurationMs = targetDurationMs,
+        source = source,
+        durationMs = durationMs,
+        note = note,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
 
 // ── 消费 ──
 
-fun ExpenseEntity.toRecord(): ExpenseRecord = ExpenseRecord(
-    id = id,
-    amountCents = amountCents,
-    currency = currency,
-    categoryId = categoryId,
-    projectId = projectId,
-    type = type,
-    note = note,
-    occurredAt = occurredAt,
-    createdAt = createdAt,
-    updatedAt = updatedAt,
-)
+fun ExpenseEntity.toRecord(): ExpenseRecord =
+    ExpenseRecord(
+        id = id,
+        amountCents = amountCents,
+        currency = currency,
+        categoryId = categoryId,
+        projectId = projectId,
+        type = type,
+        note = note,
+        occurredAt = occurredAt,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
 
-fun ExpenseRecord.toEntity(): ExpenseEntity = ExpenseEntity(
-    id = id,
-    amountCents = amountCents,
-    currency = currency,
-    categoryId = categoryId,
-    projectId = projectId,
-    type = type,
-    note = note,
-    occurredAt = occurredAt,
-    createdAt = createdAt,
-    updatedAt = updatedAt,
-)
+fun ExpenseRecord.toEntity(): ExpenseEntity =
+    ExpenseEntity(
+        id = id,
+        amountCents = amountCents,
+        currency = currency,
+        categoryId = categoryId,
+        projectId = projectId,
+        type = type,
+        note = note,
+        occurredAt = occurredAt,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )

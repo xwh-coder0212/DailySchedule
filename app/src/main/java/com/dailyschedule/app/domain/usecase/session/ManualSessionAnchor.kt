@@ -18,7 +18,6 @@ package com.dailyschedule.app.domain.usecase.session
  * 否则补录出来的记录会结束在未来。
  */
 object ManualSessionAnchor {
-
     /**
      * 历史日期的默认开始时刻：业务日开始后 9 小时。
      *
@@ -47,11 +46,12 @@ object ManualSessionAnchor {
         val latestStartMs = nowMs - durationMs
         if (latestStartMs < businessDayStartMs) return null
 
-        val preferredStartMs = if (anchorToNow) {
-            latestStartMs
-        } else {
-            businessDayStartMs + DEFAULT_START_OFFSET_MS
-        }
+        val preferredStartMs =
+            if (anchorToNow) {
+                latestStartMs
+            } else {
+                businessDayStartMs + DEFAULT_START_OFFSET_MS
+            }
         // 夹到上限：历史日期上"上午 9 点开始"也仍然可能晚于"现在 - 时长"
         // （比如现在才早上 6 点，却要补录昨天 20 小时的专注）
         return minOf(preferredStartMs, latestStartMs).coerceAtLeast(businessDayStartMs)

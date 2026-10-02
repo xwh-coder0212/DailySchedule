@@ -12,7 +12,6 @@ import java.math.RoundingMode
  * 0.1 + 0.2 那个老问题：0.29 元变成 28 分。
  */
 object AmountInput {
-
     private const val SCALE = 2
 
     /**

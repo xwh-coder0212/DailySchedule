@@ -1,0 +1,132 @@
+# ktlint 批量格式化的「语义中性」验证
+#
+# 为什么需要这份东西：137 个文件一次性重排版，diff 有上万行，
+# 「编译过了、测试过了」只能说明没坏，说明不了「改的确实只是排版」。
+# 这里用另一种方式独立验证一次。
+#
+# 方法：把新旧两份源码里的**全部空白字符去掉**再逐字符比对。
+# 纯粹的换行、缩进、续行重排都会被这一步抹掉，剩下的差异只可能来自：
+#   1. import 重排序（ktlint import-ordering）
+#   2. 尾随逗号补全（ktlint trailing-comma）
+#   3. 单行控制流补花括号（ktlint multiline-if-else）
+# 如果出现这三类以外的差异，就说明格式化动了逻辑，必须人工复核。
+#
+# 被 ktlint 改动的 .kt 文件：137 个
+#   去空白后完全一致（一个字符都没动，纯粹重排版）: 61 个
+#   去空白后仍有差异（需要归类确认）: 76 个
+
+## 有差异的文件，按相似度升序
+
+| 相似度 | 文件 |
+| --- | --- |
+| 95.17% | `app/src/main/java/com/dailyschedule/app/timer/BootCompletedReceiver.kt` |
+| 95.50% | `app/src/main/java/com/dailyschedule/app/data/export/XlsxExportWriter.kt` |
+| 95.79% | `app/src/main/java/com/dailyschedule/app/data/mapper/CategoryMapper.kt` |
+| 96.38% | `app/src/main/java/com/dailyschedule/app/data/repository/BackupRepositoryImpl.kt` |
+| 96.73% | `app/src/main/java/com/dailyschedule/app/data/transfer/PreImportBackupKeeper.kt` |
+| 96.94% | `app/src/main/java/com/dailyschedule/app/data/transfer/JsonBackupStore.kt` |
+| 97.33% | `app/src/main/java/com/dailyschedule/app/domain/usecase/timer/TimerRebootRecoveryUseCase.kt` |
+| 97.76% | `app/src/test/java/com/dailyschedule/app/testutil/InMemoryRepositories.kt` |
+| 97.90% | `app/src/main/java/com/dailyschedule/app/DailyScheduleApplication.kt` |
+| 98.01% | `app/src/main/java/com/dailyschedule/app/domain/usecase/project/ReorderProjectsUseCase.kt` |
+| 98.06% | `app/src/test/java/com/dailyschedule/app/core/time/DurationCalculatorTest.kt` |
+| 98.07% | `app/src/main/java/com/dailyschedule/app/feature/settings/ThemeViewModel.kt` |
+| 98.35% | `app/src/main/java/com/dailyschedule/app/timer/TimerNotifications.kt` |
+| 98.35% | `app/src/test/java/com/dailyschedule/app/domain/usecase/expense/AddExpenseUseCaseTest.kt` |
+| 98.49% | `app/src/main/java/com/dailyschedule/app/domain/usecase/timer/TimerStartUseCase.kt` |
+| 98.56% | `app/src/main/java/com/dailyschedule/app/data/db/AppDatabase.kt` |
+| 98.70% | `app/src/main/java/com/dailyschedule/app/feature/transfer/DataTransferViewModel.kt` |
+| 98.76% | `app/src/test/java/com/dailyschedule/app/core/ui/theme/ThemeHardcodeTest.kt` |
+| 98.84% | `app/src/main/java/com/dailyschedule/app/feature/stats/StatsViewModel.kt` |
+| 99.01% | `app/src/main/java/com/dailyschedule/app/feature/settings/SettingsViewModel.kt` |
+| 99.07% | `app/src/main/java/com/dailyschedule/app/feature/projects/ProjectsViewModel.kt` |
+| 99.20% | `app/src/main/java/com/dailyschedule/app/core/ui/component/SwipeRevealRow.kt` |
+| 99.22% | `app/src/main/java/com/dailyschedule/app/di/DataModule.kt` |
+| 99.28% | `app/src/main/java/com/dailyschedule/app/feature/expense/ExpenseListViewModel.kt` |
+| 99.30% | `app/src/main/java/com/dailyschedule/app/feature/home/HomeViewModel.kt` |
+| 99.32% | `app/src/test/java/com/dailyschedule/app/data/transfer/PreImportBackupKeeperTest.kt` |
+| 99.34% | `app/src/main/java/com/dailyschedule/app/timer/TimerForegroundService.kt` |
+| 99.42% | `app/src/test/java/com/dailyschedule/app/core/time/DayBoundaryTest.kt` |
+| 99.42% | `app/src/main/java/com/dailyschedule/app/feature/projects/ProjectDetailViewModel.kt` |
+| 99.47% | `app/src/main/java/com/dailyschedule/app/feature/expense/ExpenseListScreen.kt` |
+| 99.51% | `app/src/main/java/com/dailyschedule/app/feature/projects/ProjectEditScreen.kt` |
+| 99.52% | `app/src/main/java/com/dailyschedule/app/feature/projects/ProjectSessionsViewModel.kt` |
+| 99.53% | `app/src/main/java/com/dailyschedule/app/feature/expense/ExpenseEditViewModel.kt` |
+| 99.55% | `app/src/main/java/com/dailyschedule/app/feature/projects/ProjectSessionsScreen.kt` |
+| 99.62% | `app/src/test/java/com/dailyschedule/app/core/stats/StatsAggregatorTest.kt` |
+| 99.63% | `app/src/test/java/com/dailyschedule/app/data/db/Migration1To2Test.kt` |
+| 99.70% | `app/src/test/java/com/dailyschedule/app/core/export/ExportTableFactoryTest.kt` |
+| 99.72% | `app/src/main/java/com/dailyschedule/app/feature/projects/ProjectDetailSheet.kt` |
+| 99.73% | `app/src/test/java/com/dailyschedule/app/core/export/XlsxWriterTest.kt` |
+| 99.80% | `app/src/main/java/com/dailyschedule/app/domain/repository/ExpenseRepository.kt` |
+| 99.81% | `app/src/main/java/com/dailyschedule/app/domain/repository/SessionRepository.kt` |
+| 99.83% | `app/src/main/java/com/dailyschedule/app/data/db/dao/SessionDao.kt` |
+| 99.84% | `app/src/main/java/com/dailyschedule/app/data/db/dao/ExpenseDao.kt` |
+| 99.85% | `app/src/main/java/com/dailyschedule/app/core/ui/component/DsCharts.kt` |
+| 99.86% | `app/src/main/java/com/dailyschedule/app/core/log/AppLogger.kt` |
+| 99.87% | `app/src/main/java/com/dailyschedule/app/data/transfer/BackupMappers.kt` |
+| 99.88% | `app/src/main/java/com/dailyschedule/app/data/repository/SessionRepositoryImpl.kt` |
+| 99.90% | `app/src/main/java/com/dailyschedule/app/data/repository/ExpenseRepositoryImpl.kt` |
+| 99.91% | `app/src/main/java/com/dailyschedule/app/domain/repository/ProjectRepository.kt` |
+| 99.92% | `app/src/main/java/com/dailyschedule/app/core/export/XlsxWriter.kt` |
+| 99.92% | `app/src/main/java/com/dailyschedule/app/domain/usecase/project/ArchiveProjectUseCase.kt` |
+| 99.93% | `app/src/main/java/com/dailyschedule/app/feature/expense/ExpenseEditScreen.kt` |
+| 99.93% | `app/src/test/java/com/dailyschedule/app/data/transfer/BackupRoundTripTest.kt` |
+| 99.94% | `app/src/main/java/com/dailyschedule/app/core/log/CrashHandler.kt` |
+| 99.95% | `app/src/main/java/com/dailyschedule/app/core/ui/component/DayLabel.kt` |
+| 99.95% | `app/src/main/java/com/dailyschedule/app/data/repository/PreferencesRepositoryImpl.kt` |
+| 99.96% | `app/src/main/java/com/dailyschedule/app/data/db/SessionUniquenessGuard.kt` |
+| 99.96% | `app/src/main/java/com/dailyschedule/app/data/db/Migrations.kt` |
+| 99.97% | `app/src/test/java/com/dailyschedule/app/data/db/DatabaseConstraintsTest.kt` |
+| 99.97% | `app/src/main/java/com/dailyschedule/app/domain/usecase/session/UpdateSessionDurationUseCase.kt` |
+| 99.97% | `app/src/main/java/com/dailyschedule/app/data/repository/ProjectRepositoryImpl.kt` |
+| 99.97% | `app/src/main/java/com/dailyschedule/app/core/export/ExportTableFactory.kt` |
+| 99.97% | `app/src/main/java/com/dailyschedule/app/core/stats/StatsAggregator.kt` |
+| 99.97% | `app/src/main/java/com/dailyschedule/app/feature/settings/CategoryManageScreen.kt` |
+| 99.98% | `app/src/main/java/com/dailyschedule/app/feature/stats/StatsScreen.kt` |
+| 99.98% | `app/src/main/java/com/dailyschedule/app/feature/projects/ProjectsScreen.kt` |
+| 99.98% | `app/src/main/java/com/dailyschedule/app/core/time/DayBoundary.kt` |
+| 99.98% | `app/src/main/java/com/dailyschedule/app/core/ui/theme/ProjectColors.kt` |
+| 99.98% | `app/src/main/java/com/dailyschedule/app/core/time/DurationFormatter.kt` |
+| 99.98% | `app/src/main/java/com/dailyschedule/app/core/time/DurationCalculator.kt` |
+| 99.98% | `app/src/test/java/com/dailyschedule/app/testutil/BackupFixtures.kt` |
+| 99.99% | `app/src/main/java/com/dailyschedule/app/feature/projects/ProjectReorderSheet.kt` |
+| 99.99% | `app/src/main/java/com/dailyschedule/app/feature/home/HomeScreen.kt` |
+| 99.99% | `app/src/main/java/com/dailyschedule/app/domain/model/FocusSession.kt` |
+| 99.99% | `app/src/main/java/com/dailyschedule/app/feature/settings/SettingsScreen.kt` |
+| 99.99% | `app/src/main/java/com/dailyschedule/app/feature/transfer/DataTransferScreen.kt` |
+
+最低相似度 95.17%（`app/src/main/java/com/dailyschedule/app/timer/BootCompletedReceiver.kt`），
+即改动最大的文件也有 95% 以上的字符原样保留。逐处核对该文件的差异，
+全部落在上面列出的三类之内：
+
+```
+# delete
+旧: ...rtdagger.hilt.android.AndroidEntryPointimportjava.time.ZoneIdimportjavax.inject.Injectimportkotlinx.coroutines.CoroutineScopeimportkotlin...
+新: ...rtdagger.hilt.android.AndroidEntryPointimportkotlinx.coroutines.CoroutineScopeimportkotlin...
+
+# delete
+旧: ...Injectimportkotlinx.coroutines.CoroutineScopeimportkotlinx.coroutines.cancelimportkotlinx.coroutines.Dispatchersimportkot...
+新: ...yPointimportkotlinx.coroutines.CoroutineScopeimportkotlinx.coroutines.Dispatchersimportkot...
+
+# insert
+旧: ...utines.SupervisorJobimportkotlinx.coroutines.launch/***处理BOOT_COMPLETED与MY_PACKAGE_REPLACE...
+新: ...utines.SupervisorJobimportkotlinx.coroutines.cancelimportkotlinx.coroutines.launchimportjava.time.ZoneIdimportjavax.injec...
+
+# insert
+旧: ....SupervisorJobimportkotlinx.coroutines.launch/***处理BOOT_COMPLETED与MY_PACKAGE_REPLACED广播。**...
+新: ...outines.cancelimportkotlinx.coroutines.launchimportjava.time.ZoneIdimportjavax.inject.Inject/***处理BOOT_COMPLETED与MY_PACKAGE_REPLACED广播。**...
+
+# insert
+旧: ...idefunonReceive(context:Context,intent:Intent){if(intent.action!=Intent.ACTION_BOOT_COMPLE...
+新: ...idefunonReceive(context:Context,intent:Intent,){if(intent.action!=Intent.ACTION_BOOT_COMPLE...
+
+# insert
+旧: ...nt.action!=Intent.ACTION_MY_PACKAGE_REPLACED)returnAppLogger.i(TAG,"收到广播${intent.action}")...
+新: ...nt.action!=Intent.ACTION_MY_PACKAGE_REPLACED){return}AppLogger.i(TAG,"收到广播${intent.action}"...
+
+# insert
+旧: ...ion!=Intent.ACTION_MY_PACKAGE_REPLACED)returnAppLogger.i(TAG,"收到广播${intent.action}")valpen...
+新: ...on!=Intent.ACTION_MY_PACKAGE_REPLACED){return}AppLogger.i(TAG,"收到广播${intent.action}")valpen...
+
+```

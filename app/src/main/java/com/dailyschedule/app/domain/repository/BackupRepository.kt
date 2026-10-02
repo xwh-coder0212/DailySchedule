@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.Flow
  * 不是"写一个文件"这样的技术动作。
  */
 interface BackupRepository {
-
     /**
      * 各表**会写进备份**的条数，随数据变化自动更新。
      *

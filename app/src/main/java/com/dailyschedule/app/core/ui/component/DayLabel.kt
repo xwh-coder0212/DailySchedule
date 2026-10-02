@@ -15,7 +15,10 @@ import com.dailyschedule.app.core.time.DurationFormatter
  * 两份实现只要有一份忘了处理跨年，就会出现"2025年9月10日"被写成"9月10日"。
  */
 @Composable
-fun dayLabelOf(wallClockMs: Long, nowMs: Long): String {
+fun dayLabelOf(
+    wallClockMs: Long,
+    nowMs: Long,
+): String {
     return when (DurationFormatter.calendarDaysBetween(wallClockMs, nowMs)) {
         0L -> stringResource(R.string.date_today)
         1L -> stringResource(R.string.date_yesterday)

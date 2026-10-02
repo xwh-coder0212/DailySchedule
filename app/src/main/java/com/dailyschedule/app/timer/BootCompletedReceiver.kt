@@ -8,13 +8,13 @@ import com.dailyschedule.app.domain.repository.PreferencesRepository
 import com.dailyschedule.app.domain.repository.SessionRepository
 import com.dailyschedule.app.domain.usecase.timer.TimerRebootRecoveryUseCase
 import dagger.hilt.android.AndroidEntryPoint
-import java.time.ZoneId
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import java.time.ZoneId
+import javax.inject.Inject
 
 /**
  * 处理 BOOT_COMPLETED 与 MY_PACKAGE_REPLACED 广播。
@@ -26,15 +26,21 @@ import kotlinx.coroutines.launch
  */
 @AndroidEntryPoint
 class BootCompletedReceiver : BroadcastReceiver() {
-
     @Inject lateinit var sessionRepository: SessionRepository
+
     @Inject lateinit var preferencesRepository: PreferencesRepository
+
     @Inject lateinit var timerRebootRecovery: TimerRebootRecoveryUseCase
 
-    override fun onReceive(context: Context, intent: Intent) {
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED &&
             intent.action != Intent.ACTION_MY_PACKAGE_REPLACED
-        ) return
+        ) {
+            return
+        }
 
         AppLogger.i(TAG, "收到广播 ${intent.action}")
         val pending = goAsync()

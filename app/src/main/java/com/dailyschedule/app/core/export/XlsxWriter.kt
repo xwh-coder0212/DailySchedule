@@ -34,7 +34,6 @@ import java.util.zip.ZipOutputStream
  * 在 Excel 里既看得懂，按文本排序也等于按时间排序。故一律写字符串。
  */
 object XlsxWriter {
-
     private const val NS_MAIN = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
     private const val NS_DOC_REL =
         "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
@@ -54,7 +53,10 @@ object XlsxWriter {
      * 不关闭 [out]（由调用方负责）—— 这里只 `finish()`，方便调用方把
      * 同一个流再包别的处理，也避免「谁关流」这种扯不清的约定。
      */
-    fun write(tables: List<ExportTable>, out: OutputStream) {
+    fun write(
+        tables: List<ExportTable>,
+        out: OutputStream,
+    ) {
         require(tables.isNotEmpty()) { "至少要有一张工作表" }
         require(tables.size <= MAX_SHEETS) { "工作表数量超过 Excel 上限 $MAX_SHEETS" }
         tables.forEach(::validate)
@@ -92,108 +94,118 @@ object XlsxWriter {
 
     // ── 包部件 ──
 
-    private fun contentTypes(sheetCount: Int): String = buildString {
-        append(XML_DECL)
-        append("<Types xmlns=\"$NS_CONTENT_TYPES\">")
-        append("<Default Extension=\"rels\" ")
-        append("ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>")
-        append("<Default Extension=\"xml\" ContentType=\"application/xml\"/>")
-        append(
-            "<Override PartName=\"/xl/workbook.xml\" ContentType=\"application/" +
-                "vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/>"
-        )
-        append(
-            "<Override PartName=\"/xl/styles.xml\" ContentType=\"application/" +
-                "vnd.openxmlformats-officedocument.spreadsheetml.styles+xml\"/>"
-        )
-        for (i in 1..sheetCount) {
-            append("<Override PartName=\"/xl/worksheets/sheet$i.xml\" ContentType=\"$CT_SHEET\"/>")
-        }
-        append("</Types>")
-    }
-
-    private fun rootRels(): String = buildString {
-        append(XML_DECL)
-        append("<Relationships xmlns=\"$NS_PKG_REL\">")
-        append(
-            "<Relationship Id=\"rId1\" Type=\"$NS_DOC_REL/officeDocument\" " +
-                "Target=\"xl/workbook.xml\"/>"
-        )
-        append("</Relationships>")
-    }
-
-    private fun workbook(tables: List<ExportTable>): String = buildString {
-        append(XML_DECL)
-        append("<workbook xmlns=\"$NS_MAIN\" xmlns:r=\"$NS_DOC_REL\"><sheets>")
-        tables.forEachIndexed { index, table ->
-            val id = index + 1
+    private fun contentTypes(sheetCount: Int): String =
+        buildString {
+            append(XML_DECL)
+            append("<Types xmlns=\"$NS_CONTENT_TYPES\">")
+            append("<Default Extension=\"rels\" ")
+            append("ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>")
+            append("<Default Extension=\"xml\" ContentType=\"application/xml\"/>")
             append(
-                "<sheet name=\"${escape(table.name)}\" sheetId=\"$id\" r:id=\"rId$id\"/>"
+                "<Override PartName=\"/xl/workbook.xml\" ContentType=\"application/" +
+                    "vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/>",
             )
-        }
-        append("</sheets></workbook>")
-    }
-
-    private fun workbookRels(sheetCount: Int): String = buildString {
-        append(XML_DECL)
-        append("<Relationships xmlns=\"$NS_PKG_REL\">")
-        for (i in 1..sheetCount) {
             append(
-                "<Relationship Id=\"rId$i\" Type=\"$NS_DOC_REL/worksheet\" " +
-                    "Target=\"worksheets/sheet$i.xml\"/>"
+                "<Override PartName=\"/xl/styles.xml\" ContentType=\"application/" +
+                    "vnd.openxmlformats-officedocument.spreadsheetml.styles+xml\"/>",
             )
+            for (i in 1..sheetCount) {
+                append("<Override PartName=\"/xl/worksheets/sheet$i.xml\" ContentType=\"$CT_SHEET\"/>")
+            }
+            append("</Types>")
         }
-        // styles.xml 用最后一个 rId，避免与工作表 rId 撞号
-        append(
-            "<Relationship Id=\"rId${sheetCount + 1}\" Type=\"$NS_DOC_REL/styles\" " +
-                "Target=\"styles.xml\"/>"
-        )
-        append("</Relationships>")
-    }
+
+    private fun rootRels(): String =
+        buildString {
+            append(XML_DECL)
+            append("<Relationships xmlns=\"$NS_PKG_REL\">")
+            append(
+                "<Relationship Id=\"rId1\" Type=\"$NS_DOC_REL/officeDocument\" " +
+                    "Target=\"xl/workbook.xml\"/>",
+            )
+            append("</Relationships>")
+        }
+
+    private fun workbook(tables: List<ExportTable>): String =
+        buildString {
+            append(XML_DECL)
+            append("<workbook xmlns=\"$NS_MAIN\" xmlns:r=\"$NS_DOC_REL\"><sheets>")
+            tables.forEachIndexed { index, table ->
+                val id = index + 1
+                append(
+                    "<sheet name=\"${escape(table.name)}\" sheetId=\"$id\" r:id=\"rId$id\"/>",
+                )
+            }
+            append("</sheets></workbook>")
+        }
+
+    private fun workbookRels(sheetCount: Int): String =
+        buildString {
+            append(XML_DECL)
+            append("<Relationships xmlns=\"$NS_PKG_REL\">")
+            for (i in 1..sheetCount) {
+                append(
+                    "<Relationship Id=\"rId$i\" Type=\"$NS_DOC_REL/worksheet\" " +
+                        "Target=\"worksheets/sheet$i.xml\"/>",
+                )
+            }
+            // styles.xml 用最后一个 rId，避免与工作表 rId 撞号
+            append(
+                "<Relationship Id=\"rId${sheetCount + 1}\" Type=\"$NS_DOC_REL/styles\" " +
+                    "Target=\"styles.xml\"/>",
+            )
+            append("</Relationships>")
+        }
 
     // ── 工作表 ──
 
-    private fun sheet(table: ExportTable): String = buildString {
-        append(XML_DECL)
-        append("<worksheet xmlns=\"$NS_MAIN\">")
-        append("<sheetViews><sheetView workbookViewId=\"0\">")
-        append("<pane ySplit=\"1\" topLeftCell=\"A2\" activePane=\"bottomLeft\" state=\"frozen\"/>")
-        append("</sheetView></sheetViews>")
-        append("<sheetFormatPr defaultRowHeight=\"15\"/>")
+    private fun sheet(table: ExportTable): String =
+        buildString {
+            append(XML_DECL)
+            append("<worksheet xmlns=\"$NS_MAIN\">")
+            append("<sheetViews><sheetView workbookViewId=\"0\">")
+            append("<pane ySplit=\"1\" topLeftCell=\"A2\" activePane=\"bottomLeft\" state=\"frozen\"/>")
+            append("</sheetView></sheetViews>")
+            append("<sheetFormatPr defaultRowHeight=\"15\"/>")
 
-        append("<cols>")
-        table.columnWidths.forEachIndexed { index, width ->
-            val n = index + 1
-            append("<col min=\"$n\" max=\"$n\" width=\"$width\" customWidth=\"1\"/>")
-        }
-        append("</cols>")
+            append("<cols>")
+            table.columnWidths.forEachIndexed { index, width ->
+                val n = index + 1
+                append("<col min=\"$n\" max=\"$n\" width=\"$width\" customWidth=\"1\"/>")
+            }
+            append("</cols>")
 
-        append("<sheetData>")
-        append("<row r=\"1\">")
-        table.headers.forEachIndexed { index, header ->
-            append(cellXml(index, rowNumber = 1, cell = Cell.Text(header), isHeader = true))
-        }
-        append("</row>")
-
-        table.rows.forEachIndexed { rowIndex, row ->
-            val r = rowIndex + 2
-            append("<row r=\"$r\">")
-            row.forEachIndexed { index, cell ->
-                append(cellXml(index, rowNumber = r, cell = cell, isHeader = false))
+            append("<sheetData>")
+            append("<row r=\"1\">")
+            table.headers.forEachIndexed { index, header ->
+                append(cellXml(index, rowNumber = 1, cell = Cell.Text(header), isHeader = true))
             }
             append("</row>")
-        }
-        append("</sheetData>")
 
-        if (table.dataRowCount > 0) {
-            val lastColumn = columnLetter(table.headers.size - 1)
-            val lastRow = table.dataRowCount + 1
-            append("<autoFilter ref=\"A1:$lastColumn$lastRow\"/>")
-        }
-        append("</worksheet>")
-    }
+            table.rows.forEachIndexed { rowIndex, row ->
+                val r = rowIndex + 2
+                append("<row r=\"$r\">")
+                row.forEachIndexed { index, cell ->
+                    append(cellXml(index, rowNumber = r, cell = cell, isHeader = false))
+                }
+                append("</row>")
+            }
+            append("</sheetData>")
 
-    private fun cellXml(columnIndex: Int, rowNumber: Int, cell: Cell, isHeader: Boolean): String {
+            if (table.dataRowCount > 0) {
+                val lastColumn = columnLetter(table.headers.size - 1)
+                val lastRow = table.dataRowCount + 1
+                append("<autoFilter ref=\"A1:$lastColumn$lastRow\"/>")
+            }
+            append("</worksheet>")
+        }
+
+    private fun cellXml(
+        columnIndex: Int,
+        rowNumber: Int,
+        cell: Cell,
+        isHeader: Boolean,
+    ): String {
         val ref = "${columnLetter(columnIndex)}$rowNumber"
         if (isHeader) {
             val text = (cell as? Cell.Text)?.value.orEmpty()
@@ -221,15 +233,23 @@ object XlsxWriter {
         }
     }
 
-    private fun inlineString(ref: String, value: String, style: Int): String =
+    private fun inlineString(
+        ref: String,
+        value: String,
+        style: Int,
+    ): String =
         "<c r=\"$ref\" t=\"inlineStr\" s=\"$style\">" +
             "<is><t xml:space=\"preserve\">${escape(value)}</t></is></c>"
 
-    private fun numberStyle(format: NumberFormat, bold: Boolean): Int = when (format) {
-        NumberFormat.PLAIN -> STYLE_DEFAULT
-        NumberFormat.ONE_DECIMAL -> if (bold) STYLE_TOTAL_DECIMAL1 else STYLE_DECIMAL1
-        NumberFormat.TWO_DECIMAL -> if (bold) STYLE_TOTAL_DECIMAL2 else STYLE_DECIMAL2
-    }
+    private fun numberStyle(
+        format: NumberFormat,
+        bold: Boolean,
+    ): Int =
+        when (format) {
+            NumberFormat.PLAIN -> STYLE_DEFAULT
+            NumberFormat.ONE_DECIMAL -> if (bold) STYLE_TOTAL_DECIMAL1 else STYLE_DECIMAL1
+            NumberFormat.TWO_DECIMAL -> if (bold) STYLE_TOTAL_DECIMAL2 else STYLE_DECIMAL2
+        }
 
     // ── 工具 ──
 
@@ -288,7 +308,10 @@ object XlsxWriter {
         return sb.toString()
     }
 
-    private fun ZipOutputStream.put(name: String, content: String) {
+    private fun ZipOutputStream.put(
+        name: String,
+        content: String,
+    ) {
         putNextEntry(ZipEntry(name))
         write(content.toByteArray(Charsets.UTF_8))
         closeEntry()
@@ -307,55 +330,56 @@ object XlsxWriter {
     private const val MAX_SHEET_NAME = 31
 
     /** numFmtId 164 起是「自定义格式」区间，内置只到 163，不会撞车。 */
-    private val STYLES = buildString {
-        append(XML_DECL)
-        append("<styleSheet xmlns=\"$NS_MAIN\">")
-        append("<numFmts count=\"1\"><numFmt numFmtId=\"164\" formatCode=\"0.0\"/></numFmts>")
-        append("<fonts count=\"2\">")
-        append("<font><sz val=\"11\"/><color theme=\"1\"/><name val=\"Calibri\"/></font>")
-        append("<font><b/><sz val=\"11\"/><color theme=\"1\"/><name val=\"Calibri\"/></font>")
-        append("</fonts>")
-        // index 0 必须是 none、index 1 必须是 gray125 —— 这是 Excel 的既有约定，
-        // 顺序错了部分阅读器会报「文件已损坏」
-        append("<fills count=\"3\">")
-        append("<fill><patternFill patternType=\"none\"/></fill>")
-        append("<fill><patternFill patternType=\"gray125\"/></fill>")
-        append(
-            "<fill><patternFill patternType=\"solid\">" +
-                "<fgColor rgb=\"FFEDEDED\"/><bgColor indexed=\"64\"/></patternFill></fill>"
-        )
-        append("</fills>")
-        append("<borders count=\"2\">")
-        append("<border><left/><right/><top/><bottom/><diagonal/></border>")
-        append(
-            "<border><left/><right/><top/>" +
-                "<bottom style=\"thin\"><color rgb=\"FFB0B0B0\"/></bottom><diagonal/></border>"
-        )
-        append("</borders>")
-        append("<cellStyleXfs count=\"1\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\"/></cellStyleXfs>")
-        append("<cellXfs count=\"7\">")
-        append("<xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\"/>")
-        append(
-            "<xf numFmtId=\"0\" fontId=\"1\" fillId=\"2\" borderId=\"0\" xfId=\"0\" " +
-                "applyFont=\"1\" applyFill=\"1\" applyAlignment=\"1\">" +
-                "<alignment horizontal=\"center\"/></xf>"
-        )
-        append("<xf numFmtId=\"164\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>")
-        append("<xf numFmtId=\"2\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>")
-        append(
-            "<xf numFmtId=\"2\" fontId=\"1\" fillId=\"0\" borderId=\"1\" xfId=\"0\" " +
-                "applyNumberFormat=\"1\" applyFont=\"1\" applyBorder=\"1\"/>"
-        )
-        append(
-            "<xf numFmtId=\"164\" fontId=\"1\" fillId=\"0\" borderId=\"1\" xfId=\"0\" " +
-                "applyNumberFormat=\"1\" applyFont=\"1\" applyBorder=\"1\"/>"
-        )
-        append(
-            "<xf numFmtId=\"0\" fontId=\"1\" fillId=\"0\" borderId=\"1\" xfId=\"0\" " +
-                "applyFont=\"1\" applyBorder=\"1\"/>"
-        )
-        append("</cellXfs>")
-        append("<cellStyles count=\"1\"><cellStyle name=\"Normal\" xfId=\"0\" builtinId=\"0\"/></cellStyles>")
-        append("</styleSheet>")
-    }
+    private val STYLES =
+        buildString {
+            append(XML_DECL)
+            append("<styleSheet xmlns=\"$NS_MAIN\">")
+            append("<numFmts count=\"1\"><numFmt numFmtId=\"164\" formatCode=\"0.0\"/></numFmts>")
+            append("<fonts count=\"2\">")
+            append("<font><sz val=\"11\"/><color theme=\"1\"/><name val=\"Calibri\"/></font>")
+            append("<font><b/><sz val=\"11\"/><color theme=\"1\"/><name val=\"Calibri\"/></font>")
+            append("</fonts>")
+            // index 0 必须是 none、index 1 必须是 gray125 —— 这是 Excel 的既有约定，
+            // 顺序错了部分阅读器会报「文件已损坏」
+            append("<fills count=\"3\">")
+            append("<fill><patternFill patternType=\"none\"/></fill>")
+            append("<fill><patternFill patternType=\"gray125\"/></fill>")
+            append(
+                "<fill><patternFill patternType=\"solid\">" +
+                    "<fgColor rgb=\"FFEDEDED\"/><bgColor indexed=\"64\"/></patternFill></fill>",
+            )
+            append("</fills>")
+            append("<borders count=\"2\">")
+            append("<border><left/><right/><top/><bottom/><diagonal/></border>")
+            append(
+                "<border><left/><right/><top/>" +
+                    "<bottom style=\"thin\"><color rgb=\"FFB0B0B0\"/></bottom><diagonal/></border>",
+            )
+            append("</borders>")
+            append("<cellStyleXfs count=\"1\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\"/></cellStyleXfs>")
+            append("<cellXfs count=\"7\">")
+            append("<xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\"/>")
+            append(
+                "<xf numFmtId=\"0\" fontId=\"1\" fillId=\"2\" borderId=\"0\" xfId=\"0\" " +
+                    "applyFont=\"1\" applyFill=\"1\" applyAlignment=\"1\">" +
+                    "<alignment horizontal=\"center\"/></xf>",
+            )
+            append("<xf numFmtId=\"164\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>")
+            append("<xf numFmtId=\"2\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>")
+            append(
+                "<xf numFmtId=\"2\" fontId=\"1\" fillId=\"0\" borderId=\"1\" xfId=\"0\" " +
+                    "applyNumberFormat=\"1\" applyFont=\"1\" applyBorder=\"1\"/>",
+            )
+            append(
+                "<xf numFmtId=\"164\" fontId=\"1\" fillId=\"0\" borderId=\"1\" xfId=\"0\" " +
+                    "applyNumberFormat=\"1\" applyFont=\"1\" applyBorder=\"1\"/>",
+            )
+            append(
+                "<xf numFmtId=\"0\" fontId=\"1\" fillId=\"0\" borderId=\"1\" xfId=\"0\" " +
+                    "applyFont=\"1\" applyBorder=\"1\"/>",
+            )
+            append("</cellXfs>")
+            append("<cellStyles count=\"1\"><cellStyle name=\"Normal\" xfId=\"0\" builtinId=\"0\"/></cellStyles>")
+            append("</styleSheet>")
+        }
 }

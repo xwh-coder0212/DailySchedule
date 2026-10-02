@@ -10,7 +10,6 @@ import org.junit.Test
  * "12.5" 解析成 1250 还是 125，界面上看不出差别，只有对账时才发现少了一位。
  */
 class AmountInputTest {
-
     @Test
     fun `整数元解析为分`() {
         assertThat(AmountInput.parseCents("28")).isEqualTo(2_800L)

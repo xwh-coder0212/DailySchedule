@@ -74,110 +74,115 @@ fun SettingsScreen(
         },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-        // ── 外观 ──
-        SettingsSection(title = stringResource(R.string.settings_appearance)) {
-            Text(
-                text = stringResource(R.string.settings_theme_mode),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            ThemeMode.entries.forEach { mode ->
-                val labelRes = when (mode) {
-                    ThemeMode.SYSTEM -> R.string.settings_theme_system
-                    ThemeMode.LIGHT -> R.string.settings_theme_light
-                    ThemeMode.DARK -> R.string.settings_theme_dark
+            // ── 外观 ──
+            SettingsSection(title = stringResource(R.string.settings_appearance)) {
+                Text(
+                    text = stringResource(R.string.settings_theme_mode),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                ThemeMode.entries.forEach { mode ->
+                    val labelRes =
+                        when (mode) {
+                            ThemeMode.SYSTEM -> R.string.settings_theme_system
+                            ThemeMode.LIGHT -> R.string.settings_theme_light
+                            ThemeMode.DARK -> R.string.settings_theme_dark
+                        }
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { viewModel.setThemeMode(mode) }
+                                .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(
+                            selected = state.preferences.themeMode == mode,
+                            onClick = { viewModel.setThemeMode(mode) },
+                        )
+                        Text(
+                            text = stringResource(labelRes),
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
                 }
+
+                // 动态取色只在 Android 12+ 有意义；低版本显示禁用态 + 说明，
+                // 而不是把这个开关整个藏起来 —— 藏起来用户会以为功能丢了。
+                val supportsDynamic = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { viewModel.setThemeMode(mode) }
-                        .padding(vertical = 4.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    RadioButton(
-                        selected = state.preferences.themeMode == mode,
-                        onClick = { viewModel.setThemeMode(mode) },
-                    )
-                    Text(
-                        text = stringResource(labelRes),
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(start = 8.dp),
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.settings_dynamic_color),
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                        Text(
+                            text =
+                                stringResource(
+                                    if (supportsDynamic) {
+                                        R.string.settings_dynamic_color_desc
+                                    } else {
+                                        R.string.settings_dynamic_color_unsupported
+                                    },
+                                ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(
+                        checked = supportsDynamic && state.preferences.dynamicColor,
+                        onCheckedChange = { viewModel.setDynamicColor(it) },
+                        enabled = supportsDynamic,
                     )
                 }
             }
 
-            // 动态取色只在 Android 12+ 有意义；低版本显示禁用态 + 说明，
-            // 而不是把这个开关整个藏起来 —— 藏起来用户会以为功能丢了。
-            val supportsDynamic = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.settings_dynamic_color),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    Text(
-                        text = stringResource(
-                            if (supportsDynamic) {
-                                R.string.settings_dynamic_color_desc
-                            } else {
-                                R.string.settings_dynamic_color_unsupported
-                            },
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+            // ── 日切与周起始 ──
+            SettingsSection(title = stringResource(R.string.settings_day_start)) {
+                Text(
+                    text = stringResource(R.string.settings_day_start_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // 日切只能选 0–6 点，超出这个范围的作息不需要日切
+                    (0..6).forEach { hour ->
+                        val selected = state.preferences.dayStartHour == hour
+                        androidx.compose.material3.FilterChip(
+                            selected = selected,
+                            onClick = { viewModel.setDayStartHour(hour) },
+                            label = { Text("%02d:00".format(hour)) },
+                        )
+                    }
                 }
-                Switch(
-                    checked = supportsDynamic && state.preferences.dynamicColor,
-                    onCheckedChange = { viewModel.setDynamicColor(it) },
-                    enabled = supportsDynamic,
+            }
+
+            // ── 数据 ──
+            SettingsSection(title = stringResource(R.string.settings_data)) {
+                SettingsRow(
+                    text = stringResource(R.string.settings_data_transfer),
+                    onClick = onOpenDataTransfer,
+                )
+                SettingsRow(
+                    text = stringResource(R.string.settings_category_manage),
+                    onClick = onOpenCategoryManager,
                 )
             }
-        }
-
-        // ── 日切与周起始 ──
-        SettingsSection(title = stringResource(R.string.settings_day_start)) {
-            Text(
-                text = stringResource(R.string.settings_day_start_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // 日切只能选 0–6 点，超出这个范围的作息不需要日切
-                (0..6).forEach { hour ->
-                    val selected = state.preferences.dayStartHour == hour
-                    androidx.compose.material3.FilterChip(
-                        selected = selected,
-                        onClick = { viewModel.setDayStartHour(hour) },
-                        label = { Text("%02d:00".format(hour)) },
-                    )
-                }
-            }
-        }
-
-        // ── 数据 ──
-        SettingsSection(title = stringResource(R.string.settings_data)) {
-            SettingsRow(
-                text = stringResource(R.string.settings_data_transfer),
-                onClick = onOpenDataTransfer,
-            )
-            SettingsRow(
-                text = stringResource(R.string.settings_category_manage),
-                onClick = onOpenCategoryManager,
-            )
-        }
         }
     }
 }
@@ -190,9 +195,10 @@ private fun SettingsSection(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            ),
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -204,12 +210,16 @@ private fun SettingsSection(
 }
 
 @Composable
-private fun SettingsRow(text: String, onClick: () -> Unit) {
+private fun SettingsRow(
+    text: String,
+    onClick: () -> Unit,
+) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(text = text, style = MaterialTheme.typography.bodyLarge)

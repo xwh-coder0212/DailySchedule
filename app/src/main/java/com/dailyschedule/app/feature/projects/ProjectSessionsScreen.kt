@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Add
@@ -48,7 +49,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dailyschedule.app.R
@@ -84,14 +84,15 @@ fun ProjectSessionsScreen(
     var deleting by remember { mutableStateOf<FocusSession?>(null) }
     var addingManual by remember { mutableStateOf(false) }
 
-    val messageText = message?.let { m ->
-        when (m) {
-            SessionsMessage.DurationOutOfRange ->
-                stringResource(R.string.session_add_invalid_duration)
-            SessionsMessage.NoRoomForDuration -> stringResource(R.string.session_add_no_room)
-            is SessionsMessage.Failure -> m.text
+    val messageText =
+        message?.let { m ->
+            when (m) {
+                SessionsMessage.DurationOutOfRange ->
+                    stringResource(R.string.session_add_invalid_duration)
+                SessionsMessage.NoRoomForDuration -> stringResource(R.string.session_add_no_room)
+                is SessionsMessage.Failure -> m.text
+            }
         }
-    }
     LaunchedEffect(messageText) {
         if (messageText != null) {
             snackbarHostState.showSnackbar(messageText)
@@ -115,14 +116,16 @@ fun ProjectSessionsScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
         ) {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 item(key = "summary") {
@@ -171,9 +174,10 @@ fun ProjectSessionsScreen(
 
             FloatingActionButton(
                 onClick = { addingManual = true },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(20.dp),
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(20.dp),
             ) {
                 Icon(
                     Icons.Outlined.Add,
@@ -240,14 +244,18 @@ fun ProjectSessionsScreen(
 }
 
 @Composable
-private fun TotalCard(totalCount: Int, totalMs: Long) {
+private fun TotalCard(
+    totalCount: Int,
+    totalMs: Long,
+) {
     val (hours, minutes) = DurationFormatter.splitHoursMinutes(totalMs)
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            ),
     ) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
             Text(
@@ -263,10 +271,11 @@ private fun TotalCard(totalCount: Int, totalMs: Long) {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
                         text = totalCount.toString(),
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontFeatureSettings = "tnum",
-                        ),
+                        style =
+                            MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontFeatureSettings = "tnum",
+                            ),
                     )
                     Text(
                         text = stringResource(R.string.project_detail_times, totalCount),
@@ -278,10 +287,11 @@ private fun TotalCard(totalCount: Int, totalMs: Long) {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
                         text = hours.toString(),
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontFeatureSettings = "tnum",
-                        ),
+                        style =
+                            MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontFeatureSettings = "tnum",
+                            ),
                     )
                     Text(
                         text = stringResource(R.string.project_detail_hours, hours),
@@ -291,10 +301,11 @@ private fun TotalCard(totalCount: Int, totalMs: Long) {
                     )
                     Text(
                         text = minutes.toString(),
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontFeatureSettings = "tnum",
-                        ),
+                        style =
+                            MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontFeatureSettings = "tnum",
+                            ),
                         modifier = Modifier.padding(start = 12.dp),
                     )
                     Text(
@@ -339,13 +350,14 @@ private fun SessionRowItem(
         },
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                .clickable {
-                    if (revealed) onRevealedChange(false) else onEdit()
-                }
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                    .clickable {
+                        if (revealed) onRevealedChange(false) else onEdit()
+                    }
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -364,18 +376,20 @@ private fun SessionRowItem(
                             session.endWallClockMs ?: session.startWallClockMs,
                         )
                     }",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontFeatureSettings = "tnum",
-                    ),
+                    style =
+                        MaterialTheme.typography.bodySmall.copy(
+                            fontFeatureSettings = "tnum",
+                        ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Text(
                 text = DurationFormatter.duration(session.durationMs ?: 0L),
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.Medium,
-                    fontFeatureSettings = "tnum",
-                ),
+                style =
+                    MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.Medium,
+                        fontFeatureSettings = "tnum",
+                    ),
             )
         }
     }
@@ -385,12 +399,13 @@ private fun SessionRowItem(
 @Composable
 fun ManualBadge(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier
-            .background(
-                color = MaterialTheme.colorScheme.tertiaryContainer,
-                shape = RoundedCornerShape(6.dp),
-            )
-            .padding(horizontal = 6.dp, vertical = 1.dp),
+        modifier =
+            modifier
+                .background(
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                    shape = RoundedCornerShape(6.dp),
+                )
+                .padding(horizontal = 6.dp, vertical = 1.dp),
     ) {
         Text(
             text = stringResource(R.string.session_history_manual_badge),
@@ -408,11 +423,12 @@ private fun RowScope.RevealAction(
     onClick: () -> Unit,
 ) {
     Box(
-        modifier = Modifier
-            .weight(1f)
-            .fillMaxSize()
-            .background(container)
-            .clickable(onClick = onClick),
+        modifier =
+            Modifier
+                .weight(1f)
+                .fillMaxSize()
+                .background(container)
+                .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -445,8 +461,11 @@ private fun DurationDialog(
                 onValueChange = { input ->
                     // 只收数字：这里量的是分钟，小数点没有意义，
                     // 放进来只会在解析时变成 0 或崩溃
-                    if (input.length <= 5 && input.all { it.isDigit() }) text = input
-                    else if (input.isEmpty()) text = ""
+                    if (input.length <= 5 && input.all { it.isDigit() }) {
+                        text = input
+                    } else if (input.isEmpty()) {
+                        text = ""
+                    }
                 },
                 label = { Text(stringResource(R.string.session_add_duration_label)) },
                 singleLine = true,
@@ -484,8 +503,11 @@ private fun AddManualDialog(
                 OutlinedTextField(
                     value = minutesText,
                     onValueChange = { input ->
-                        if (input.length <= 5 && input.all { it.isDigit() }) minutesText = input
-                        else if (input.isEmpty()) minutesText = ""
+                        if (input.length <= 5 && input.all { it.isDigit() }) {
+                            minutesText = input
+                        } else if (input.isEmpty()) {
+                            minutesText = ""
+                        }
                     },
                     label = { Text(stringResource(R.string.session_add_duration_label)) },
                     singleLine = true,

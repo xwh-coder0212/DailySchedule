@@ -10,7 +10,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import com.dailyschedule.app.MainActivity
 import com.dailyschedule.app.R
-import com.dailyschedule.app.core.time.DurationFormatter
 
 /**
  * 通知通道集中定义。
@@ -24,7 +23,6 @@ import com.dailyschedule.app.core.time.DurationFormatter
  * 永远不要再修改它们。
  */
 object TimerNotifications {
-
     const val CHANNEL_ACTIVE_TIMER = "active_timer"
     const val CHANNEL_POMODORO_END = "pomodoro_end"
     const val CHANNEL_PENDING_REVIEW = "pending_review"
@@ -41,7 +39,8 @@ object TimerNotifications {
             NotificationChannel(
                 CHANNEL_ACTIVE_TIMER,
                 context.getString(R.string.notif_channel_active_timer),
-                NotificationManager.IMPORTANCE_LOW,  // 不响铃不震动
+                // 不响铃不震动
+                NotificationManager.IMPORTANCE_LOW,
             ).apply {
                 description = context.getString(R.string.notif_channel_active_timer_desc)
                 setShowBadge(false)
@@ -49,7 +48,8 @@ object TimerNotifications {
             NotificationChannel(
                 CHANNEL_POMODORO_END,
                 context.getString(R.string.notif_channel_pomodoro_end),
-                NotificationManager.IMPORTANCE_DEFAULT,  // 到点要响
+                // 到点要响
+                NotificationManager.IMPORTANCE_DEFAULT,
             ),
             NotificationChannel(
                 CHANNEL_PENDING_REVIEW,
@@ -72,34 +72,40 @@ object TimerNotifications {
         projectName: String?,
         paused: Boolean,
     ): android.app.Notification {
-        val openIntent = PendingIntent.getActivity(
-            context,
-            0,
-            Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-            },
-            PendingIntent.FLAG_IMMUTABLE,
-        )
-
-        val title = if (projectName.isNullOrBlank()) {
-            context.getString(R.string.timer_notif_title_anonymous)
-        } else {
-            context.getString(R.string.timer_notif_title_with_project, projectName)
-        }
-
-        val builder = NotificationCompat.Builder(context, CHANNEL_ACTIVE_TIMER)
-            .setSmallIcon(R.drawable.ic_stat_timer)
-            .setContentTitle(title)
-            .setContentText(
-                if (paused) context.getString(R.string.timer_notif_paused)
-                else null
+        val openIntent =
+            PendingIntent.getActivity(
+                context,
+                0,
+                Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+                },
+                PendingIntent.FLAG_IMMUTABLE,
             )
-            .setUsesChronometer(!paused)
-            .setWhen(startElapsedMs)
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setContentIntent(openIntent)
-            .setCategory(NotificationCompat.CATEGORY_STATUS)
+
+        val title =
+            if (projectName.isNullOrBlank()) {
+                context.getString(R.string.timer_notif_title_anonymous)
+            } else {
+                context.getString(R.string.timer_notif_title_with_project, projectName)
+            }
+
+        val builder =
+            NotificationCompat.Builder(context, CHANNEL_ACTIVE_TIMER)
+                .setSmallIcon(R.drawable.ic_stat_timer)
+                .setContentTitle(title)
+                .setContentText(
+                    if (paused) {
+                        context.getString(R.string.timer_notif_paused)
+                    } else {
+                        null
+                    },
+                )
+                .setUsesChronometer(!paused)
+                .setWhen(startElapsedMs)
+                .setOngoing(true)
+                .setOnlyAlertOnce(true)
+                .setContentIntent(openIntent)
+                .setCategory(NotificationCompat.CATEGORY_STATUS)
 
         // 暂停中时不用 chronometer（chronometer 不会停，会继续走）
         if (paused) builder.setShowWhen(false)

@@ -192,11 +192,15 @@ echo "sdk.dir=/你的/Android/sdk" > local.properties
 ### 测试
 
 ```bash
-./gradlew testDebugUnitTest      # 170 个单测
+./gradlew testDebugUnitTest      # 206 个单测
 ```
 
 单测用 Robolectric 跑，不需要设备。`testOptions.unitTests.isReturnDefaultValues = true`
 是刻意打开的 —— `android.util.Log` 在纯 JVM 下是抛异常的 stub，打开后日志调用退化为 no-op。
+
+其中 `BackupRoundTripTest` 走**真实的 Room 内存库**而不是 mock DAO：
+备份恢复的风险全在"SQLite 里到底发生了什么"——外键顺序、主键自增序列、
+触发器、事务边界。mock 掉 DAO 等于把要验的东西全 mock 没了，测试会全绿而线上照样丢数据。
 
 更详细的 Windows 环境搭建与常见报错见 [BUILD.md](./BUILD.md)。
 
@@ -207,18 +211,30 @@ echo "sdk.dir=/你的/Android/sdk" > local.properties
 | 门禁 | 命令 | 结果 |
 | --- | --- | --- |
 | 编译 | `./gradlew compileDebugKotlin` | 通过，0 警告 |
-| 单元测试 | `./gradlew testDebugUnitTest` | **170 通过 / 0 失败** |
-| Android Lint | `./gradlew :app:lintDebug` | **0 error / 54 warning** |
-| ktlint | `./gradlew :app:ktlintSources` | 能跑，存量 1469 处风格违规**未清** |
+| 单元测试 | `./gradlew testDebugUnitTest` | **206 通过 / 0 失败 / 0 跳过** |
+| Android Lint | `./gradlew :app:lintDebug` | **0 error / 27 warning** |
+| ktlint | `./gradlew :app:ktlintGate` | **通过，存量 0 处** |
 | 打包 | `./gradlew assembleDebug` | 通过 |
 | 真机验收 | `docs/quality/device-acceptance-2026-10-02.md` | Redmi / Android 16 上 12 项中 11 项通过，1 项未覆盖 |
 
-两点需要说明，因为它们都是「看起来绿、实际空过」的坑：
+几个需要说明的地方，因为它们都是「看起来绿、实际空过」的坑：
 
 **`ktlintCheck` 是空过的。** ktlint-gradle 12.3.0 认不出 AGP 9 的源集模型，
 只生成了 `.kts` 的检查任务，`src/main` 与 `src/test` 下几百个 `.kt` 一个都没扫。
-因此仓库里用 `ktlintSources`（直接调 ktlint CLI，绕开插件的 Android 集成）替代。
-存量违规清单见 `docs/quality/quality-gate.log`。
+因此仓库里自建了四个直连 ktlint CLI 的任务：
+
+| 任务 | 用途 |
+| --- | --- |
+| `ktlintSources` | 扫描并输出报告到 `build/reports/ktlint/ktlint.out` |
+| `ktlintBaseline` | 用当前扫描结果刷新基线 |
+| `ktlintGate` | 与基线比对，出现新增违规就失败（**已挂进 `check`**） |
+| `ktlintFormatAll` | `ktlint -F` 批量修复 |
+
+存量 1469 处（124 个文件）已清零，基线随之收紧到 0，门禁按最严标准执行。
+清理前的完整违规清单留在 `docs/quality/ktlint-violations-before-cleanup.log`。
+
+**基线记「文件 + 规则 + 次数」，不记行号。** 行号会随任何一次编辑整体位移，
+那种基线一改就满屏假警报，等于没有基线。
 
 **Android Lint 曾经连跑都没跑起来。** 早期失败是拉 `lint-gradle` 时网络中断导致的
 依赖解析失败，不是配置问题。重试后正常。

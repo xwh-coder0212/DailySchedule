@@ -6,7 +6,6 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.dailyschedule.app.core.model.SessionSource
 import com.google.common.truth.Truth.assertThat
-import java.io.File
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -19,6 +18,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.io.File
 
 /**
  * v1 → v2 迁移测试。
@@ -42,7 +42,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class Migration1To2Test {
-
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val dbName = "migration-1-2-test.db"
 
@@ -63,87 +62,93 @@ class Migration1To2Test {
     }
 
     @Test
-    fun `v1 库升到 v2：Room 校验通过、旧记录保留、来源标为计时`() = runTest {
-        createV1Database()
+    fun `v1 库升到 v2：Room 校验通过、旧记录保留、来源标为计时`() =
+        runTest {
+            createV1Database()
 
-        val db = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
-            .addMigrations(*ALL_MIGRATIONS)
-            .allowMainThreadQueries()
-            .build()
+            val db =
+                Room.databaseBuilder(context, AppDatabase::class.java, dbName)
+                    .addMigrations(*ALL_MIGRATIONS)
+                    .allowMainThreadQueries()
+                    .build()
 
-        try {
-            // 打开这个库本身就会跑 migration + Room 的 schema 校验。
-            // 走到这里没抛异常，说明「迁移后的表结构」与「实体声明的结构」互相认可。
-            val sessions = db.sessionDao().observeCompletedInRange(0L, Long.MAX_VALUE).first()
+            try {
+                // 打开这个库本身就会跑 migration + Room 的 schema 校验。
+                // 走到这里没抛异常，说明「迁移后的表结构」与「实体声明的结构」互相认可。
+                val sessions = db.sessionDao().observeCompletedInRange(0L, Long.MAX_VALUE).first()
 
-            assertThat(sessions).hasSize(1)
-            val legacy = sessions.single()
-            assertThat(legacy.id).isEqualTo(LEGACY_SESSION_ID)
-            assertThat(legacy.projectId).isEqualTo(1L)
-            assertThat(legacy.durationMs).isEqualTo(LEGACY_DURATION_MS)
-            assertThat(legacy.note).isEqualTo("旧版本的记录")
-            // 迁移前不存在补录功能，存量记录只能是计时器产生的
-            assertThat(legacy.source).isEqualTo(SessionSource.TIMER)
-        } finally {
-            db.close()
+                assertThat(sessions).hasSize(1)
+                val legacy = sessions.single()
+                assertThat(legacy.id).isEqualTo(LEGACY_SESSION_ID)
+                assertThat(legacy.projectId).isEqualTo(1L)
+                assertThat(legacy.durationMs).isEqualTo(LEGACY_DURATION_MS)
+                assertThat(legacy.note).isEqualTo("旧版本的记录")
+                // 迁移前不存在补录功能，存量记录只能是计时器产生的
+                assertThat(legacy.source).isEqualTo(SessionSource.TIMER)
+            } finally {
+                db.close()
+            }
         }
-    }
 
     @Test
-    fun `v2 新写入的行在没显式指定来源时默认为计时`() = runTest {
-        createV1Database()
+    fun `v2 新写入的行在没显式指定来源时默认为计时`() =
+        runTest {
+            createV1Database()
 
-        val db = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
-            .addMigrations(*ALL_MIGRATIONS)
-            .allowMainThreadQueries()
-            .build()
+            val db =
+                Room.databaseBuilder(context, AppDatabase::class.java, dbName)
+                    .addMigrations(*ALL_MIGRATIONS)
+                    .allowMainThreadQueries()
+                    .build()
 
-        try {
-            // 直接走 SQL 插入且不写 source 列，验证「列的默认值」确实落到了库里 ——
-            // 只看实体默认值是不够的，那条路不经过 SQLite 的 DEFAULT
-            db.openHelper.writableDatabase.execSQL(
-                """
-                INSERT INTO focus_sessions
-                  (projectId, status, needsReview, startElapsedMs, startWallClockMs,
-                   accumulatedPauseMs, mode, durationMs, createdAt, updatedAt)
-                VALUES (1, 'COMPLETED', 0, 2000, 2000, 0, 'STOPWATCH', 60000, 2000, 2000)
-                """.trimIndent()
-            )
+            try {
+                // 直接走 SQL 插入且不写 source 列，验证「列的默认值」确实落到了库里 ——
+                // 只看实体默认值是不够的，那条路不经过 SQLite 的 DEFAULT
+                db.openHelper.writableDatabase.execSQL(
+                    """
+                    INSERT INTO focus_sessions
+                      (projectId, status, needsReview, startElapsedMs, startWallClockMs,
+                       accumulatedPauseMs, mode, durationMs, createdAt, updatedAt)
+                    VALUES (1, 'COMPLETED', 0, 2000, 2000, 0, 'STOPWATCH', 60000, 2000, 2000)
+                    """.trimIndent(),
+                )
 
-            val sessions = db.sessionDao().observeCompletedInRange(0L, Long.MAX_VALUE).first()
-            assertThat(sessions).hasSize(2)
-            assertThat(sessions.map { it.source }.toSet()).containsExactly(SessionSource.TIMER)
-        } finally {
-            db.close()
+                val sessions = db.sessionDao().observeCompletedInRange(0L, Long.MAX_VALUE).first()
+                assertThat(sessions).hasSize(2)
+                assertThat(sessions.map { it.source }.toSet()).containsExactly(SessionSource.TIMER)
+            } finally {
+                db.close()
+            }
         }
-    }
 
     @Test
-    fun `迁移删掉了 v1 的旧索引并装上触发器`() = runTest {
-        createV1Database()
+    fun `迁移删掉了 v1 的旧索引并装上触发器`() =
+        runTest {
+            createV1Database()
 
-        val db = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
-            .addMigrations(*ALL_MIGRATIONS)
-            .allowMainThreadQueries()
-            .build()
+            val db =
+                Room.databaseBuilder(context, AppDatabase::class.java, dbName)
+                    .addMigrations(*ALL_MIGRATIONS)
+                    .allowMainThreadQueries()
+                    .build()
 
-        try {
-            val raw = db.openHelper.readableDatabase
+            try {
+                val raw = db.openHelper.readableDatabase
 
-            // 旧的部分唯一索引必须消失：它会让 Room 的 schema 校验判为「多了个索引」
-            raw.query(
-                "SELECT name FROM sqlite_master WHERE type='index' AND name=?",
-                arrayOf(SessionUniquenessGuard.LEGACY_INDEX_NAME),
-            ).use { assertThat(it.count).isEqualTo(0) }
+                // 旧的部分唯一索引必须消失：它会让 Room 的 schema 校验判为「多了个索引」
+                raw.query(
+                    "SELECT name FROM sqlite_master WHERE type='index' AND name=?",
+                    arrayOf(SessionUniquenessGuard.LEGACY_INDEX_NAME),
+                ).use { assertThat(it.count).isEqualTo(0) }
 
-            // 取而代之的两条触发器必须到位，否则升级用户会比新装用户少一层保障
-            raw.query(
-                "SELECT name FROM sqlite_master WHERE type='trigger' AND name LIKE 'trg_single_active_session%'",
-            ).use { assertThat(it.count).isEqualTo(2) }
-        } finally {
-            db.close()
+                // 取而代之的两条触发器必须到位，否则升级用户会比新装用户少一层保障
+                raw.query(
+                    "SELECT name FROM sqlite_master WHERE type='trigger' AND name LIKE 'trg_single_active_session%'",
+                ).use { assertThat(it.count).isEqualTo(2) }
+            } finally {
+                db.close()
+            }
         }
-    }
 
     // ── 造一个 v1 库 ──
 
@@ -158,7 +163,7 @@ class Migration1To2Test {
                 INSERT INTO projects
                   (id, name, iconName, colorHex, isArchived, sortOrder, createdAt, updatedAt)
                 VALUES (1, '高等数学', 'ic_math', '#3366CC', 0, 0, 1000, 1000)
-                """.trimIndent()
+                """.trimIndent(),
             )
             sqlite.execSQL(
                 """
@@ -167,7 +172,7 @@ class Migration1To2Test {
                    accumulatedPauseMs, mode, durationMs, note, createdAt, updatedAt)
                 VALUES ($LEGACY_SESSION_ID, 1, 'COMPLETED', 0, 1000, 1000,
                         0, 'STOPWATCH', $LEGACY_DURATION_MS, '旧版本的记录', 1000, 1000)
-                """.trimIndent()
+                """.trimIndent(),
             )
             // 真实设备上这条部分唯一索引由 DatabaseCallback.onCreate 建出来，
             // 造假库时也要补上，否则测的就不是线上那个库的形状
@@ -175,7 +180,7 @@ class Migration1To2Test {
                 """
                 CREATE UNIQUE INDEX IF NOT EXISTS idx_single_active_session
                 ON focus_sessions(CASE WHEN status IN ('RUNNING', 'PAUSED') THEN 1 END)
-                """.trimIndent()
+                """.trimIndent(),
             )
             sqlite.version = 1
         } finally {
@@ -192,10 +197,11 @@ class Migration1To2Test {
      * 排查方向从一开始就被带偏。
      */
     private fun v1Ddl(): List<String> {
-        val schemaFile = listOf(
-            File("schemas/com.dailyschedule.app.data.db.AppDatabase/1.json"),
-            File("app/schemas/com.dailyschedule.app.data.db.AppDatabase/1.json"),
-        ).firstOrNull { it.exists() }
+        val schemaFile =
+            listOf(
+                File("schemas/com.dailyschedule.app.data.db.AppDatabase/1.json"),
+                File("app/schemas/com.dailyschedule.app.data.db.AppDatabase/1.json"),
+            ).firstOrNull { it.exists() }
 
         assertThat(schemaFile).isNotNull()
         val root = Json.parseToJsonElement(schemaFile!!.readText()).jsonObject
@@ -204,6 +210,7 @@ class Migration1To2Test {
         return entities.flatMap { element ->
             val entity = element.jsonObject
             val tableName = entity.getValue("tableName").jsonPrimitive.content
+
             fun String.resolve() = replace("\${TABLE_NAME}", tableName)
 
             buildList {

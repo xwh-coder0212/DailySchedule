@@ -57,10 +57,11 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         ActiveSessionCard(
@@ -95,15 +96,17 @@ private fun ActiveSessionCard(
     val active = state.activeSession
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+            ),
     ) {
         if (active == null) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -115,18 +118,20 @@ private fun ActiveSessionCard(
         } else {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
-                    text = state.activeProjectName
-                        ?: stringResource(R.string.record_no_project),
+                    text =
+                        state.activeProjectName
+                            ?: stringResource(R.string.record_no_project),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = DurationFormatter.clock(elapsedOfActive(active, nowElapsedMs)),
-                    style = MaterialTheme.typography.displayMedium.copy(
-                        fontWeight = FontWeight.Medium,
-                        fontFeatureSettings = "tnum",
-                    ),
+                    style =
+                        MaterialTheme.typography.displayMedium.copy(
+                            fontWeight = FontWeight.Medium,
+                            fontFeatureSettings = "tnum",
+                        ),
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
                 Spacer(Modifier.height(16.dp))
@@ -142,10 +147,11 @@ private fun ActiveSessionCard(
                     }
                     Button(
                         onClick = onStop,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                        ),
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            ),
                     ) {
                         Text(stringResource(R.string.record_stop))
                     }
@@ -166,9 +172,10 @@ private fun DailyTotalsCard(
         shape = RoundedCornerShape(20.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             StatColumn(
@@ -188,14 +195,18 @@ private fun DailyTotalsCard(
 }
 
 @Composable
-private fun StatColumn(label: String, value: String) {
+private fun StatColumn(
+    label: String,
+    value: String,
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = value,
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Medium,
-                fontFeatureSettings = "tnum",
-            ),
+            style =
+                MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Medium,
+                    fontFeatureSettings = "tnum",
+                ),
         )
         Text(
             text = label,
@@ -210,9 +221,10 @@ private fun TimelineCard(items: List<TimelineItem>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            ),
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(
@@ -241,41 +253,49 @@ private fun TimelineCard(items: List<TimelineItem>) {
 @Composable
 private fun TimelineRow(item: TimelineItem) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = DurationFormatter.timeOfDay(item.session.startWallClockMs),
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontFeatureSettings = "tnum",
-            ),
+            style =
+                MaterialTheme.typography.bodyMedium.copy(
+                    fontFeatureSettings = "tnum",
+                ),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             text = item.projectName ?: stringResource(R.string.record_no_project),
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 12.dp),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .padding(horizontal = 12.dp),
         )
         Text(
             text = DurationFormatter.duration(item.session.durationMs ?: 0L),
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = FontWeight.Medium,
-                fontFeatureSettings = "tnum",
-            ),
+            style =
+                MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Medium,
+                    fontFeatureSettings = "tnum",
+                ),
         )
     }
 }
 
-private fun elapsedOfActive(session: FocusSession?, nowElapsedMs: Long): Long {
+private fun elapsedOfActive(
+    session: FocusSession?,
+    nowElapsedMs: Long,
+): Long {
     if (session == null || nowElapsedMs == 0L) return 0L
-    val pauseDelta = session.pauseStartElapsedMs
-        ?.let { (nowElapsedMs - it).coerceAtLeast(0L) }
-        ?: 0L
+    val pauseDelta =
+        session.pauseStartElapsedMs
+            ?.let { (nowElapsedMs - it).coerceAtLeast(0L) }
+            ?: 0L
     val raw = nowElapsedMs - session.startElapsedMs - session.accumulatedPauseMs - pauseDelta
     return raw.coerceAtLeast(0L)
 }

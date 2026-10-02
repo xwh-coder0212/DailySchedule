@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -45,11 +44,12 @@ import com.dailyschedule.app.R
 import com.dailyschedule.app.core.ui.theme.ProjectColors
 
 /** 预设图标名。MVP 只给 12 个通用图形，够用且不制造选择过载。 */
-private val PRESET_ICONS = listOf(
-    "book", "school", "code", "fitness_center",
-    "language", "science", "draw", "music_note",
-    "sports_esports", "work", "self_improvement", "flight_takeoff",
-)
+private val PRESET_ICONS =
+    listOf(
+        "book", "school", "code", "fitness_center",
+        "language", "science", "draw", "music_note",
+        "sports_esports", "work", "self_improvement", "flight_takeoff",
+    )
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -81,8 +81,8 @@ fun ProjectEditScreen(
                 title = {
                     Text(
                         stringResource(
-                            if (projectId == null) R.string.project_create else R.string.project_edit
-                        )
+                            if (projectId == null) R.string.project_create else R.string.project_edit,
+                        ),
                     )
                 },
                 navigationIcon = {
@@ -99,11 +99,12 @@ fun ProjectEditScreen(
         }
 
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             OutlinedTextField(
@@ -123,20 +124,23 @@ fun ProjectEditScreen(
                 ProjectColors.Palette.forEach { hex ->
                     val selected = hex == colorHex
                     Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(Color(android.graphics.Color.parseColor(hex)))
-                            .then(
-                                if (selected) {
-                                    Modifier.border(
-                                        width = 3.dp,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        shape = CircleShape,
-                                    )
-                                } else Modifier
-                            )
-                            .clickable { colorHex = hex },
+                        modifier =
+                            Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(Color(android.graphics.Color.parseColor(hex)))
+                                .then(
+                                    if (selected) {
+                                        Modifier.border(
+                                            width = 3.dp,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            shape = CircleShape,
+                                        )
+                                    } else {
+                                        Modifier
+                                    },
+                                )
+                                .clickable { colorHex = hex },
                     )
                 }
             }
@@ -149,23 +153,28 @@ fun ProjectEditScreen(
                 PRESET_ICONS.forEach { icon ->
                     val selected = icon == iconName
                     Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(
-                                if (selected) MaterialTheme.colorScheme.primaryContainer
-                                else MaterialTheme.colorScheme.surfaceContainerHigh
-                            )
-                            .clickable { iconName = icon }
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        modifier =
+                            Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(
+                                    if (selected) {
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.surfaceContainerHigh
+                                    },
+                                )
+                                .clickable { iconName = icon }
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
                     ) {
                         Text(
                             text = icon,
                             style = MaterialTheme.typography.bodySmall,
-                            color = if (selected) {
-                                MaterialTheme.colorScheme.onPrimaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
+                            color =
+                                if (selected) {
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
                         )
                     }
                 }
@@ -193,7 +202,7 @@ fun ProjectEditScreen(
                                 iconName = iconName,
                                 colorHex = colorHex,
                                 dailyTargetMinutes = target,
-                            )
+                            ),
                         )
                     }
                     onBack()

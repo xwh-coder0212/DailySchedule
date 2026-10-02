@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -53,7 +52,6 @@ import com.dailyschedule.app.core.ui.component.SwipeRevealActionsWidth
 import com.dailyschedule.app.core.ui.component.SwipeRevealRow
 import com.dailyschedule.app.core.ui.component.dayLabelOf
 import com.dailyschedule.app.core.ui.theme.ProjectColors
-import com.dailyschedule.app.domain.model.Category
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -85,9 +83,10 @@ fun ExpenseListScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item(key = "month-switcher") {
@@ -151,9 +150,10 @@ fun ExpenseListScreen(
 
         FloatingActionButton(
             onClick = onAdd,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(20.dp),
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(20.dp),
         ) {
             Icon(
                 Icons.Outlined.Add,
@@ -184,9 +184,10 @@ private fun MonthSwitcher(
     onNext: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 4.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
@@ -198,9 +199,10 @@ private fun MonthSwitcher(
         }
         Text(
             text = stringResource(R.string.expense_month_label, year, month),
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontFeatureSettings = "tnum",
-            ),
+            style =
+                MaterialTheme.typography.titleMedium.copy(
+                    fontFeatureSettings = "tnum",
+                ),
             modifier = Modifier.widthIn(min = 96.dp),
             textAlign = TextAlign.Center,
         )
@@ -223,26 +225,29 @@ private fun MonthSummaryCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            ),
     ) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
             Text(
-                text = if (isCurrentMonth) {
-                    stringResource(R.string.expense_month_total)
-                } else {
-                    stringResource(R.string.expense_month_total_named, month)
-                },
+                text =
+                    if (isCurrentMonth) {
+                        stringResource(R.string.expense_month_total)
+                    } else {
+                        stringResource(R.string.expense_month_total_named, month)
+                    },
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 text = DurationFormatter.amountExact(totalCents),
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    fontFeatureSettings = "tnum",
-                ),
+                style =
+                    MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontFeatureSettings = "tnum",
+                    ),
                 modifier = Modifier.padding(vertical = 4.dp),
             )
             Text(
@@ -261,7 +266,10 @@ private fun MonthSummaryCard(
  * 这时说「多 100%」是错的，说「上月无记录」才是事实。
  */
 @Composable
-private fun comparisonText(totalCents: Long, lastMonthCents: Long): String {
+private fun comparisonText(
+    totalCents: Long,
+    lastMonthCents: Long,
+): String {
     if (lastMonthCents <= 0L) {
         return stringResource(
             R.string.expense_vs_last_month,
@@ -270,11 +278,12 @@ private fun comparisonText(totalCents: Long, lastMonthCents: Long): String {
         )
     }
     val deltaPercent = ((totalCents - lastMonthCents).toDouble() / lastMonthCents * 100).roundToInt()
-    val trend = when {
-        deltaPercent == 0 -> stringResource(R.string.expense_vs_flat)
-        deltaPercent > 0 -> stringResource(R.string.expense_vs_more, deltaPercent)
-        else -> stringResource(R.string.expense_vs_less, abs(deltaPercent))
-    }
+    val trend =
+        when {
+            deltaPercent == 0 -> stringResource(R.string.expense_vs_flat)
+            deltaPercent > 0 -> stringResource(R.string.expense_vs_more, deltaPercent)
+            else -> stringResource(R.string.expense_vs_less, abs(deltaPercent))
+        }
     return stringResource(
         R.string.expense_vs_last_month,
         DurationFormatter.amountExact(lastMonthCents),
@@ -312,35 +321,39 @@ private fun ExpenseRowItem(
         },
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                .clickable {
-                    // 露出状态下点行体 = 收回去。否则点一下没反应，会以为卡住了。
-                    if (revealed) onRevealedChange(false) else onEdit()
-                }
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                    .clickable {
+                        // 露出状态下点行体 = 收回去。否则点一下没反应，会以为卡住了。
+                        if (revealed) onRevealedChange(false) else onEdit()
+                    }
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier
-                    .size(26.dp)
-                    .clip(RoundedCornerShape(9.dp))
-                    .background(ProjectColors.parse(row.category?.colorHex)),
+                modifier =
+                    Modifier
+                        .size(26.dp)
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(ProjectColors.parse(row.category?.colorHex)),
             )
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 10.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .padding(start = 10.dp),
             ) {
                 Text(
                     text = row.category?.name ?: stringResource(R.string.expense_no_category),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (row.category == null) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    },
+                    color =
+                        if (row.category == null) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
                 )
                 Text(
                     text = "${dayLabelOf(row.expense.occurredAt, nowMs)} ${
@@ -352,10 +365,11 @@ private fun ExpenseRowItem(
             }
             Text(
                 text = DurationFormatter.amountExact(signedCents(row.expense.amountCents, row.expense.type)),
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.Medium,
-                    fontFeatureSettings = "tnum",
-                ),
+                style =
+                    MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.Medium,
+                        fontFeatureSettings = "tnum",
+                    ),
             )
         }
     }
@@ -369,11 +383,12 @@ private fun RowScope.RevealAction(
     onClick: () -> Unit,
 ) {
     Box(
-        modifier = Modifier
-            .weight(1f)
-            .fillMaxSize()
-            .background(container)
-            .clickable(onClick = onClick),
+        modifier =
+            Modifier
+                .weight(1f)
+                .fillMaxSize()
+                .background(container)
+                .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -421,5 +436,7 @@ private fun DeleteExpenseDialog(
 }
 
 /** 支出取负、收入取正，只影响显示，不动库里存的数。 */
-private fun signedCents(amountCents: Long, type: ExpenseType): Long =
-    if (type == ExpenseType.EXPENSE) -amountCents else amountCents
+private fun signedCents(
+    amountCents: Long,
+    type: ExpenseType,
+): Long = if (type == ExpenseType.EXPENSE) -amountCents else amountCents

@@ -244,9 +244,18 @@ tasks.register("ktlintBaseline") {
         val file = ktlintBaselineFile.asFile
         file.parentFile.mkdirs()
         file.writeText(
-            counts.entries
-                .sortedWith(compareBy({ it.key.first }, { it.key.second }))
-                .joinToString("") { (key, count) -> "${key.first}\t${key.second}\t$count\n" },
+            buildString {
+                // 带注释头：基线被收紧到 0 之后文件会只剩这几行，
+                // 一个空文件看起来像"忘了生成"，而不是"当前没有存量债"。
+                appendLine("# ktlint 存量基线。格式：<相对路径>\\t<规则名>\\t<出现次数>")
+                appendLine("# 由 `./gradlew :app:ktlintBaseline` 生成，不要手改。")
+                appendLine("# 空 = 当前没有任何存量违规，门禁按最严标准执行。")
+                append(
+                    counts.entries
+                        .sortedWith(compareBy({ it.key.first }, { it.key.second }))
+                        .joinToString("") { (key, count) -> "${key.first}\t${key.second}\t$count\n" },
+                )
+            },
         )
         logger.lifecycle(
             "ktlint 基线已刷新：${counts.size} 个 (文件, 规则) 组合，" +

@@ -21,7 +21,6 @@ class DayBoundary(
     val weekStartDay: Int = 1,
     private val zoneId: ZoneId = ZoneId.systemDefault(),
 ) {
-
     init {
         require(dayStartHour in 0..23) { "dayStartHour 必须在 0..23，实际为 $dayStartHour" }
         require(weekStartDay in 1..7) { "weekStartDay 必须在 1..7（1=周一），实际为 $weekStartDay" }
@@ -83,8 +82,10 @@ class DayBoundary(
     }
 
     /** 两个整日之间的天数，用于趋势图的横轴刻度。 */
-    fun daysBetween(from: LocalDate, to: LocalDate): Int =
-        Duration.between(from.atStartOfDay(), to.atStartOfDay()).toDays().toInt()
+    fun daysBetween(
+        from: LocalDate,
+        to: LocalDate,
+    ): Int = Duration.between(from.atStartOfDay(), to.atStartOfDay()).toDays().toInt()
 
     private fun LocalDateTime.toMillis(): Long = atZone(zoneId).toInstant().toEpochMilli()
 }

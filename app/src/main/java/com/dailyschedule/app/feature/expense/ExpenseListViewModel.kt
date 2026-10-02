@@ -12,7 +12,6 @@ import com.dailyschedule.app.domain.repository.ExpenseRepository
 import com.dailyschedule.app.domain.repository.PreferencesRepository
 import com.dailyschedule.app.domain.usecase.expense.DeleteExpenseUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,6 +21,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /**
  * 列表里的一行：账目 + 它的分类。
@@ -56,67 +56,74 @@ data class ExpenseListUiState(
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
-class ExpenseListViewModel @Inject constructor(
-    private val expenseRepository: ExpenseRepository,
-    private val categoryRepository: CategoryRepository,
-    private val preferencesRepository: PreferencesRepository,
-    private val deleteExpense: DeleteExpenseUseCase,
-    private val clock: Clock,
-) : ViewModel() {
+class ExpenseListViewModel
+    @Inject
+    constructor(
+        private val expenseRepository: ExpenseRepository,
+        private val categoryRepository: CategoryRepository,
+        private val preferencesRepository: PreferencesRepository,
+        private val deleteExpense: DeleteExpenseUseCase,
+        private val clock: Clock,
+    ) : ViewModel() {
+        /** 0 = 当前月，1 = 上一个月，以此类推 */
+        private val _monthOffset = MutableStateFlow(0)
+        val monthOffset: StateFlow<Int> = _monthOffset.asStateFlow()
 
-    /** 0 = 当前月，1 = 上一个月，以此类推 */
-    private val _monthOffset = MutableStateFlow(0)
-    val monthOffset: StateFlow<Int> = _monthOffset.asStateFlow()
+        val state: StateFlow<ExpenseListUiState> =
+            combine(_monthOffset, preferencesRepository.observe()) { offset, prefs -> offset to prefs }
+                .flatMapLatest { (offset, prefs) ->
+                    val boundary = DayBoundary(prefs.dayStartHour, prefs.weekStartDay)
+                    val currentDate = boundary.businessDateOf(clock.wallClockMillis())
+                    val anchor = currentDate.minusMonths(offset.toLong())
+                    val range = boundary.monthRangeOf(anchor)
+                    val prevRange = boundary.monthRangeOf(anchor.minusMonths(1))
 
-    val state: StateFlow<ExpenseListUiState> =
-        combine(_monthOffset, preferencesRepository.observe()) { offset, prefs -> offset to prefs }
-            .flatMapLatest { (offset, prefs) ->
-                val boundary = DayBoundary(prefs.dayStartHour, prefs.weekStartDay)
-                val currentDate = boundary.businessDateOf(clock.wallClockMillis())
-                val anchor = currentDate.minusMonths(offset.toLong())
-                val range = boundary.monthRangeOf(anchor)
-                val prevRange = boundary.monthRangeOf(anchor.minusMonths(1))
-
-                combine(
-                    expenseRepository.observeInRange(
-                        ExpenseType.EXPENSE, range.first, range.last + 1,
-                    ),
-                    expenseRepository.observeTotalCents(
-                        ExpenseType.EXPENSE, range.first, range.last + 1,
-                    ),
-                    expenseRepository.observeTotalCents(
-                        ExpenseType.EXPENSE, prevRange.first, prevRange.last + 1,
-                    ),
-                    categoryRepository.observeAll(),
-                ) { rows, total, prevTotal, categories ->
-                    val categoryById = categories.associateBy { it.id }
-                    ExpenseListUiState(
-                        year = anchor.year,
-                        month = anchor.monthValue,
-                        monthTotalCents = total,
-                        lastMonthTotalCents = prevTotal,
-                        rows = rows.map { ExpenseRow(it, categoryById[it.categoryId]) },
-                        canGoNext = offset > 0,
-                        isLoading = false,
-                    )
+                    combine(
+                        expenseRepository.observeInRange(
+                            ExpenseType.EXPENSE,
+                            range.first,
+                            range.last + 1,
+                        ),
+                        expenseRepository.observeTotalCents(
+                            ExpenseType.EXPENSE,
+                            range.first,
+                            range.last + 1,
+                        ),
+                        expenseRepository.observeTotalCents(
+                            ExpenseType.EXPENSE,
+                            prevRange.first,
+                            prevRange.last + 1,
+                        ),
+                        categoryRepository.observeAll(),
+                    ) { rows, total, prevTotal, categories ->
+                        val categoryById = categories.associateBy { it.id }
+                        ExpenseListUiState(
+                            year = anchor.year,
+                            month = anchor.monthValue,
+                            monthTotalCents = total,
+                            lastMonthTotalCents = prevTotal,
+                            rows = rows.map { ExpenseRow(it, categoryById[it.categoryId]) },
+                            canGoNext = offset > 0,
+                            isLoading = false,
+                        )
+                    }
                 }
-            }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), ExpenseListUiState())
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), ExpenseListUiState())
 
-    fun showPreviousMonth() {
-        if (_monthOffset.value < MAX_LOOKBACK_MONTHS) _monthOffset.value += 1
-    }
+        fun showPreviousMonth() {
+            if (_monthOffset.value < MAX_LOOKBACK_MONTHS) _monthOffset.value += 1
+        }
 
-    fun showNextMonth() {
-        if (_monthOffset.value > 0) _monthOffset.value -= 1
-    }
+        fun showNextMonth() {
+            if (_monthOffset.value > 0) _monthOffset.value -= 1
+        }
 
-    fun delete(id: Long) {
-        viewModelScope.launch { deleteExpense(id) }
-    }
+        fun delete(id: Long) {
+            viewModelScope.launch { deleteExpense(id) }
+        }
 
-    private companion object {
-        /** 往前最多翻 10 年。纯粹是给一个下界，避免用户手抖翻到 1970 年 */
-        const val MAX_LOOKBACK_MONTHS = 120
+        private companion object {
+            /** 往前最多翻 10 年。纯粹是给一个下界，避免用户手抖翻到 1970 年 */
+            const val MAX_LOOKBACK_MONTHS = 120
+        }
     }
-}

@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.Flow
  */
 @Dao
 interface ExpenseDao {
-
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(entity: ExpenseEntity): Long
 
@@ -32,9 +31,13 @@ interface ExpenseDao {
         WHERE type = :type
           AND occurredAt >= :startMs AND occurredAt < :endMs
         ORDER BY occurredAt DESC
-        """
+        """,
     )
-    fun observeInRange(type: ExpenseType, startMs: Long, endMs: Long): Flow<List<ExpenseEntity>>
+    fun observeInRange(
+        type: ExpenseType,
+        startMs: Long,
+        endMs: Long,
+    ): Flow<List<ExpenseEntity>>
 
     /** 最近 N 笔（首页/小组件/历史页用） */
     @Query(
@@ -43,9 +46,12 @@ interface ExpenseDao {
         WHERE type = :type
         ORDER BY occurredAt DESC
         LIMIT :limit
-        """
+        """,
     )
-    fun observeRecent(type: ExpenseType, limit: Int): Flow<List<ExpenseEntity>>
+    fun observeRecent(
+        type: ExpenseType,
+        limit: Int,
+    ): Flow<List<ExpenseEntity>>
 
     /** 区间总额（分） */
     @Query(
@@ -53,9 +59,13 @@ interface ExpenseDao {
         SELECT COALESCE(SUM(amountCents), 0) FROM expenses
         WHERE type = :type
           AND occurredAt >= :startMs AND occurredAt < :endMs
-        """
+        """,
     )
-    fun observeTotalCents(type: ExpenseType, startMs: Long, endMs: Long): Flow<Long>
+    fun observeTotalCents(
+        type: ExpenseType,
+        startMs: Long,
+        endMs: Long,
+    ): Flow<Long>
 
     /** 分类占比 */
     @Query(
@@ -68,7 +78,7 @@ interface ExpenseDao {
           AND e.occurredAt >= :startMs AND e.occurredAt < :endMs
         GROUP BY c.id
         ORDER BY totalCents DESC
-        """
+        """,
     )
     fun observeTotalByCategory(
         type: ExpenseType,
@@ -81,9 +91,12 @@ interface ExpenseDao {
         """
         SELECT COALESCE(SUM(amountCents), 0) FROM expenses
         WHERE projectId = :projectId AND type = :type
-        """
+        """,
     )
-    fun observeTotalOfProject(projectId: Long, type: ExpenseType): Flow<Long>
+    fun observeTotalOfProject(
+        projectId: Long,
+        type: ExpenseType,
+    ): Flow<Long>
 
     @Query("SELECT * FROM expenses WHERE projectId = :projectId ORDER BY occurredAt DESC")
     fun observeOfProject(projectId: Long): Flow<List<ExpenseEntity>>

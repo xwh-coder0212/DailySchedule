@@ -13,7 +13,6 @@ import com.dailyschedule.app.core.model.SessionStatus
  * 一旦重排，历史数据静默错位。
  */
 class Converters {
-
     @TypeConverter
     fun toSessionStatus(value: String?): SessionStatus? = SessionStatus.fromRaw(value)
 
@@ -32,8 +31,7 @@ class Converters {
      * 一条元数据不认识，不该导致整个历史记录读不出来。
      */
     @TypeConverter
-    fun toSessionSource(value: String?): SessionSource =
-        SessionSource.fromRaw(value) ?: SessionSource.DEFAULT
+    fun toSessionSource(value: String?): SessionSource = SessionSource.fromRaw(value) ?: SessionSource.DEFAULT
 
     @TypeConverter
     fun fromSessionSource(value: SessionSource): String = value.name

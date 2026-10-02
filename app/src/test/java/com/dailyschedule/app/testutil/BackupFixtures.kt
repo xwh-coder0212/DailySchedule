@@ -22,8 +22,10 @@ import com.dailyschedule.app.core.transfer.SessionRecord
  * 而真正的意图被淹没在噪声里。
  */
 object BackupFixtures {
-
-    fun category(id: Long, name: String = "分类$id") = CategoryRecord(
+    fun category(
+        id: Long,
+        name: String = "分类$id",
+    ) = CategoryRecord(
         id = id,
         name = name,
         iconName = "more_horiz",
@@ -125,17 +127,19 @@ object BackupFixtures {
         dbVersion = 2,
         exportedAt = 1_759_400_000_000L,
         exportedAtIso = "2026-10-02T12:43:19.412+08:00",
-        counts = counts ?: BackupCounts(
-            projects = projects.size,
-            categories = categories.size,
-            sessions = sessions.size,
-            expenses = expenses.size,
-        ),
-        data = BackupData(
-            categories = categories,
-            projects = projects,
-            sessions = sessions,
-            expenses = expenses,
-        ),
+        counts =
+            counts ?: BackupCounts(
+                projects = projects.size,
+                categories = categories.size,
+                sessions = sessions.size,
+                expenses = expenses.size,
+            ),
+        data =
+            BackupData(
+                categories = categories,
+                projects = projects,
+                sessions = sessions,
+                expenses = expenses,
+            ),
     )
 }

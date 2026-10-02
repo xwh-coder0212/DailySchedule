@@ -7,7 +7,6 @@ class FakeClock(
     var elapsedMs: Long = 0L,
     var wallMs: Long = 0L,
 ) : Clock {
-
     override fun elapsedRealtime(): Long = elapsedMs
 
     override fun wallClockMillis(): Long = wallMs

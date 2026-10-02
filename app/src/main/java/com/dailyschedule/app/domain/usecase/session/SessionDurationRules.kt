@@ -11,7 +11,6 @@ import com.dailyschedule.app.core.result.AppError
  * 而用户只会觉得这个 App 时好时坏。
  */
 object SessionDurationRules {
-
     /**
      * 单次上限。
      *
@@ -22,12 +21,13 @@ object SessionDurationRules {
     const val MAX_DURATION_MS = MAX_DURATION_HOURS * 60L * 60_000L
 
     /** 返回非 null 即为不合法原因 */
-    fun validate(durationMs: Long): AppError? = when {
-        durationMs <= 0L -> AppError.Validation("时长必须大于 0")
-        durationMs > MAX_DURATION_MS ->
-            AppError.Validation("单次时长不能超过 $MAX_DURATION_HOURS 小时")
-        else -> null
-    }
+    fun validate(durationMs: Long): AppError? =
+        when {
+            durationMs <= 0L -> AppError.Validation("时长必须大于 0")
+            durationMs > MAX_DURATION_MS ->
+                AppError.Validation("单次时长不能超过 $MAX_DURATION_HOURS 小时")
+            else -> null
+        }
 
     /**
      * 允许的「未来」容差。

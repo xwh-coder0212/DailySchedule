@@ -38,7 +38,6 @@ enum class BackupRejection {
  * 界面只需要知道"哪一类问题"，具体数字对用户没有意义。
  */
 sealed interface BackupValidation {
-
     /**
      * 通过，可以进入恢复流程。
      *
@@ -72,7 +71,6 @@ sealed interface BackupValidation {
  * 所以这里的选择是：照常接受文件，跳过这些行，并把跳过条数报给用户。
  */
 object BackupValidator {
-
     fun validate(document: BackupDocument): BackupValidation {
         if (document.format != BackupCodec.FORMAT_ID) {
             return BackupValidation.Rejected(
@@ -106,12 +104,13 @@ object BackupValidator {
 
     private fun countMismatch(document: BackupDocument): BackupValidation? {
         val data = document.data
-        val actual = BackupCounts(
-            projects = data.projects.size,
-            categories = data.categories.size,
-            sessions = data.sessions.size,
-            expenses = data.expenses.size,
-        )
+        val actual =
+            BackupCounts(
+                projects = data.projects.size,
+                categories = data.categories.size,
+                sessions = data.sessions.size,
+                expenses = data.expenses.size,
+            )
         if (actual == document.counts) return null
         return BackupValidation.Rejected(
             BackupRejection.COUNT_MISMATCH,

@@ -100,9 +100,10 @@ fun ProjectsScreen(
             }
         } else {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 state.activeSession?.let { session ->
@@ -181,9 +182,10 @@ fun ProjectsScreen(
 
         FloatingActionButton(
             onClick = onCreate,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(20.dp),
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(20.dp),
         ) {
             Icon(
                 Icons.Outlined.Add,
@@ -193,9 +195,10 @@ fun ProjectsScreen(
 
         SnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 88.dp),
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 88.dp),
         )
     }
 
@@ -247,32 +250,38 @@ private fun ActiveSessionCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+            ),
     ) {
         Column(Modifier.padding(20.dp)) {
             Text(
-                text = buildString {
-                    append(
-                        stringResource(
-                            if (paused) R.string.projects_active_paused
-                            else R.string.projects_active_label,
-                        ),
-                    )
-                    append(" · ")
-                    append(projectName ?: stringResource(R.string.record_no_project))
-                },
+                text =
+                    buildString {
+                        append(
+                            stringResource(
+                                if (paused) {
+                                    R.string.projects_active_paused
+                                } else {
+                                    R.string.projects_active_label
+                                },
+                            ),
+                        )
+                        append(" · ")
+                        append(projectName ?: stringResource(R.string.record_no_project))
+                    },
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
             Spacer(Modifier.height(6.dp))
             Text(
                 text = DurationFormatter.clock(session.elapsedSinceStart(nowElapsedMs)),
-                style = MaterialTheme.typography.displayMedium.copy(
-                    fontWeight = FontWeight.Medium,
-                    fontFeatureSettings = "tnum",
-                ),
+                style =
+                    MaterialTheme.typography.displayMedium.copy(
+                        fontWeight = FontWeight.Medium,
+                        fontFeatureSettings = "tnum",
+                    ),
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
             Spacer(Modifier.height(14.dp))
@@ -286,10 +295,11 @@ private fun ActiveSessionCard(
                 }
                 Button(
                     onClick = onStop,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                    ),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                        ),
                 ) {
                     Text(stringResource(R.string.record_stop))
                 }
@@ -326,19 +336,22 @@ private fun ProjectCard(
     val onBackground = ProjectColors.contentOn(stat.project.colorHex)
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            // 已归档压暗：归档的语义是"不再选中它"，视觉上就该退到后面去
-            containerColor = if (dimmed) background.copy(alpha = 0.45f) else background,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                // 已归档压暗：归档的语义是"不再选中它"，视觉上就该退到后面去
+                containerColor = if (dimmed) background.copy(alpha = 0.45f) else background,
+            ),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -348,31 +361,34 @@ private fun ProjectCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 color = onBackground,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 12.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .padding(end = 12.dp),
             )
             Button(
                 onClick = onStart,
                 enabled = !isTimerRunning,
                 contentPadding = PaddingValues(horizontal = 20.dp),
-                colors = ButtonDefaults.buttonColors(
-                    // 卡片底色是任意色，按钮不能用 primary —— 会撞色。
-                    // 用"背景的反色"配一点点透明度，任何底色上都读得出。
-                    containerColor = onBackground.copy(alpha = 0.16f),
-                    contentColor = onBackground,
-                    disabledContainerColor = onBackground.copy(alpha = 0.08f),
-                    disabledContentColor = onBackground.copy(alpha = 0.55f),
-                ),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        // 卡片底色是任意色，按钮不能用 primary —— 会撞色。
+                        // 用"背景的反色"配一点点透明度，任何底色上都读得出。
+                        containerColor = onBackground.copy(alpha = 0.16f),
+                        contentColor = onBackground,
+                        disabledContainerColor = onBackground.copy(alpha = 0.08f),
+                        disabledContentColor = onBackground.copy(alpha = 0.55f),
+                    ),
             ) {
                 Text(
-                    text = stringResource(
-                        if (isThisRunning) {
-                            R.string.project_card_running
-                        } else {
-                            R.string.project_card_start
-                        },
-                    ),
+                    text =
+                        stringResource(
+                            if (isThisRunning) {
+                                R.string.project_card_running
+                            } else {
+                                R.string.project_card_start
+                            },
+                        ),
                     maxLines = 1,
                 )
             }

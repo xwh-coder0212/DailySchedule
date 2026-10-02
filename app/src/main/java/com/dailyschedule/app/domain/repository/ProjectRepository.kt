@@ -4,7 +4,6 @@ import com.dailyschedule.app.domain.model.Project
 import kotlinx.coroutines.flow.Flow
 
 interface ProjectRepository {
-
     /** 全部项目（含归档），项目页列表用 */
     fun observeAll(): Flow<List<Project>>
 
@@ -19,7 +18,10 @@ interface ProjectRepository {
 
     suspend fun update(project: Project)
 
-    suspend fun setArchived(id: Long, archived: Boolean)
+    suspend fun setArchived(
+        id: Long,
+        archived: Boolean,
+    )
 
     suspend fun reorder(orderedIds: List<Long>)
 

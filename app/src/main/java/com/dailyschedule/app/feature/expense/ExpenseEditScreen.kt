@@ -78,15 +78,16 @@ fun ExpenseEditScreen(
         if (state.savedTick > 0) snackbarHostState.showSnackbar(savedText)
     }
 
-    val errorText = state.errorMessage?.let { key ->
-        stringResource(
-            when (key) {
-                ExpenseEditViewModel.ERROR_AMOUNT -> R.string.expense_error_amount
-                ExpenseEditViewModel.ERROR_CATEGORY -> R.string.expense_error_category
-                else -> R.string.expense_error_unknown
-            },
-        )
-    }
+    val errorText =
+        state.errorMessage?.let { key ->
+            stringResource(
+                when (key) {
+                    ExpenseEditViewModel.ERROR_AMOUNT -> R.string.expense_error_amount
+                    ExpenseEditViewModel.ERROR_CATEGORY -> R.string.expense_error_category
+                    else -> R.string.expense_error_unknown
+                },
+            )
+        }
     LaunchedEffect(errorText) {
         if (errorText != null) snackbarHostState.showSnackbar(errorText)
     }
@@ -97,8 +98,11 @@ fun ExpenseEditScreen(
                 title = {
                     Text(
                         stringResource(
-                            if (state.isEditing) R.string.expense_edit_title
-                            else R.string.expense_add,
+                            if (state.isEditing) {
+                                R.string.expense_edit_title
+                            } else {
+                                R.string.expense_add
+                            },
                         ),
                     )
                 },
@@ -114,9 +118,10 @@ fun ExpenseEditScreen(
         when {
             state.notFound -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -127,125 +132,144 @@ fun ExpenseEditScreen(
                 }
             }
 
-            else -> Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-            ) {
+            else ->
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
                 ) {
-                    Text(
-                        text = stringResource(R.string.record_amount_hint),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        text = if (state.amountText.isEmpty()) "0" else state.amountText,
-                        style = MaterialTheme.typography.displayMedium.copy(
-                            fontWeight = FontWeight.Medium,
-                            fontFeatureSettings = "tnum",
-                        ),
-                        modifier = Modifier.padding(vertical = 8.dp),
-                    )
-                    OutlinedTextField(
-                        value = state.note,
-                        onValueChange = viewModel::onNoteChange,
-                        label = { Text(stringResource(R.string.record_note_label)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                    )
-                }
-
-                Text(
-                    text = stringResource(
-                        if (state.isEditing) R.string.expense_pick_category
-                        else R.string.record_tap_category,
-                    ),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-                )
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(4),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(categories, key = { it.id }) { category ->
-                        CategoryTile(
-                            category = category,
-                            selected = state.isEditing && state.selectedCategoryId == category.id,
-                            onClick = { viewModel.onCategorySelected(category.id) },
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 16.dp),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.record_amount_hint),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            text = if (state.amountText.isEmpty()) "0" else state.amountText,
+                            style =
+                                MaterialTheme.typography.displayMedium.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    fontFeatureSettings = "tnum",
+                                ),
+                            modifier = Modifier.padding(vertical = 8.dp),
+                        )
+                        OutlinedTextField(
+                            value = state.note,
+                            onValueChange = viewModel::onNoteChange,
+                            label = { Text(stringResource(R.string.record_note_label)) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
                         )
                     }
-                }
 
-                if (state.isEditing) {
-                    Button(
-                        onClick = viewModel::saveEdits,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                    Text(
+                        text =
+                            stringResource(
+                                if (state.isEditing) {
+                                    R.string.expense_pick_category
+                                } else {
+                                    R.string.record_tap_category
+                                },
+                            ),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                    )
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(4),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Text(stringResource(R.string.expense_save_changes))
+                        items(categories, key = { it.id }) { category ->
+                            CategoryTile(
+                                category = category,
+                                selected = state.isEditing && state.selectedCategoryId == category.id,
+                                onClick = { viewModel.onCategorySelected(category.id) },
+                            )
+                        }
                     }
-                }
 
-                DsNumberPad(
-                    onKey = viewModel::onKey,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+                    if (state.isEditing) {
+                        Button(
+                            onClick = viewModel::saveEdits,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                        ) {
+                            Text(stringResource(R.string.expense_save_changes))
+                        }
+                    }
+
+                    DsNumberPad(
+                        onKey = viewModel::onKey,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
         }
     }
 }
 
 @Composable
-private fun CategoryTile(category: Category, selected: Boolean, onClick: () -> Unit) {
+private fun CategoryTile(
+    category: Category,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
     Card(
         modifier = Modifier.clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerHigh
-            },
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    if (selected) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerHigh
+                    },
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .background(
-                        runCatching {
-                            Color(android.graphics.Color.parseColor(category.colorHex))
-                        }.getOrDefault(MaterialTheme.colorScheme.primary),
-                    ),
+                modifier =
+                    Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(
+                            runCatching {
+                                Color(android.graphics.Color.parseColor(category.colorHex))
+                            }.getOrDefault(MaterialTheme.colorScheme.primary),
+                        ),
             )
             Text(
                 text = category.name,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 6.dp),
                 textAlign = TextAlign.Center,
-                color = if (selected) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                },
+                color =
+                    if (selected) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
             )
         }
     }

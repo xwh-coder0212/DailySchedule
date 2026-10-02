@@ -23,8 +23,8 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 /**
  * 左滑露出操作按钮的行容器。
@@ -71,55 +71,59 @@ fun SwipeRevealRow(
             horizontalArrangement = Arrangement.End,
         ) {
             Row(
-                modifier = Modifier
-                    .width(actionsWidth)
-                    .fillMaxHeight(),
+                modifier =
+                    Modifier
+                        .width(actionsWidth)
+                        .fillMaxHeight(),
                 content = actions,
             )
         }
 
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .layout { measurable, constraints ->
-                    // 用 layout 而不是 offset：偏移量只在放置阶段读取，
-                    // 拖动时不触发 content 的重组与重绘，只重排位置。
-                    val placeable = measurable.measure(constraints)
-                    layout(placeable.width, placeable.height) {
-                        placeable.placeRelative(offset.value.roundToInt(), 0)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .layout { measurable, constraints ->
+                        // 用 layout 而不是 offset：偏移量只在放置阶段读取，
+                        // 拖动时不触发 content 的重组与重绘，只重排位置。
+                        val placeable = measurable.measure(constraints)
+                        layout(placeable.width, placeable.height) {
+                            placeable.placeRelative(offset.value.roundToInt(), 0)
+                        }
                     }
-                }
-                // `rememberDraggableState` 的回调**不是** suspend 函数，所以 snapTo
-                // 必须自己起协程。launch 按调用顺序排队，多个 delta 会依次生效，
-                // 不会出现后一帧先于前一帧写入导致的位置抖动。
-                .draggable(
-                    orientation = Orientation.Horizontal,
-                    state = rememberDraggableState { delta ->
-                        // 不跟手指反向走：右滑时已经贴住 0，再拉也不动。
-                        scope.launch {
-                            offset.snapTo((offset.value + delta).coerceIn(-actionPx, 0f))
-                        }
-                    },
-                    onDragStopped = { velocity ->
-                        val passedHalf = offset.value < -actionPx / 2f
-                        val flungOpen = velocity < -FLING_VELOCITY
-                        val flungClosed = velocity > FLING_VELOCITY
-                        val open = when {
-                            flungClosed -> false
-                            flungOpen -> true
-                            else -> passedHalf
-                        }
-                        onRevealedChange(open)
-                        // 自己先动起来，不等父级把 revealed 回传 ——
-                        // 少一帧延迟，手指松开的那一瞬间就已经在走动画。
-                        scope.launch {
-                            offset.animateTo(
-                                targetValue = if (open) -actionPx else 0f,
-                                animationSpec = tween(durationMillis = 180),
-                            )
-                        }
-                    },
-                ),
+                    // `rememberDraggableState` 的回调**不是** suspend 函数，所以 snapTo
+                    // 必须自己起协程。launch 按调用顺序排队，多个 delta 会依次生效，
+                    // 不会出现后一帧先于前一帧写入导致的位置抖动。
+                    .draggable(
+                        orientation = Orientation.Horizontal,
+                        state =
+                            rememberDraggableState { delta ->
+                                // 不跟手指反向走：右滑时已经贴住 0，再拉也不动。
+                                scope.launch {
+                                    offset.snapTo((offset.value + delta).coerceIn(-actionPx, 0f))
+                                }
+                            },
+                        onDragStopped = { velocity ->
+                            val passedHalf = offset.value < -actionPx / 2f
+                            val flungOpen = velocity < -FLING_VELOCITY
+                            val flungClosed = velocity > FLING_VELOCITY
+                            val open =
+                                when {
+                                    flungClosed -> false
+                                    flungOpen -> true
+                                    else -> passedHalf
+                                }
+                            onRevealedChange(open)
+                            // 自己先动起来，不等父级把 revealed 回传 ——
+                            // 少一帧延迟，手指松开的那一瞬间就已经在走动画。
+                            scope.launch {
+                                offset.animateTo(
+                                    targetValue = if (open) -actionPx else 0f,
+                                    animationSpec = tween(durationMillis = 180),
+                                )
+                            }
+                        },
+                    ),
         ) {
             content()
         }

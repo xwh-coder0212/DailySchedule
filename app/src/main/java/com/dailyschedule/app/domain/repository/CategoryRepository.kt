@@ -4,7 +4,6 @@ import com.dailyschedule.app.domain.model.Category
 import kotlinx.coroutines.flow.Flow
 
 interface CategoryRepository {
-
     /** 全部分类（含停用），设置页分类管理用 */
     fun observeAll(): Flow<List<Category>>
 

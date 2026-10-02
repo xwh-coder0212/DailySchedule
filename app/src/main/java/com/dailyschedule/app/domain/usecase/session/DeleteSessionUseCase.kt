@@ -17,29 +17,31 @@ import javax.inject.Inject
  * 一个说"这条已经不在了"，一个说"正在计时，先结束它"。
  * 多一次查询换一句准确的话，值得。
  */
-class DeleteSessionUseCase @Inject constructor(
-    private val sessionRepository: SessionRepository,
-) {
+class DeleteSessionUseCase
+    @Inject
+    constructor(
+        private val sessionRepository: SessionRepository,
+    ) {
+        suspend operator fun invoke(sessionId: Long): AppResult<Unit> {
+            val existing =
+                sessionRepository.getById(sessionId)
+                    ?: return AppError.NotFound("这条专注记录不存在，可能已被删除").asFailure()
 
-    suspend operator fun invoke(sessionId: Long): AppResult<Unit> {
-        val existing = sessionRepository.getById(sessionId)
-            ?: return AppError.NotFound("这条专注记录不存在，可能已被删除").asFailure()
+            if (existing.status != SessionStatus.COMPLETED) {
+                return AppError.Validation("正在进行的计时不能删除，请先结束它").asFailure()
+            }
 
-        if (existing.status != SessionStatus.COMPLETED) {
-            return AppError.Validation("正在进行的计时不能删除，请先结束它").asFailure()
+            if (!sessionRepository.delete(sessionId)) {
+                // 走到这里说明上一步读到的行在删除前被别处改回了活动态（极端竞态）。
+                // 不吞掉：返回失败让界面如实说"没删掉"。
+                return AppError.Unknown("删除失败，请重试").asFailure()
+            }
+
+            AppLogger.i(TAG, "删记录 id=$sessionId")
+            return Unit.asSuccess()
         }
 
-        if (!sessionRepository.delete(sessionId)) {
-            // 走到这里说明上一步读到的行在删除前被别处改回了活动态（极端竞态）。
-            // 不吞掉：返回失败让界面如实说"没删掉"。
-            return AppError.Unknown("删除失败，请重试").asFailure()
+        private companion object {
+            const val TAG = "DeleteSession"
         }
-
-        AppLogger.i(TAG, "删记录 id=$sessionId")
-        return Unit.asSuccess()
     }
-
-    private companion object {
-        const val TAG = "DeleteSession"
-    }
-}

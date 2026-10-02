@@ -6,9 +6,10 @@ import javax.inject.Singleton
 
 /** 真实时间源。生产环境唯一实现。 */
 @Singleton
-class AndroidClock @Inject constructor() : Clock {
+class AndroidClock
+    @Inject
+    constructor() : Clock {
+        override fun elapsedRealtime(): Long = SystemClock.elapsedRealtime()
 
-    override fun elapsedRealtime(): Long = SystemClock.elapsedRealtime()
-
-    override fun wallClockMillis(): Long = System.currentTimeMillis()
-}
+        override fun wallClockMillis(): Long = System.currentTimeMillis()
+    }

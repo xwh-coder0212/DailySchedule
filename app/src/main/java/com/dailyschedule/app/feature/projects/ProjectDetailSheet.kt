@@ -40,10 +40,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -83,9 +82,10 @@ fun ProjectDetailSheet(
             // 打开面板的瞬间数据还没到，或者这个待办刚被别处删掉。
             // 不画骨架屏：面板是弹出层，闪一下骨架比直接不画更晃眼。
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 40.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 40.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -98,9 +98,10 @@ fun ProjectDetailSheet(
         }
 
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Row(
@@ -114,10 +115,11 @@ fun ProjectDetailSheet(
                     fontWeight = FontWeight.SemiBold,
                 )
                 Column(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { showBackgroundPicker = true }
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    modifier =
+                        Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { showBackgroundPicker = true }
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Icon(
@@ -145,9 +147,10 @@ fun ProjectDetailSheet(
                 OutlinedButton(
                     onClick = { confirmDelete = true },
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error,
-                    ),
+                    colors =
+                        ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error,
+                        ),
                 ) {
                     Text(stringResource(R.string.common_delete), maxLines = 1)
                 }
@@ -168,9 +171,10 @@ fun ProjectDetailSheet(
 
             SectionCard(title = stringResource(R.string.project_detail_heatmap)) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     val weekdays = stringArrayResource(R.array.weekday_short)
@@ -277,47 +281,60 @@ fun ProjectDetailSheet(
  * 它只回答"哪天有专注、哪天比哪天多"，不回答"够不够"，所以按周归一化是对的。
  */
 @Composable
-private fun HeatDot(colorHex: String?, totalMs: Long, maxMs: Long) {
+private fun HeatDot(
+    colorHex: String?,
+    totalMs: Long,
+    maxMs: Long,
+) {
     val filled = totalMs > 0L && maxMs > 0L
     val fraction = if (filled) totalMs.toFloat() / maxMs.toFloat() else 0f
-    val alpha = when {
-        !filled -> 0f
-        fraction >= 0.66f -> 1f
-        fraction >= 0.33f -> 0.58f
-        else -> 0.30f
-    }
+    val alpha =
+        when {
+            !filled -> 0f
+            fraction >= 0.66f -> 1f
+            fraction >= 0.33f -> 0.58f
+            else -> 0.30f
+        }
     val base = ProjectColors.parse(colorHex)
 
     Box(
-        modifier = Modifier
-            .size(20.dp)
-            .clip(CircleShape)
-            .background(
-                if (filled) base.copy(alpha = alpha)
-                else MaterialTheme.colorScheme.surfaceContainerHighest,
-            )
-            .then(
-                if (filled) {
-                    Modifier
-                } else {
-                    Modifier.border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        shape = CircleShape,
-                    )
-                },
-            ),
+        modifier =
+            Modifier
+                .size(20.dp)
+                .clip(CircleShape)
+                .background(
+                    if (filled) {
+                        base.copy(alpha = alpha)
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerHighest
+                    },
+                )
+                .then(
+                    if (filled) {
+                        Modifier
+                    } else {
+                        Modifier.border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant,
+                            shape = CircleShape,
+                        )
+                    },
+                ),
     )
 }
 
 @Composable
-private fun SectionCard(title: String, content: @Composable () -> Unit) {
+private fun SectionCard(
+    title: String,
+    content: @Composable () -> Unit,
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            ),
     ) {
         Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
             Text(
@@ -331,14 +348,18 @@ private fun SectionCard(title: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun NumberWithUnit(number: String, unit: String) {
+private fun NumberWithUnit(
+    number: String,
+    unit: String,
+) {
     Row(verticalAlignment = Alignment.Bottom) {
         Text(
             text = number,
-            style = MaterialTheme.typography.headlineSmall.copy(
-                fontWeight = FontWeight.SemiBold,
-                fontFeatureSettings = "tnum",
-            ),
+            style =
+                MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontFeatureSettings = "tnum",
+                ),
         )
         Text(
             text = unit,
@@ -350,7 +371,10 @@ private fun NumberWithUnit(number: String, unit: String) {
 }
 
 @Composable
-private fun RowScope.SheetButton(label: String, onClick: () -> Unit) {
+private fun RowScope.SheetButton(
+    label: String,
+    onClick: () -> Unit,
+) {
     OutlinedButton(onClick = onClick, modifier = Modifier.weight(1f)) {
         Text(label, maxLines = 1)
     }
@@ -363,13 +387,15 @@ private fun RowScope.SheetTile(
     onClick: () -> Unit,
 ) {
     Card(
-        modifier = Modifier
-            .weight(1f)
-            .clickable(onClick = onClick),
+        modifier =
+            Modifier
+                .weight(1f)
+                .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
@@ -408,22 +434,23 @@ private fun BackgroundPickerDialog(
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             row.forEach { hex ->
                                 Box(
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(ProjectColors.parse(hex))
-                                        .then(
-                                            if (hex == currentHex) {
-                                                Modifier.border(
-                                                    width = 2.dp,
-                                                    color = MaterialTheme.colorScheme.onSurface,
-                                                    shape = RoundedCornerShape(10.dp),
-                                                )
-                                            } else {
-                                                Modifier
-                                            },
-                                        )
-                                        .clickable { onPick(hex) },
+                                    modifier =
+                                        Modifier
+                                            .size(36.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(ProjectColors.parse(hex))
+                                            .then(
+                                                if (hex == currentHex) {
+                                                    Modifier.border(
+                                                        width = 2.dp,
+                                                        color = MaterialTheme.colorScheme.onSurface,
+                                                        shape = RoundedCornerShape(10.dp),
+                                                    )
+                                                } else {
+                                                    Modifier
+                                                },
+                                            )
+                                            .clickable { onPick(hex) },
                                 )
                             }
                         }
@@ -464,7 +491,10 @@ private fun ProjectStatsDialog(
 }
 
 @Composable
-private fun StatsLine(label: String, valueMs: Long) {
+private fun StatsLine(
+    label: String,
+    valueMs: Long,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -477,10 +507,11 @@ private fun StatsLine(label: String, valueMs: Long) {
         )
         Text(
             text = DurationFormatter.duration(valueMs),
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.Medium,
-                fontFeatureSettings = "tnum",
-            ),
+            style =
+                MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Medium,
+                    fontFeatureSettings = "tnum",
+                ),
         )
     }
 }

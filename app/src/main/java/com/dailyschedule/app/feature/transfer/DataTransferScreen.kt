@@ -71,17 +71,20 @@ fun DataTransferScreen(
 
     // SAF：让用户自己决定存哪儿。App 不申请任何存储权限，
     // 拿到的是一次性的 content:// 写入授权，写完即失效。
-    val exportBackupLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument(JSON_MIME),
-    ) { uri -> uri?.let(viewModel::exportBackupTo) }
+    val exportBackupLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.CreateDocument(JSON_MIME),
+        ) { uri -> uri?.let(viewModel::exportBackupTo) }
 
-    val importLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
-    ) { uri -> uri?.let(viewModel::selectImportFile) }
+    val importLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.OpenDocument(),
+        ) { uri -> uri?.let(viewModel::selectImportFile) }
 
-    val exportExcelLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument(XLSX_MIME),
-    ) { uri -> uri?.let(viewModel::exportTo) }
+    val exportExcelLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.CreateDocument(XLSX_MIME),
+        ) { uri -> uri?.let(viewModel::exportTo) }
 
     Scaffold(
         topBar = {
@@ -99,11 +102,12 @@ fun DataTransferScreen(
         },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             BusyRow(state.busy)
@@ -112,9 +116,10 @@ fun DataTransferScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                ),
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    ),
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -162,8 +167,9 @@ fun DataTransferScreen(
                             enabled = !state.isBusy,
                         ) {
                             Text(
-                                text = stringResource(R.string.backup_undo_action) +
-                                    "（$backupName）",
+                                text =
+                                    stringResource(R.string.backup_undo_action) +
+                                        "（$backupName）",
                             )
                         }
                     }
@@ -175,75 +181,82 @@ fun DataTransferScreen(
                 val success = outcome is ExportOutcome.Success
                 OutcomeCard(
                     isSuccess = success,
-                    text = when (outcome) {
-                        is ExportOutcome.Success -> stringResource(R.string.export_success, outcome.fileName)
-                        is ExportOutcome.Failure -> stringResource(R.string.export_failed, outcome.reason)
-                    },
+                    text =
+                        when (outcome) {
+                            is ExportOutcome.Success -> stringResource(R.string.export_success, outcome.fileName)
+                            is ExportOutcome.Failure -> stringResource(R.string.export_failed, outcome.reason)
+                        },
                 )
             }
 
             state.importEvent?.let { event ->
                 when (event) {
-                    is ImportEvent.Rejected -> OutcomeCard(
-                        isSuccess = false,
-                        text = stringResource(
-                            R.string.backup_rejected,
-                            stringResource(rejectionRes(event.reason)),
-                        ),
-                    )
+                    is ImportEvent.Rejected ->
+                        OutcomeCard(
+                            isSuccess = false,
+                            text =
+                                stringResource(
+                                    R.string.backup_rejected,
+                                    stringResource(rejectionRes(event.reason)),
+                                ),
+                        )
 
                     is ImportEvent.RestoreSucceeded -> {
                         val counts = event.report.counts
                         OutcomeCard(
                             isSuccess = true,
-                            text = buildString {
-                                append(
-                                    stringResource(
-                                        if (event.isUndo) {
-                                            R.string.backup_undo_success
-                                        } else {
-                                            R.string.backup_restore_success
-                                        },
-                                        counts.projects,
-                                        counts.categories,
-                                        counts.sessions,
-                                        counts.expenses,
-                                    ),
-                                )
-                                if (event.report.skippedActiveSessions > 0) {
+                            text =
+                                buildString {
+                                    append(
+                                        stringResource(
+                                            if (event.isUndo) {
+                                                R.string.backup_undo_success
+                                            } else {
+                                                R.string.backup_restore_success
+                                            },
+                                            counts.projects,
+                                            counts.categories,
+                                            counts.sessions,
+                                            counts.expenses,
+                                        ),
+                                    )
+                                    if (event.report.skippedActiveSessions > 0) {
+                                        append("\n")
+                                        append(
+                                            stringResource(
+                                                R.string.backup_restore_skipped,
+                                                event.report.skippedActiveSessions,
+                                            ),
+                                        )
+                                    }
                                     append("\n")
                                     append(
                                         stringResource(
-                                            R.string.backup_restore_skipped,
-                                            event.report.skippedActiveSessions,
+                                            R.string.backup_restore_backup_hint,
+                                            event.preImportBackupName,
                                         ),
                                     )
-                                }
-                                append("\n")
-                                append(
-                                    stringResource(
-                                        R.string.backup_restore_backup_hint,
-                                        event.preImportBackupName,
-                                    ),
-                                )
-                            },
+                                },
                         )
                     }
 
-                    ImportEvent.BlockedByRunningSession -> OutcomeCard(
-                        isSuccess = false,
-                        text = stringResource(R.string.backup_restore_blocked),
-                    )
+                    ImportEvent.BlockedByRunningSession ->
+                        OutcomeCard(
+                            isSuccess = false,
+                            text = stringResource(R.string.backup_restore_blocked),
+                        )
 
-                    ImportEvent.NoLocalBackup -> OutcomeCard(
-                        isSuccess = false,
-                        text = stringResource(R.string.backup_no_local_backup),
-                    )
+                    ImportEvent.NoLocalBackup ->
+                        OutcomeCard(
+                            isSuccess = false,
+                            text = stringResource(R.string.backup_no_local_backup),
+                        )
 
-                    is ImportEvent.Failed -> OutcomeCard(
-                        isSuccess = false,
-                        text = stringResource(R.string.backup_restore_failed, event.reason),
-                    )
+                    is ImportEvent.Failed ->
+                        OutcomeCard(
+                            isSuccess = false,
+                            text = stringResource(R.string.backup_restore_failed, event.reason),
+                        )
                 }
             }
 
@@ -251,9 +264,10 @@ fun DataTransferScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                ),
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    ),
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -303,9 +317,10 @@ fun DataTransferScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                ),
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    ),
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
@@ -344,13 +359,14 @@ private fun BusyRow(busy: TransferBusy?) {
     ) {
         CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
         Text(
-            text = stringResource(
-                when (busy) {
-                    TransferBusy.EXPORTING -> R.string.export_in_progress
-                    TransferBusy.READING_BACKUP -> R.string.backup_reading
-                    TransferBusy.RESTORING -> R.string.backup_restoring
-                },
-            ),
+            text =
+                stringResource(
+                    when (busy) {
+                        TransferBusy.EXPORTING -> R.string.export_in_progress
+                        TransferBusy.READING_BACKUP -> R.string.backup_reading
+                        TransferBusy.RESTORING -> R.string.backup_restoring
+                    },
+                ),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(start = 8.dp),
         )
@@ -389,35 +405,38 @@ private fun ImportConfirmDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = if (pending.isUndo) {
-                        stringResource(R.string.backup_confirm_undo_source, pending.fileName)
-                    } else {
-                        stringResource(
-                            R.string.backup_confirm_source,
-                            pending.exportedAtIso,
-                            pending.appVersion,
-                            pending.fileName,
-                        )
-                    },
+                    text =
+                        if (pending.isUndo) {
+                            stringResource(R.string.backup_confirm_undo_source, pending.fileName)
+                        } else {
+                            stringResource(
+                                R.string.backup_confirm_source,
+                                pending.exportedAtIso,
+                                pending.appVersion,
+                                pending.fileName,
+                            )
+                        },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = stringResource(
-                        R.string.backup_confirm_counts,
-                        counts.projects,
-                        counts.categories,
-                        counts.sessions,
-                        counts.expenses,
-                    ),
+                    text =
+                        stringResource(
+                            R.string.backup_confirm_counts,
+                            counts.projects,
+                            counts.categories,
+                            counts.sessions,
+                            counts.expenses,
+                        ),
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 if (pending.activeSessions > 0) {
                     Text(
-                        text = stringResource(
-                            R.string.backup_confirm_active_warning,
-                            pending.activeSessions,
-                        ),
+                        text =
+                            stringResource(
+                                R.string.backup_confirm_active_warning,
+                                pending.activeSessions,
+                            ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -474,58 +493,71 @@ private fun BackupCountsRows(counts: BackupCounts) {
  * 而两段各写一个字符串、各写一份布局，又是同一段代码抄两遍。
  */
 @Composable
-private fun CountRow(label: String, count: Int, @StringRes countFormat: Int) {
+private fun CountRow(
+    label: String,
+    count: Int,
+    @StringRes countFormat: Int,
+) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(text = label, style = MaterialTheme.typography.bodyLarge)
         Text(
             text = stringResource(countFormat, count),
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = FontWeight.Medium,
-                fontFeatureSettings = "tnum",
-            ),
+            style =
+                MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.Medium,
+                    fontFeatureSettings = "tnum",
+                ),
         )
     }
 }
 
 @Composable
-private fun OutcomeCard(isSuccess: Boolean, text: String) {
+private fun OutcomeCard(
+    isSuccess: Boolean,
+    text: String,
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSuccess) {
-                MaterialTheme.colorScheme.secondaryContainer
-            } else {
-                MaterialTheme.colorScheme.errorContainer
-            },
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    if (isSuccess) {
+                        MaterialTheme.colorScheme.secondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.errorContainer
+                    },
+            ),
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
-            color = if (isSuccess) {
-                MaterialTheme.colorScheme.onSecondaryContainer
-            } else {
-                MaterialTheme.colorScheme.onErrorContainer
-            },
+            color =
+                if (isSuccess) {
+                    MaterialTheme.colorScheme.onSecondaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onErrorContainer
+                },
             modifier = Modifier.padding(16.dp),
         )
     }
 }
 
 @StringRes
-private fun rejectionRes(reason: BackupRejection): Int = when (reason) {
-    BackupRejection.NOT_A_BACKUP -> R.string.backup_reject_not_a_backup
-    BackupRejection.TOO_NEW -> R.string.backup_reject_too_new
-    BackupRejection.TOO_OLD -> R.string.backup_reject_too_old
-    BackupRejection.COUNT_MISMATCH -> R.string.backup_reject_count_mismatch
-    BackupRejection.DUPLICATE_ID -> R.string.backup_reject_duplicate_id
-    BackupRejection.DANGLING_REFERENCE -> R.string.backup_reject_dangling_reference
-    BackupRejection.INVALID_VALUES -> R.string.backup_reject_invalid_values
-}
+private fun rejectionRes(reason: BackupRejection): Int =
+    when (reason) {
+        BackupRejection.NOT_A_BACKUP -> R.string.backup_reject_not_a_backup
+        BackupRejection.TOO_NEW -> R.string.backup_reject_too_new
+        BackupRejection.TOO_OLD -> R.string.backup_reject_too_old
+        BackupRejection.COUNT_MISMATCH -> R.string.backup_reject_count_mismatch
+        BackupRejection.DUPLICATE_ID -> R.string.backup_reject_duplicate_id
+        BackupRejection.DANGLING_REFERENCE -> R.string.backup_reject_dangling_reference
+        BackupRejection.INVALID_VALUES -> R.string.backup_reject_invalid_values
+    }

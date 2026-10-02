@@ -14,7 +14,6 @@ import com.dailyschedule.app.domain.usecase.timer.TimerPauseUseCase
 import com.dailyschedule.app.domain.usecase.timer.TimerResumeUseCase
 import com.dailyschedule.app.domain.usecase.timer.TimerStopUseCase
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,6 +21,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /**
  * 计时常驻前台服务。
@@ -39,11 +39,14 @@ import kotlinx.coroutines.launch
  */
 @AndroidEntryPoint
 class TimerForegroundService : Service() {
-
     @Inject lateinit var sessionRepository: SessionRepository
+
     @Inject lateinit var projectRepository: ProjectRepository
+
     @Inject lateinit var timerPause: TimerPauseUseCase
+
     @Inject lateinit var timerResume: TimerResumeUseCase
+
     @Inject lateinit var timerStop: TimerStopUseCase
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -56,31 +59,38 @@ class TimerForegroundService : Service() {
         TimerNotifications.ensureChannels(this)
         AppLogger.i(TAG, "服务创建")
 
-        observerJob = scope.launch {
-            sessionRepository.observeActive().collectLatest { session ->
-                if (session == null) {
-                    AppLogger.i(TAG, "无活动会话，退出前台")
-                    stopForegroundCompat()
-                    stopSelf()
-                    return@collectLatest
-                }
+        observerJob =
+            scope.launch {
+                sessionRepository.observeActive().collectLatest { session ->
+                    if (session == null) {
+                        AppLogger.i(TAG, "无活动会话，退出前台")
+                        stopForegroundCompat()
+                        stopSelf()
+                        return@collectLatest
+                    }
 
-                val projectName = session.projectId?.let { pid ->
-                    runCatching { projectRepository.getById(pid)?.name }.getOrNull()
-                }
+                    val projectName =
+                        session.projectId?.let { pid ->
+                            runCatching { projectRepository.getById(pid)?.name }.getOrNull()
+                        }
 
-                val notif = TimerNotifications.buildActiveTimerNotification(
-                    context = this@TimerForegroundService,
-                    startElapsedMs = session.startElapsedMs,
-                    projectName = projectName,
-                    paused = session.pauseStartElapsedMs != null,
-                )
-                startForegroundCompat(notif)
+                    val notif =
+                        TimerNotifications.buildActiveTimerNotification(
+                            context = this@TimerForegroundService,
+                            startElapsedMs = session.startElapsedMs,
+                            projectName = projectName,
+                            paused = session.pauseStartElapsedMs != null,
+                        )
+                    startForegroundCompat(notif)
+                }
             }
-        }
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         when (intent?.action) {
             ACTION_PAUSE -> scope.launch { timerPause() }
             ACTION_RESUME -> scope.launch { timerResume() }

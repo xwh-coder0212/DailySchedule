@@ -36,7 +36,6 @@ enum class NumberFormat {
 }
 
 sealed interface Cell {
-
     /** 字符串。`bold` 用于合计行的标签 */
     data class Text(val value: String, val bold: Boolean = false) : Cell
 

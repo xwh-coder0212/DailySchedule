@@ -2,11 +2,11 @@ package com.dailyschedule.app.core.export
 
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.ZipInputStream
 import javax.xml.parsers.DocumentBuilderFactory
-import org.junit.Test
 
 /**
  * XLSX 写出器的结构测试。
@@ -17,7 +17,6 @@ import org.junit.Test
  * 所以每个部件、每种单元格类型都必须在这里被钉住。
  */
 class XlsxWriterTest {
-
     @Test
     fun `部件齐全 —— 六个必需部件一个都不能少`() {
         val entries = zipEntries(writeBytes(listOf(sampleTable())))
@@ -79,13 +78,14 @@ class XlsxWriterTest {
 
     @Test
     fun `没有数据行时不写筛选也不写合计`() {
-        val table = ExportTable(
-            name = "空表",
-            headers = listOf("A", "B"),
-            rows = emptyList(),
-            columnWidths = listOf(8, 8),
-            dataRowCount = 0,
-        )
+        val table =
+            ExportTable(
+                name = "空表",
+                headers = listOf("A", "B"),
+                rows = emptyList(),
+                columnWidths = listOf(8, 8),
+                dataRowCount = 0,
+            )
         val sheet = zipEntries(writeBytes(listOf(table))).getValue("xl/worksheets/sheet1.xml")
 
         assertThat(sheet).doesNotContain("autoFilter")
@@ -93,13 +93,14 @@ class XlsxWriterTest {
 
     @Test
     fun `公式同时写出表达式与缓存值`() {
-        val table = ExportTable(
-            name = "表",
-            headers = listOf("A"),
-            rows = listOf(listOf(Cell.Formula("SUM(A2:A3)", cached = 95.0))),
-            columnWidths = listOf(8),
-            dataRowCount = 1,
-        )
+        val table =
+            ExportTable(
+                name = "表",
+                headers = listOf("A"),
+                rows = listOf(listOf(Cell.Formula("SUM(A2:A3)", cached = 95.0))),
+                columnWidths = listOf(8),
+                dataRowCount = 1,
+            )
         val sheet = zipEntries(writeBytes(listOf(table))).getValue("xl/worksheets/sheet1.xml")
 
         assertThat(sheet).contains("<f>SUM(A2:A3)</f>")
@@ -108,13 +109,14 @@ class XlsxWriterTest {
 
     @Test
     fun `空单元格整格省略`() {
-        val table = ExportTable(
-            name = "表",
-            headers = listOf("A", "B", "C"),
-            rows = listOf(listOf(Cell.Text(""), Cell.Blank, Cell.Text("有值"))),
-            columnWidths = listOf(8, 8, 8),
-            dataRowCount = 1,
-        )
+        val table =
+            ExportTable(
+                name = "表",
+                headers = listOf("A", "B", "C"),
+                rows = listOf(listOf(Cell.Text(""), Cell.Blank, Cell.Text("有值"))),
+                columnWidths = listOf(8, 8, 8),
+                dataRowCount = 1,
+            )
         val sheet = zipEntries(writeBytes(listOf(table))).getValue("xl/worksheets/sheet1.xml")
 
         assertThat(sheet).contains("<row r=\"2\"><c r=\"C2\"")
@@ -122,13 +124,14 @@ class XlsxWriterTest {
 
     @Test
     fun `特殊字符被转义`() {
-        val table = ExportTable(
-            name = "表",
-            headers = listOf("H"),
-            rows = listOf(listOf(Cell.Text("a<b&c\"d'e"))),
-            columnWidths = listOf(8),
-            dataRowCount = 1,
-        )
+        val table =
+            ExportTable(
+                name = "表",
+                headers = listOf("H"),
+                rows = listOf(listOf(Cell.Text("a<b&c\"d'e"))),
+                columnWidths = listOf(8),
+                dataRowCount = 1,
+            )
         val sheet = zipEntries(writeBytes(listOf(table))).getValue("xl/worksheets/sheet1.xml")
 
         assertThat(sheet).contains("a&lt;b&amp;c&quot;d&apos;e")
@@ -191,16 +194,18 @@ class XlsxWriterTest {
 
     @Test
     fun `每个部件都是合法 XML —— 结构错一处 Excel 就报文件损坏`() {
-        val entries = zipEntries(
-            writeBytes(listOf(sampleTable(), sampleTable().copy(name = "花费记录"))),
-        )
+        val entries =
+            zipEntries(
+                writeBytes(listOf(sampleTable(), sampleTable().copy(name = "花费记录"))),
+            )
         val factory = DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
         entries.forEach { (name, content) ->
-            val parsed = runCatching {
-                factory.newDocumentBuilder().parse(
-                    ByteArrayInputStream(content.toByteArray(Charsets.UTF_8)),
-                )
-            }
+            val parsed =
+                runCatching {
+                    factory.newDocumentBuilder().parse(
+                        ByteArrayInputStream(content.toByteArray(Charsets.UTF_8)),
+                    )
+                }
             assertWithMessage("部件 $name 不是合法 XML：${parsed.exceptionOrNull()}")
                 .that(parsed.isSuccess)
                 .isTrue()
@@ -209,9 +214,10 @@ class XlsxWriterTest {
 
     @Test
     fun `workbook 里引用的每个 rId 都在关系表里有定义 —— 缺一个就整包打不开`() {
-        val entries = zipEntries(
-            writeBytes(listOf(sampleTable(), sampleTable().copy(name = "花费记录"))),
-        )
+        val entries =
+            zipEntries(
+                writeBytes(listOf(sampleTable(), sampleTable().copy(name = "花费记录"))),
+            )
         val workbook = entries.getValue("xl/workbook.xml")
         val rels = entries.getValue("xl/_rels/workbook.xml.rels")
 
@@ -227,17 +233,19 @@ class XlsxWriterTest {
         val entries = zipEntries(writeBytes(listOf(sampleTable())))
         val styles = entries.getValue("xl/styles.xml")
 
-        val declared = Regex("""<cellXfs count="(\d+)">""").find(styles)!!
-            .groupValues[1].toInt()
+        val declared =
+            Regex("""<cellXfs count="(\d+)">""").find(styles)!!
+                .groupValues[1].toInt()
         val actual = Regex("<xf ").findAll(styles.substringAfter("<cellXfs count=")).count()
         assertWithMessage("cellXfs 的 count 声明必须等于实际 xf 数量")
             .that(actual)
             .isEqualTo(declared)
 
-        val used = Regex("<c r=\"[A-Z]+\\d+\"[^>]*?\\ss=\"(\\d+)\"")
-            .findAll(entries.getValue("xl/worksheets/sheet1.xml"))
-            .map { it.groupValues[1].toInt() }
-            .toSet()
+        val used =
+            Regex("<c r=\"[A-Z]+\\d+\"[^>]*?\\ss=\"(\\d+)\"")
+                .findAll(entries.getValue("xl/worksheets/sheet1.xml"))
+                .map { it.groupValues[1].toInt() }
+                .toSet()
         assertThat(used).isNotEmpty()
         used.forEach { index ->
             assertWithMessage("工作表引用了不存在的样式下标 $index")
@@ -248,16 +256,18 @@ class XlsxWriterTest {
 
     // ── 工具 ──
 
-    private fun sampleTable() = ExportTable(
-        name = "专注记录",
-        headers = listOf("标题", "时长"),
-        rows = listOf(
-            listOf(Cell.Text("高数"), Cell.Number(95.0, NumberFormat.ONE_DECIMAL)),
-            listOf(Cell.Text("英语"), Cell.Number(30.0, NumberFormat.ONE_DECIMAL)),
-        ),
-        columnWidths = listOf(8, 10),
-        dataRowCount = 2,
-    )
+    private fun sampleTable() =
+        ExportTable(
+            name = "专注记录",
+            headers = listOf("标题", "时长"),
+            rows =
+                listOf(
+                    listOf(Cell.Text("高数"), Cell.Number(95.0, NumberFormat.ONE_DECIMAL)),
+                    listOf(Cell.Text("英语"), Cell.Number(30.0, NumberFormat.ONE_DECIMAL)),
+                ),
+            columnWidths = listOf(8, 10),
+            dataRowCount = 2,
+        )
 
     private fun writeBytes(tables: List<ExportTable>): ByteArray {
         val out = ByteArrayOutputStream()

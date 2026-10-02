@@ -10,7 +10,6 @@ import org.junit.Test
  * 这一条守的是可读性下限：浅底配浅字等于没有字，而用户永远可能挑到浅色。
  */
 class ProjectColorsTest {
-
     @Test
     fun `深色底用浅色字`() {
         assertThat(ProjectColors.prefersDarkContentOn("#0F6E56")).isFalse()

@@ -11,7 +11,6 @@ import org.junit.Test
  * 暂停期间不涨，以及暂停时段只扣一次。
  */
 class FocusSessionTest {
-
     private fun running(
         startElapsedMs: Long = 1_000L,
         accumulatedPauseMs: Long = 0L,
@@ -41,11 +40,12 @@ class FocusSessionTest {
 
     @Test
     fun `正处在暂停中时不涨 —— 暂停起点之后的每一毫秒都不算`() {
-        val session = running(
-            startElapsedMs = 1_000L,
-            accumulatedPauseMs = 0L,
-            pauseStartElapsedMs = 31_000L,
-        )
+        val session =
+            running(
+                startElapsedMs = 1_000L,
+                accumulatedPauseMs = 0L,
+                pauseStartElapsedMs = 31_000L,
+            )
         // 走到 45s，但 30s 起就暂停了 → 只有前 30s 算数
         assertThat(session.elapsedSinceStart(45_000L)).isEqualTo(30_000L)
         // 再等 10 秒，读数必须原地不动
@@ -54,11 +54,12 @@ class FocusSessionTest {
 
     @Test
     fun `累计暂停与当前暂停同时存在时不重复扣`() {
-        val session = running(
-            startElapsedMs = 0L,
-            accumulatedPauseMs = 10_000L,
-            pauseStartElapsedMs = 50_000L,
-        )
+        val session =
+            running(
+                startElapsedMs = 0L,
+                accumulatedPauseMs = 10_000L,
+                pauseStartElapsedMs = 50_000L,
+            )
         // 经过 60s：扣已累计的 10s，再扣当前这段 60-50=10s
         assertThat(session.elapsedSinceStart(60_000L)).isEqualTo(40_000L)
     }
@@ -71,13 +72,14 @@ class FocusSessionTest {
 
     @Test
     fun `补录出来的是已完成记录，isManual 为真`() {
-        val recorded = FocusSession.recorded(
-            projectId = 7L,
-            durationMs = 90 * 60_000L,
-            startWallClockMs = 1_700_000_000_000L,
-            note = null,
-            nowWallClockMs = 1_700_100_000_000L,
-        )
+        val recorded =
+            FocusSession.recorded(
+                projectId = 7L,
+                durationMs = 90 * 60_000L,
+                startWallClockMs = 1_700_000_000_000L,
+                note = null,
+                nowWallClockMs = 1_700_100_000_000L,
+            )
 
         assertThat(recorded.isManual).isTrue()
         assertThat(recorded.status).isEqualTo(SessionStatus.COMPLETED)

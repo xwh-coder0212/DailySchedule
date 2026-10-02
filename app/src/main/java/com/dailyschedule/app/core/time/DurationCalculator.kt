@@ -9,7 +9,6 @@ import kotlin.math.abs
  * 都不影响结果的正确性。
  */
 object DurationCalculator {
-
     /**
      * @param startElapsedMs      开始时刻（单调时钟）
      * @param endElapsedMs        结束时刻，null 表示仍在运行
@@ -25,9 +24,10 @@ object DurationCalculator {
         nowElapsedMs: Long,
     ): Long {
         val end = endElapsedMs ?: nowElapsedMs
-        val ongoingPause = pauseStartElapsedMs
-            ?.let { (nowElapsedMs - it).coerceAtLeast(0L) }
-            ?: 0L
+        val ongoingPause =
+            pauseStartElapsedMs
+                ?.let { (nowElapsedMs - it).coerceAtLeast(0L) }
+                ?: 0L
         val pause = accumulatedPauseMs + ongoingPause
         return (end - startElapsedMs - pause).coerceAtLeast(0L)
     }
@@ -45,7 +45,6 @@ object DurationCalculator {
  * 它不需要额外持久化任何字段，也不需要 BOOT_COMPLETED 权限。
  */
 object RebootResolver {
-
     /** 两次取时钟之间存在微小间隔，判定重启时留出容差。 */
     const val TOLERANCE_MS = 2_000L
 
@@ -53,11 +52,12 @@ object RebootResolver {
     const val CLOCK_TOLERANCE_MS = 300_000L
 
     /** 本次开机的墙上时刻。 */
-    fun bootWallClockMs(nowWallClockMs: Long, nowElapsedMs: Long): Long =
-        nowWallClockMs - nowElapsedMs
+    fun bootWallClockMs(
+        nowWallClockMs: Long,
+        nowElapsedMs: Long,
+    ): Long = nowWallClockMs - nowElapsedMs
 
     sealed interface Resolution {
-
         /** 正常：会话在当前开机周期内，时长可信。 */
         data class Normal(val elapsedMs: Long) : Resolution
 
@@ -114,18 +114,20 @@ object RebootResolver {
             )
         }
 
-        val elapsed = DurationCalculator.elapsedOf(
-            startElapsedMs = startElapsedMs,
-            endElapsedMs = null,
-            accumulatedPauseMs = accumulatedPauseMs,
-            pauseStartElapsedMs = pauseStartElapsedMs,
-            nowElapsedMs = nowElapsedMs,
-        )
+        val elapsed =
+            DurationCalculator.elapsedOf(
+                startElapsedMs = startElapsedMs,
+                endElapsedMs = null,
+                accumulatedPauseMs = accumulatedPauseMs,
+                pauseStartElapsedMs = pauseStartElapsedMs,
+                nowElapsedMs = nowElapsedMs,
+            )
 
         // 墙上跨度应当约等于「已计时长 + 所有暂停」，偏差过大说明有人动过系统时间
-        val ongoingPause = pauseStartElapsedMs
-            ?.let { (nowElapsedMs - it).coerceAtLeast(0L) }
-            ?: 0L
+        val ongoingPause =
+            pauseStartElapsedMs
+                ?.let { (nowElapsedMs - it).coerceAtLeast(0L) }
+                ?: 0L
         val wallSpan = nowWallClockMs - startWallClockMs
         val expectedWallSpan = elapsed + accumulatedPauseMs + ongoingPause
 

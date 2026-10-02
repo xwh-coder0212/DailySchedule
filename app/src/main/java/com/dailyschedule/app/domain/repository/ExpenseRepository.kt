@@ -6,12 +6,22 @@ import com.dailyschedule.app.domain.model.Expense
 import kotlinx.coroutines.flow.Flow
 
 interface ExpenseRepository {
+    fun observeInRange(
+        type: ExpenseType,
+        startMs: Long,
+        endMs: Long,
+    ): Flow<List<Expense>>
 
-    fun observeInRange(type: ExpenseType, startMs: Long, endMs: Long): Flow<List<Expense>>
+    fun observeRecent(
+        type: ExpenseType,
+        limit: Int,
+    ): Flow<List<Expense>>
 
-    fun observeRecent(type: ExpenseType, limit: Int): Flow<List<Expense>>
-
-    fun observeTotalCents(type: ExpenseType, startMs: Long, endMs: Long): Flow<Long>
+    fun observeTotalCents(
+        type: ExpenseType,
+        startMs: Long,
+        endMs: Long,
+    ): Flow<Long>
 
     fun observeTotalByCategory(
         type: ExpenseType,
@@ -20,7 +30,10 @@ interface ExpenseRepository {
     ): Flow<List<CategoryAmount>>
 
     /** 某项目上的累计花费（P1 才做 UI，字段与查询现在就有） */
-    fun observeTotalOfProject(projectId: Long, type: ExpenseType): Flow<Long>
+    fun observeTotalOfProject(
+        projectId: Long,
+        type: ExpenseType,
+    ): Flow<Long>
 
     fun observeOfProject(projectId: Long): Flow<List<Expense>>
 

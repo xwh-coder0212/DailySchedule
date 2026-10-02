@@ -32,7 +32,6 @@ import kotlinx.serialization.json.Json
  * 含未知状态的备份必须当场停下，因为它后面就是一次清库。
  */
 object BackupCodec {
-
     /** 文件身份标识。写进 `format` 字段，导入时先比对它 */
     const val FORMAT_ID = "dailyschedule.backup"
 
@@ -51,12 +50,13 @@ object BackupCodec {
      */
     const val MAX_BYTES: Long = 64L * 1024 * 1024
 
-    val json: Json = Json {
-        prettyPrint = true
-        encodeDefaults = true
-        explicitNulls = true
-        ignoreUnknownKeys = false
-    }
+    val json: Json =
+        Json {
+            prettyPrint = true
+            encodeDefaults = true
+            explicitNulls = true
+            ignoreUnknownKeys = false
+        }
 
     fun encode(document: BackupDocument): String = json.encodeToString(document)
 

@@ -24,7 +24,6 @@ enum class SessionStatus {
         /** 活动态：同一时刻全库最多一行。由部分唯一索引在 DB 层强制（见 DatabaseCallback）。 */
         val ACTIVE: Set<SessionStatus> = setOf(RUNNING, PAUSED)
 
-        fun fromRaw(value: String?): SessionStatus? =
-            entries.firstOrNull { it.name == value }
+        fun fromRaw(value: String?): SessionStatus? = entries.firstOrNull { it.name == value }
     }
 }

@@ -40,67 +40,70 @@ interface ThemePackSpec {
  *   （阴影在深色下几乎不可见，还拖慢滚动）
  */
 object GraphiteTealSpec : ThemePackSpec {
+    override val light =
+        lightColorScheme(
+            primary = Color(0xFF0F6E56),
+            onPrimary = Color(0xFFFFFFFF),
+            primaryContainer = Color(0xFFCDEBDF),
+            onPrimaryContainer = Color(0xFF04352A),
+            secondary = Color(0xFF5A5F7A),
+            onSecondary = Color(0xFFFFFFFF),
+            secondaryContainer = Color(0xFFDDE1F0),
+            onSecondaryContainer = Color(0xFF171B2E),
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF1A1C1A),
+            surfaceContainerLowest = Color(0xFFFFFFFF),
+            surfaceContainerLow = Color(0xFFF5F5F1),
+            surfaceContainer = Color(0xFFF0F0EA),
+            surfaceContainerHigh = Color(0xFFECECE6),
+            surfaceContainerHighest = Color(0xFFE4E4DE),
+            onSurfaceVariant = Color(0xFF5F6058),
+            outline = Color(0xFFD6D6CC),
+            outlineVariant = Color(0xFFE4E4DE),
+            error = Color(0xFFA32D2D),
+            onError = Color(0xFFFFFFFF),
+            errorContainer = Color(0xFFF7D6D6),
+            onErrorContainer = Color(0xFF5A1616),
+        )
 
-    override val light = lightColorScheme(
-        primary = Color(0xFF0F6E56),
-        onPrimary = Color(0xFFFFFFFF),
-        primaryContainer = Color(0xFFCDEBDF),
-        onPrimaryContainer = Color(0xFF04352A),
-        secondary = Color(0xFF5A5F7A),
-        onSecondary = Color(0xFFFFFFFF),
-        secondaryContainer = Color(0xFFDDE1F0),
-        onSecondaryContainer = Color(0xFF171B2E),
-        surface = Color(0xFFFFFFFF),
-        onSurface = Color(0xFF1A1C1A),
-        surfaceContainerLowest = Color(0xFFFFFFFF),
-        surfaceContainerLow = Color(0xFFF5F5F1),
-        surfaceContainer = Color(0xFFF0F0EA),
-        surfaceContainerHigh = Color(0xFFECECE6),
-        surfaceContainerHighest = Color(0xFFE4E4DE),
-        onSurfaceVariant = Color(0xFF5F6058),
-        outline = Color(0xFFD6D6CC),
-        outlineVariant = Color(0xFFE4E4DE),
-        error = Color(0xFFA32D2D),
-        onError = Color(0xFFFFFFFF),
-        errorContainer = Color(0xFFF7D6D6),
-        onErrorContainer = Color(0xFF5A1616),
-    )
+    override val dark =
+        darkColorScheme(
+            primary = Color(0xFF6FD3B4),
+            onPrimary = Color(0xFF04352A),
+            primaryContainer = Color(0xFF12503F),
+            onPrimaryContainer = Color(0xFFCDEBDF),
+            secondary = Color(0xFFB9BEDB),
+            onSecondary = Color(0xFF22273D),
+            secondaryContainer = Color(0xFF2C3149),
+            onSecondaryContainer = Color(0xFFDDE1F0),
+            surface = Color(0xFF141615),
+            onSurface = Color(0xFFE4E6E1),
+            surfaceContainerLowest = Color(0xFF0F110F),
+            surfaceContainerLow = Color(0xFF1B1E1C),
+            surfaceContainer = Color(0xFF212421),
+            surfaceContainerHigh = Color(0xFF262A28),
+            surfaceContainerHighest = Color(0xFF2F332F),
+            onSurfaceVariant = Color(0xFFA3A69F),
+            outline = Color(0xFF3A3E3B),
+            outlineVariant = Color(0xFF2A2E2B),
+            error = Color(0xFFF09595),
+            onError = Color(0xFF501313),
+            errorContainer = Color(0xFF6E1F1F),
+            onErrorContainer = Color(0xFFF7D6D6),
+        )
 
-    override val dark = darkColorScheme(
-        primary = Color(0xFF6FD3B4),
-        onPrimary = Color(0xFF04352A),
-        primaryContainer = Color(0xFF12503F),
-        onPrimaryContainer = Color(0xFFCDEBDF),
-        secondary = Color(0xFFB9BEDB),
-        onSecondary = Color(0xFF22273D),
-        secondaryContainer = Color(0xFF2C3149),
-        onSecondaryContainer = Color(0xFFDDE1F0),
-        surface = Color(0xFF141615),
-        onSurface = Color(0xFFE4E6E1),
-        surfaceContainerLowest = Color(0xFF0F110F),
-        surfaceContainerLow = Color(0xFF1B1E1C),
-        surfaceContainer = Color(0xFF212421),
-        surfaceContainerHigh = Color(0xFF262A28),
-        surfaceContainerHighest = Color(0xFF2F332F),
-        onSurfaceVariant = Color(0xFFA3A69F),
-        outline = Color(0xFF3A3E3B),
-        outlineVariant = Color(0xFF2A2E2B),
-        error = Color(0xFFF09595),
-        onError = Color(0xFF501313),
-        errorContainer = Color(0xFF6E1F1F),
-        onErrorContainer = Color(0xFFF7D6D6),
-    )
-
-    override val shapes = Shapes(
-        extraSmall = RoundedCornerShape(4.dp),
-        small = RoundedCornerShape(8.dp),
-        medium = RoundedCornerShape(12.dp),
-        large = RoundedCornerShape(16.dp),
-        extraLarge = RoundedCornerShape(20.dp),
-    )
+    override val shapes =
+        Shapes(
+            extraSmall = RoundedCornerShape(4.dp),
+            small = RoundedCornerShape(8.dp),
+            medium = RoundedCornerShape(12.dp),
+            large = RoundedCornerShape(16.dp),
+            extraLarge = RoundedCornerShape(20.dp),
+        )
 }
 
 /** 枚举 → 具体实现。新增风格时在这里加一条分支。 */
-fun ThemePack.spec(): ThemePackSpec = when (this) {
-    ThemePack.GRAPHITE_TEAL -> GraphiteTealSpec
-}
+fun ThemePack.spec(): ThemePackSpec =
+    when (this) {
+        ThemePack.GRAPHITE_TEAL -> GraphiteTealSpec
+    }

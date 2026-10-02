@@ -12,23 +12,24 @@ import javax.inject.Inject
  * 顺序很重要：时区检测 → 重启截断 → 通知栏重建。
  * 通知栏最后才动，那时 DB 已稳定。
  */
-class AppStartupUseCase @Inject constructor(
-    private val detectTimezoneChange: DetectTimezoneChangeUseCase,
-    private val timerRebootRecovery: TimerRebootRecoveryUseCase,
-    private val sessionRepository: SessionRepository,
-    private val preferencesRepository: PreferencesRepository,
-) {
+class AppStartupUseCase
+    @Inject
+    constructor(
+        private val detectTimezoneChange: DetectTimezoneChangeUseCase,
+        private val timerRebootRecovery: TimerRebootRecoveryUseCase,
+        private val sessionRepository: SessionRepository,
+        private val preferencesRepository: PreferencesRepository,
+    ) {
+        suspend operator fun invoke() {
+            val zoneChanged = detectTimezoneChange()
+            val recovery = timerRebootRecovery()
+            AppLogger.i(
+                TAG,
+                "启动恢复完成 zoneChanged=$zoneChanged recovery=$recovery",
+            )
+        }
 
-    suspend operator fun invoke() {
-        val zoneChanged = detectTimezoneChange()
-        val recovery = timerRebootRecovery()
-        AppLogger.i(
-            TAG,
-            "启动恢复完成 zoneChanged=$zoneChanged recovery=$recovery",
-        )
+        private companion object {
+            const val TAG = "AppStartup"
+        }
     }
-
-    private companion object {
-        const val TAG = "AppStartup"
-    }
-}

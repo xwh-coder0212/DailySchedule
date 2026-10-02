@@ -12,7 +12,6 @@ enum class ExpenseType {
     ;
 
     companion object {
-        fun fromRaw(value: String?): ExpenseType? =
-            entries.firstOrNull { it.name == value }
+        fun fromRaw(value: String?): ExpenseType? = entries.firstOrNull { it.name == value }
     }
 }

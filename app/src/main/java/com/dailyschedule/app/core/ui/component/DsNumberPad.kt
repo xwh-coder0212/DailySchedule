@@ -26,16 +26,18 @@ fun DsNumberPad(
     onKey: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val keys = listOf(
-        "1", "2", "3",
-        "4", "5", "6",
-        "7", "8", "9",
-        ".", "0", "del",
-    )
+    val keys =
+        listOf(
+            "1", "2", "3",
+            "4", "5", "6",
+            "7", "8", "9",
+            ".", "0", "del",
+        )
     Column(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .padding(8.dp),
+        modifier =
+            modifier
+                .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         keys.chunked(3).forEach { row ->
@@ -45,12 +47,13 @@ fun DsNumberPad(
             ) {
                 row.forEach { key ->
                     Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .aspectRatio(1.6f)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                            .clickable { onKey(key) },
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .aspectRatio(1.6f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                                .clickable { onKey(key) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(

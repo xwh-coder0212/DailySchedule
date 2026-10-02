@@ -42,27 +42,21 @@ import com.dailyschedule.app.core.model.SessionStatus
 )
 data class FocusSessionEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-
     /** 可空：项目被删除后置 NULL，历史投入永久保留 */
     val projectId: Long?,
-
     val status: SessionStatus,
     /** "是否在运行" 与 "要不要人工看一眼" 是两件事，故为独立标志而非第五个状态 */
     val needsReview: Boolean = false,
-
     // ── 双时钟 ──
     val startElapsedMs: Long,
     val startWallClockMs: Long,
     val endElapsedMs: Long? = null,
     val endWallClockMs: Long? = null,
-
     // ── 暂停 ──
     val accumulatedPauseMs: Long = 0,
     val pauseStartElapsedMs: Long? = null,
-
     val mode: SessionMode = SessionMode.STOPWATCH,
     val targetDurationMs: Long? = null,
-
     /**
      * 计时器产生还是用户补录。v2 新增列。
      *
@@ -76,11 +70,9 @@ data class FocusSessionEntity(
      */
     @ColumnInfo(defaultValue = "'TIMER'")
     val source: SessionSource = SessionSource.DEFAULT,
-
     /** 权威时长；未结束时为 null */
     val durationMs: Long? = null,
     val note: String? = null,
-
     val createdAt: Long,
     val updatedAt: Long,
 )

@@ -2,17 +2,16 @@ package com.dailyschedule.app.core.time
 
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import org.junit.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
-import org.junit.Test
 
 /**
  * 日期边界。这是全 App 最容易埋 bug 的地方 —— 错了不会崩，只是数字悄悄不对，
  * 等发现时已经攒了几周脏数据。所以每个用例都对应 Phase 4 §7.4 列出的边界。
  */
 class DayBoundaryTest {
-
     private val shanghai = ZoneId.of("Asia/Shanghai")
     private val boundary = DayBoundary(dayStartHour = 4, weekStartDay = 1, zoneId = shanghai)
 
@@ -24,10 +23,11 @@ class DayBoundaryTest {
         minute: Int = 0,
         second: Int = 0,
         millis: Int = 0,
-    ): Long = LocalDateTime.of(year, month, day, hour, minute, second, millis * 1_000_000)
-        .atZone(shanghai)
-        .toInstant()
-        .toEpochMilli()
+    ): Long =
+        LocalDateTime.of(year, month, day, hour, minute, second, millis * 1_000_000)
+            .atZone(shanghai)
+            .toInstant()
+            .toEpochMilli()
 
     @Test
     fun `普通白天归属当天`() {
@@ -122,10 +122,11 @@ class DayBoundaryTest {
     @Test
     fun `同一时刻在不同时区口径下归属不同日期`() {
         // Phase 6 §12.1 的例子：北京时间 10-01 10:00
-        val t = LocalDateTime.of(2026, 10, 1, 10, 0)
-            .atZone(shanghai)
-            .toInstant()
-            .toEpochMilli()
+        val t =
+            LocalDateTime.of(2026, 10, 1, 10, 0)
+                .atZone(shanghai)
+                .toInstant()
+                .toEpochMilli()
 
         val inShanghai = DayBoundary(dayStartHour = 4, zoneId = shanghai)
         val inLondon = DayBoundary(dayStartHour = 4, zoneId = ZoneId.of("Europe/London"))
