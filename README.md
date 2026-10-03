@@ -258,6 +258,7 @@ echo "sdk.dir=/你的/Android/sdk" > local.properties
 | `quality/device-acceptance-2026-10-02.md` | 真机验收报告（第一轮）：环境、逐项证据、发现的问题、未覆盖项 |
 | `quality/device-acceptance-2026-10-03.md` | 真机验收报告（第二轮）：JSON 备份/恢复全链路、补录角标、验收脚本修正 |
 | `quality/README.md` | 质量门禁原始日志的索引与 ktlint 违规分布 |
+| `optimization-roadmap-2026-10-03.md` | 验收之后的优化方案与可行性评估（A/B/C/D 四档、依赖顺序、逐项验证方式） |
 | `../BUILD.md` | 本机构建与排错 |
 
 ## 版本规划
