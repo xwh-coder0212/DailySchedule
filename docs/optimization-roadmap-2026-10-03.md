@@ -11,7 +11,7 @@
 
 | 档 | 项 | 工作量【估算】 | 风险 | 前置依赖 |
 | --- | --- | --- | --- | --- |
-| A1 | 删掉 3 个零引用的死依赖 | S（半天内） | 低 | 先决定 C1 做不做小组件 |
+| A1 | 清掉零引用的死依赖（删 `work-runtime-ktx`；Glance 留待 V2） | S（半天内） | 低 | 无 |
 | A2 | **release 签名配置 + 首次 release 构建验证** | S–M | **中**（keystore 保管） | 无 |
 | A3 | 验收遗留 2 项转成单测 | S | 低 | 无 |
 | A4 | 加 CI（GitHub Actions） | M | 中（首次调环境） | A1、A2 先做完 |
@@ -66,7 +66,7 @@
 
 ## 三、A 档：立刻可做
 
-### A1 删掉零引用的死依赖
+### A1 清理零引用的死依赖
 
 **实测证据**
 
@@ -88,35 +88,29 @@ $ grep -rn 'WorkManager\|CoroutineWorker\|OneTimeWorkRequest' app/src
 唯一一次出现是 `BootCompletedReceiver.kt` 的注释里提到「Worker / JobScheduler」，
 是说明文字，不是调用。
 
-**做法**：删 `app/build.gradle.kts:106-108` 三行，同步删版本目录里 `glance` / `work` 的
-versions 与 libraries 条目。
+**做法**：本次只删 `app/build.gradle.kts:106` 那一行 `work-runtime-ktx`，
+并同步删版本目录里 `work` 的 version 与 library 条目。Glance 的两行按下面的建议保留。
 
 **风险：低**。要留意的是 `glance-appwidget` 会传递带入 `work-runtime` ——
-删掉后如果仍然编译通过，就反证了工程里没有对它们的隐式依赖。
+删掉显式声明后如果仍然编译通过，就反证了工程里没有对它的直接调用。
 
-**验证**：`./gradlew :app:assembleRelease` 与 `:app:testDebugUnitTest` 都通过。
+**验证**：`./gradlew :app:testDebugUnitTest` 通过。体积收益要在 A2
+（release 构建首次跑通）之后才能量到，因为 debug 包不混淆，量不准。
 
-**⚠ 这一项与 C1 互斥，而且 README 里已经有倾向**
+**我的建议（默认按这条走，你要改就说一声）**
 
-`README.md:266` 的版本规划写着：
+既然 README 的版本规划里桌面小组件已经占着 V2 的位置，就按「保留 Glance、
+只删 `work-runtime-ktx`」处理：
 
-```
-- **V2** —— 桌面小组件、编辑页补齐。
-```
+- `app/build.gradle.kts:106` 的 `work-runtime-ktx` —— **删**。没有任何代码调用它，
+  即使保留 Glance，`glance-appwidget` 也会传递带入 `work-runtime`，显式声明纯属冗余。
+  真要写 Worker 时再加回来，成本是三行。
+- `app/build.gradle.kts:107-108` 的两行 Glance —— **留**。它占的是 V2 的位置，
+  删了再装回来虽然几乎零成本，但对一个已经规划在 V2 的功能来回折腾没有收益。
+  真正该做的动作是「别让它一直闲着」，也就是把 C1 排进 V2。
 
-也就是说**桌面小组件已经被列为 V2 范围**，Glance 那两行不是随手加的，是给 V2 占位。
-所以这里要分开处理：
-
-- **`work-runtime-ktx`（`app/build.gradle.kts:106`）这一行无论哪条路都可以删。**
-  没有任何代码调用它；即使保留 Glance，`glance-appwidget` 也会传递带入
-  `work-runtime`，显式声明纯属冗余。等真要写 Worker 时再加回来。
-- **Glance 两行怎么处理，取决于 V2 什么时候动手**：
-  - V2 近期动 → 保留，走 C1 补实现（删了再装回来成本几乎为零，但没必要来回折腾）
-  - V2 很久以后 → 删掉。留着它的代价在 release 包里其实不大（R8 开着，
-    没有 manifest 入口的东西基本会被裁掉），主要代价是「依赖清单里挂着一个
-    看不懂用途的包」以及每次升级依赖时要多考虑一个组件。
-
-**两条路只能选一条，先拍板再动手** —— 别一边删一边又去写小组件。
+反过来的处理方式（两行都删）只在一种情况下更优：你决定**不做**桌面小组件。
+那时删掉能少一份升级负担，需要同步改 `README.md` 的 V2 范围。
 
 ---
 
@@ -347,18 +341,17 @@ Glance 的依赖**已经躺在构建脚本里**（零引用，见 A1），
 ## 七、建议的推进顺序（含依赖）
 
 ```
-① 先拍板：桌面小组件做不做  ──┬─→ 做：走 C1（保留 Glance）
-                              └─→ 不做：走 A1（删 Glance + WorkManager）
-② A2 release 签名 + 首次 release 包实跑验证        ← 门槛项，不依赖 ①
+① A1 清死依赖：删 work-runtime-ktx，Glance 留待 V2（按 README 的 V2 范围）  ← 不依赖任何项
+② A2 release 签名 + 首次 release 包实跑验证        ← 门槛项，排最前
 ③ A3 验收遗留两项转单测                            ← 不依赖任何项，可穿插
-④ A4 加 CI                                        ← 依赖 ①② 完成（让 CI 首跑在干净基线）
+④ A4 加 CI                                        ← 依赖 ①②③ 完成（让 CI 首跑在干净基线）
 ⑤ B2 / B3 / B4                                    ← 三者都在纯函数层，可并行，不碰 UI
 ⑥ B1 先量冷启动基线 → 再决定投不投 Baseline Profile
 ⑦ B5 单独一轮做依赖升级
 ⑧ C2 / C5（低成本增强）→ C3（统计维度）→ C4（仅在需要上架时）
 ```
 
-**为什么 A2 排在①之后但仍然靠前**：它是唯一一个「不做就没法把 App 给别人用」的项，
+**为什么 A2 排最前**：它是唯一一个「不做就没法把 App 给别人用」的项，
 而成本只有「加一段构建脚本 + 生成一个 keystore」。
 
 **为什么 A4（CI）必须等前两项**：CI 的价值是「以后不用记得跑门禁」。
