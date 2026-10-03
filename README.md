@@ -214,7 +214,7 @@ echo "sdk.dir=/你的/Android/sdk" > local.properties
 | Android Lint | `./gradlew :app:lintDebug` | **0 error / 27 warning** |
 | ktlint | `./gradlew :app:ktlintGate` | **通过，存量 0 处** |
 | 打包 | `./gradlew assembleDebug` | 通过 |
-| 真机验收 | `docs/quality/device-acceptance-2026-10-02.md` | Redmi / Android 16 上 12 项中 11 项通过，1 项未覆盖 |
+| 真机验收 | `docs/quality/device-acceptance-2026-10-03.md` | Redmi / Android 16 上 14 项全部通过（含 JSON 备份恢复全链路、补录角标） |
 
 几个需要说明的地方，因为它们都是「看起来绿、实际空过」的坑：
 
@@ -255,7 +255,8 @@ echo "sdk.dir=/你的/Android/sdk" > local.properties
 | `phase6-uiux.md` | 视觉语言与页面规格 |
 | `phase7-implementation-plan.md` | 实施计划与 WBS |
 | `rev2-ui-revision.html` | 第二轮改版方案与落地状态（三 Tab、统计重做、补录标记） |
-| `quality/device-acceptance-2026-10-02.md` | 真机验收报告：环境、逐项证据、发现的问题、未覆盖项 |
+| `quality/device-acceptance-2026-10-02.md` | 真机验收报告（第一轮）：环境、逐项证据、发现的问题、未覆盖项 |
+| `quality/device-acceptance-2026-10-03.md` | 真机验收报告（第二轮）：JSON 备份/恢复全链路、补录角标、验收脚本修正 |
 | `quality/README.md` | 质量门禁原始日志的索引与 ktlint 违规分布 |
 | `../BUILD.md` | 本机构建与排错 |
 
