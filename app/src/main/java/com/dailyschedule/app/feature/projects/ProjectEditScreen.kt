@@ -113,7 +113,7 @@ fun ProjectEditScreen(
                 label = { Text(stringResource(R.string.project_name_label)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
             )
 
             SectionTitle(stringResource(R.string.project_color_label))
@@ -186,7 +186,7 @@ fun ProjectEditScreen(
                 label = { Text(stringResource(R.string.project_target_label)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
             )
 
             Button(

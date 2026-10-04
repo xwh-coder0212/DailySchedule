@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.Button
@@ -165,7 +164,7 @@ fun ExpenseEditScreen(
                             label = { Text(stringResource(R.string.record_note_label)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = MaterialTheme.shapes.medium,
                         )
                     }
 
@@ -230,7 +229,7 @@ private fun CategoryTile(
 ) {
     Card(
         modifier = Modifier.clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors =
             CardDefaults.cardColors(
                 containerColor =

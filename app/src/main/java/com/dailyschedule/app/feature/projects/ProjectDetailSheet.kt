@@ -117,7 +117,7 @@ fun ProjectDetailSheet(
                 Column(
                     modifier =
                         Modifier
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(MaterialTheme.shapes.medium)
                             .clickable { showBackgroundPicker = true }
                             .padding(horizontal = 10.dp, vertical = 6.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -391,7 +391,7 @@ private fun RowScope.SheetTile(
             Modifier
                 .weight(1f)
                 .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors =
             CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,

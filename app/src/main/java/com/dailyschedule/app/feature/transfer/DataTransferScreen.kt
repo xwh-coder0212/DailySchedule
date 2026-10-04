@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -115,7 +114,7 @@ fun DataTransferScreen(
             // ── 1. 完整备份（可恢复） ──
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.large,
                 colors =
                     CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -263,7 +262,7 @@ fun DataTransferScreen(
             // ── 3. Excel 报表 ──
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.large,
                 colors =
                     CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -316,7 +315,7 @@ fun DataTransferScreen(
             // 理解成「数据安全了」，然后在换机时丢掉全部历史。
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.large,
                 colors =
                     CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -525,7 +524,7 @@ private fun OutcomeCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         colors =
             CardDefaults.cardColors(
                 containerColor =

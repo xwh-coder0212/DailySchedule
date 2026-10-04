@@ -1,7 +1,7 @@
 package com.dailyschedule.app.feature.home
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -27,12 +29,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dailyschedule.app.R
 import com.dailyschedule.app.core.time.DurationFormatter
+import com.dailyschedule.app.core.ui.component.DsEmptyState
+import com.dailyschedule.app.core.ui.theme.DsSpacing
+import com.dailyschedule.app.core.ui.theme.numeric
+import com.dailyschedule.app.core.ui.theme.numericEmphasis
 import com.dailyschedule.app.domain.model.FocusSession
 import kotlinx.coroutines.delay
 
@@ -61,8 +65,8 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
             Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(DsSpacing.screenHorizontal),
+        verticalArrangement = Arrangement.spacedBy(DsSpacing.sectionGap),
     ) {
         ActiveSessionCard(
             state = state,
@@ -81,7 +85,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
 
         TimelineCard(items = state.timeline)
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(DsSpacing.xxl))
     }
 }
 
@@ -95,28 +99,23 @@ private fun ActiveSessionCard(
 ) {
     val active = state.activeSession
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        // 有会话 <-> 无会话切换时高度差别很大，直接跳会被看成"闪一下"。
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
         colors =
             CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
             ),
     ) {
         if (active == null) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = stringResource(R.string.home_no_session),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
+            DsEmptyState(
+                icon = Icons.Outlined.Timer,
+                title = stringResource(R.string.home_no_session),
+                // 卡片底色是 primaryContainer，前景必须用配套的 onPrimaryContainer，
+                // 否则用默认的 onSurfaceVariant 会发灰、对比度不足。
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
         } else {
-            Column(modifier = Modifier.padding(20.dp)) {
+            Column(modifier = Modifier.padding(DsSpacing.xl)) {
                 Text(
                     text =
                         state.activeProjectName
@@ -124,18 +123,14 @@ private fun ActiveSessionCard(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(DsSpacing.sm))
                 Text(
                     text = DurationFormatter.clock(elapsedOfActive(active, nowElapsedMs)),
-                    style =
-                        MaterialTheme.typography.displayMedium.copy(
-                            fontWeight = FontWeight.Medium,
-                            fontFeatureSettings = "tnum",
-                        ),
+                    style = numericEmphasis(MaterialTheme.typography.displayMedium),
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
-                Spacer(Modifier.height(16.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Spacer(Modifier.height(DsSpacing.lg))
+                Row(horizontalArrangement = Arrangement.spacedBy(DsSpacing.sm)) {
                     if (active.pauseStartElapsedMs == null) {
                         Button(onClick = onPause) {
                             Text(stringResource(R.string.record_pause))
@@ -168,14 +163,14 @@ private fun DailyTotalsCard(
     sessionCount: Int,
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        shape = MaterialTheme.shapes.extraLarge,
     ) {
         Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .padding(DsSpacing.xl),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             StatColumn(
@@ -202,11 +197,7 @@ private fun StatColumn(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = value,
-            style =
-                MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Medium,
-                    fontFeatureSettings = "tnum",
-                ),
+            style = numericEmphasis(MaterialTheme.typography.titleLarge),
         )
         Text(
             text = label,
@@ -219,28 +210,27 @@ private fun StatColumn(
 @Composable
 private fun TimelineCard(items: List<TimelineItem>) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        // 列表增删时高度平滑过渡，不要瞬间撑开。
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        shape = MaterialTheme.shapes.extraLarge,
         colors =
             CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer,
             ),
     ) {
-        Column(Modifier.padding(16.dp)) {
+        Column(Modifier.padding(DsSpacing.lg)) {
             Text(
                 text = stringResource(R.string.tab_home),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             if (items.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.home_timeline_empty),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 16.dp),
+                DsEmptyState(
+                    icon = Icons.Outlined.History,
+                    title = stringResource(R.string.home_timeline_empty),
                 )
             } else {
-                Column(Modifier.padding(top = 8.dp)) {
+                Column(Modifier.padding(top = DsSpacing.sm)) {
                     items.forEach { item ->
                         TimelineRow(item = item)
                     }
@@ -256,16 +246,13 @@ private fun TimelineRow(item: TimelineItem) {
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
+                .padding(vertical = DsSpacing.sm),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = DurationFormatter.timeOfDay(item.session.startWallClockMs),
-            style =
-                MaterialTheme.typography.bodyMedium.copy(
-                    fontFeatureSettings = "tnum",
-                ),
+            style = numeric(MaterialTheme.typography.bodyMedium),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
@@ -274,15 +261,11 @@ private fun TimelineRow(item: TimelineItem) {
             modifier =
                 Modifier
                     .weight(1f)
-                    .padding(horizontal = 12.dp),
+                    .padding(horizontal = DsSpacing.md),
         )
         Text(
             text = DurationFormatter.duration(item.session.durationMs ?: 0L),
-            style =
-                MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Medium,
-                    fontFeatureSettings = "tnum",
-                ),
+            style = numericEmphasis(MaterialTheme.typography.bodyMedium),
         )
     }
 }

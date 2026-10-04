@@ -5,6 +5,61 @@
 
 ## [未发布]
 
+### 界面令牌层收口（2026-10-04）
+
+背景是「界面看着潦草」。先量化再动手，量出来的根因不是缺组件，而是**设计令牌层建了但没人用**：
+
+| 探针 | 改造前 |
+| --- | --- |
+| `TabularNumbers` / `DisplayNumberStyle` / `TimerNumberStyle` 引用数 | 各 **0** |
+| `MaterialTheme.shapes` 引用数 | **0**（而硬编码 `RoundedCornerShape(N.dp)` 有 34 处在消费端） |
+| 页面手写 `fontFeatureSettings = "tnum"` | **20** 处 |
+| dp 字面量 | **233** 处，含 `9/11/14/22/26/30.dp` 这类非 4dp 网格值 |
+| `AnimatedVisibility` / `animateContentSize` / `Crossfade` | 各 **0** 个文件 |
+
+即同一件事存在 20 份副本，改一处不会全局生效 —— 同类元素的间距、圆角、数字排版各自为政。
+
+**Added**
+
+- `core/ui/theme/DsSpacing.kt`：间距与尺寸令牌。9 个刻度（4dp 网格）+ 页面边距、
+  列表行最小高度、最小触摸目标。
+- `core/ui/theme/DsText.kt`：排版令牌收口。`numeric()` / `numericEmphasis()` 把
+  手写 tnum 收敛成一处；`DsTypography` 作为唯一排版入口。
+- `core/ui/theme/DsMotion.kt`：动效规范。三档时长（160 / 240 / 360ms）+ 进出曲线。
+- `core/ui/component/DsEmptyState.kt`：统一空状态（图标 + 标题 + 说明 + 可选按钮）。
+  此前全工程没有空状态组件，各页面自己拼「一行灰字」，用户分不清是没数据还是渲染失败。
+
+**Changed**
+
+- `Theme.kt`：`typography` 默认值由裸 `Typography()` 改为 `DsTypography`，排版有了唯一定稿入口。
+- `HomeScreen.kt`：示范页接入四层令牌 —— dp 字面量改 `DsSpacing`、圆角改
+  `MaterialTheme.shapes.extraLarge`、4 处手写 tnum 改 `numeric()`、两处空态改 `DsEmptyState`，
+  并给三张卡片加 `animateContentSize()`。
+- **19 处圆角等价收回令牌**：消费端 `RoundedCornerShape(12.dp)` → `MaterialTheme.shapes.medium`、
+  `(16.dp)` → `Large`，数值完全相等、视觉零变化。定义处 `ThemePackSpec` 明确排除，
+  5 个文件的孤儿 import 一并删除。
+
+**Verified**
+
+- 编译 `COMPILE_EXIT=0`（0 警告）。
+- 单测 **213 用例 / 24 类 / 0 失败 / 0 错误 / 0 跳过** —— 与改造前逐项相同。
+- ktlint 门禁通过，基线 0 处存量，未引入新违规。
+- Android Lint `0 error / 27 warning` —— 与改造前逐项相同。
+
+单测与 Lint 数字一字未变，佐证「等价替换」的判断：没有改到任何被测试覆盖的行为。
+
+**仍未覆盖**
+
+- **本次改动没有经过任何视觉验证**，只过了编译与门禁。卡点在设备而非代码：
+  真机连接正常但 `adb install` 被 MIUI 以 `INSTALL_FAILED_USER_RESTRICTED` 拦下，
+  该开关不在标准 settings 命名空间内，adb 侧改不了；`am start` 拉起 MIUI 安装器后
+  被其主动拒绝（Activity 创建后立即 `onHandleDestroyed`）。
+- 字号一个都没改：三个大数字令牌（34 / 40sp）与页面在用的 Material3 基准
+  （`displayMedium` 45sp、`titleLarge` 22sp）不一致，统一到哪套属排版决策。
+- 其余 11 个页面未接入令牌；页面里 20 处手写 tnum 与非槽位圆角 12 处（`14/11/10/9/6/2.dp`）
+  未动 —— 后者的归位必然改变视觉，需与排版评审一起定。
+- 完整诊断与取舍见 `docs/quality/ui-foundation-2026-10-04.md`。
+
 ### release 构建打通、补 CI、清死依赖（2026-10-04）
 
 在此之前这个工程**一个 release 包都没产出过**：`app/build/outputs/apk/` 下只有 debug，
