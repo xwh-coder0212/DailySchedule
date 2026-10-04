@@ -162,7 +162,32 @@ AGP 自动应用：
 | --- | --- |
 | **release 包的真机端到端** | **未验**。需要装上 release 包，跑一次 JSON 导出 → 导入，并确认导入后的库与导出文件逐字段一致。静态验证再强也替代不了这一步 —— 它证明的是「类与字符串还在」，不是「这条代码路径真的能跑通」。 |
 | release 包在设备上的安装 | 未验 |
-| keystore 的备份 | **未做**。keystore 与口令只存在于本机、仓库之外的同一个目录里，既不在仓库内，也没有任何离线备份。签名私钥不能重新生成 —— 丢了就无法再给已安装的 App 发升级包（Android 靠签名区分「同一应用的新版本」与「另一个应用」），只能换 `applicationId` 重装，用户数据要重新导。**这是当前最该补的一件事。** |
+| keystore 的备份 | **已做一份，但还不够**。已在 `E:/DailySchedule-backup/keystore/` 放了一份副本（含口令与一份说明它的 README），两处 SHA-256 已核对一致 —— 这一份防的是「D 盘坏了」和「原目录被误删」。**它防不住整机丢失或盘被加密**，所以还需要一份在本机之外的副本。签名私钥不能重新生成：丢了就无法再给已安装的 App 发升级包（Android 靠签名区分「同一应用的新版本」与「另一个应用」），只能换 `applicationId` 重装，用户数据要重新导。 |
+| 推送 / CI 首次实跑 | 未做（见下） |
+
+## 推送链路当前的状态（2026-10-04 实测）
+
+A4 的验收动作是「推送后看 GitHub Actions 页面」，而这条链路现在有两处要处理：
+
+1. **全局 git 代理配置是断的。** `http.proxy = http://127.0.0.1:31180`、
+   `https.proxy = http://127.0.0.1:31181`，但这两个端口上**没有任何进程在监听**。
+   于是 git 连 github 时报
+   `Failed to connect to github.com:443 over proxy 127.0.0.1 ... Could not connect to server`。
+   绕过代理直连是通的：
+
+   ```bash
+   git -c http.proxy= -c https.proxy= ls-remote --heads origin
+   # → 7c6c8c070a6782a6c0e90ef34b1d94f0f0253820    refs/heads/main
+   ```
+
+   也就是说阻断 git 的不是网络，是那份指向已停代理的配置。
+   不要直接改全局配置 —— 里面还有 gitee / coding / codeup 几条按域名分流的代理规则，
+   动它们可能影响别的仓库。用上面这种单次覆盖的方式即可。
+2. **推送凭据**：`credential.helper = helper-selector`（Git Credential Manager），
+   本机没有 SSH key、没有 `gh` CLI。之前的推送成功过（远端 `main` 停在 `7c6c8c0`，
+   与本地提交历史对得上），说明 GCM 里存着可用的凭据。
+
+推送本身是对外动作，按 `SOUL.md` 的约定不在未经确认的情况下执行。
 
 ## 签名身份（已定，且为什么必须现在定）
 
