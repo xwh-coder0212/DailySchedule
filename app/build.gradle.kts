@@ -11,6 +11,54 @@ plugins {
     alias(libs.plugins.ktlint)
 }
 
+/*
+ * release 签名配置。
+ *
+ * 背景：这个工程此前**完全没有签名配置**（signingConfigs / storeFile / key.properties
+ * 全工程零命中），也就是说 `:app:assembleRelease` 即使跑成功，产出的也是一个
+ * **无法安装**的 unsigned 包 —— 而它此前连一次都没跑过（outputs/apk 下只有 debug）。
+ * 那意味着 R8 与 shrinkResources 开了却从未验证过，proguard-rules.pro 是死规则。
+ *
+ * 这里做成「有 key.properties 就签，没有就退回 unsigned」而不是硬失败，原因有两个：
+ *   1. keystore 按设计不入库（见 .gitignore）。硬失败会让任何一次在没有密钥的
+ *      机器/CI 上跑 assembleRelease 直接断掉，连"R8 有没有把东西裁坏"都验不了。
+ *   2. CI 的 release job 靠 secret 注入；没配 secret 时仍然应该能产包做体积与
+ *      dex 核对。
+ * 代价是"忘了配密钥会静默拿到一个装不上的包"，所以下面挂了 assembleRelease
+ * 的构建期警告，把这件事喊出来。
+ *
+ * key.properties 字段：storeFile / storePassword / keyAlias / keyPassword。
+ * 注意 PKCS12 格式下 keyPassword 必须等于 storePassword，否则 keytool 只会
+ * 警告一句然后用 storePassword 覆盖掉 keyPassword。
+ *
+ * ## 为什么不用 java.util.Properties
+ * 两个原因，都不是风格问题：
+ *   1. Gradle Kotlin DSL 的隐式导入里**没有** `java.util.Properties`
+ *      （`java.io.File` 有），直接用会报 Unresolved reference。
+ *   2. 更要紧的是 `Properties.load` 会把反斜杠当转义符。storeFile 一旦写成
+ *      Windows 原生路径 `D:\toolchain\keystore\x.jks`，读出来会变成
+ *      `D:toolchainkeystorex.jks` —— 不报错，只是在签名时找不到文件。
+ * 这四个键的格式是我们自己写死的（`键=值` 一行一条），手写解析反而更可控。
+ */
+val releaseKeyPropertiesFile: File = rootProject.file("key.properties")
+
+/** 只认识 `键=值` 与 `#` 注释两种行；值里允许出现 `=` 与 `:`，不做任何转义处理。 */
+val releaseKeyProperties: Map<String, String> =
+    if (releaseKeyPropertiesFile.isFile) {
+        releaseKeyPropertiesFile
+            .readLines()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() && !it.startsWith("#") && it.indexOf('=') > 0 }
+            .associate { it.substringBefore('=').trim() to it.substringAfter('=').trim() }
+    } else {
+        emptyMap()
+    }
+
+val requiredReleaseSigningKeys = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+val missingReleaseSigningKeys =
+    requiredReleaseSigningKeys.filter { releaseKeyProperties[it].isNullOrEmpty() }
+val releaseSigningAvailable = releaseKeyProperties.isNotEmpty() && missingReleaseSigningKeys.isEmpty()
+
 android {
     namespace = "com.dailyschedule.app"
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -23,6 +71,20 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    // 必须排在 buildTypes 之前：buildTypes.release 要按名字取回这里创建的配置
+    signingConfigs {
+        if (releaseSigningAvailable) {
+            create("release") {
+                // storeFile 写成绝对路径（本地 D:/toolchain/keystore/...、
+                // CI 是 $RUNNER_TEMP/release.jks），所以直接用 file() 交给它解析
+                storeFile = file(releaseKeyProperties.getValue("storeFile"))
+                storePassword = releaseKeyProperties.getValue("storePassword")
+                keyAlias = releaseKeyProperties.getValue("keyAlias")
+                keyPassword = releaseKeyProperties.getValue("keyPassword")
+            }
+        }
     }
 
     buildTypes {
@@ -38,6 +100,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 
@@ -62,6 +125,30 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+}
+
+/*
+ * 产出 unsigned release 包时的构建期警告。
+ *
+ * 不做成硬失败：CI 没有配密钥时也要能产包来核 dex 与体积（理由见文件上方注释）。
+ * 但必须喊一声 —— unsigned 的 release 包 `adb install` 会直接报
+ * INSTALL_PARSE_FAILED_NO_CERTIFICATES，而这一点在构建输出里完全看不出来，
+ * 只看 BUILD SUCCESSFUL 会以为一切正常。
+ */
+tasks.matching { it.name == "assembleRelease" }.configureEach {
+    if (!releaseSigningAvailable) {
+        doFirst {
+            val reason =
+                if (!releaseKeyPropertiesFile.isFile) {
+                    "找不到 ${releaseKeyPropertiesFile.absolutePath}"
+                } else {
+                    "${releaseKeyPropertiesFile.name} 缺少字段：${missingReleaseSigningKeys.joinToString(", ")}"
+                }
+            logger.lifecycle(
+                "警告：本次 release 包不会签名，无法安装到设备。原因：$reason。（配置方式见 app/build.gradle.kts 顶部注释）",
+            )
         }
     }
 }
@@ -103,7 +190,22 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
 
     implementation(libs.datastore.preferences)
-    implementation(libs.work.runtime.ktx)
+    // 这里曾经声明 work-runtime-ktx 2.11.0，但全工程零调用（唯一一次出现是
+    // BootCompletedReceiver 的注释里提到「Worker / JobScheduler」，属说明文字），已删。
+    //
+    // 但删之前得看清一件事 —— 实测（`gradle :app:dependencies --configuration
+    // releaseRuntimeClasspath`）：glance-appwidget:1.2.0 → glance:1.2.0 传递带入的是
+    //     androidx.work:work-runtime:2.7.1
+    //     androidx.work:work-runtime-ktx:2.7.1
+    // 也就是说那行显式声明一直在充当**版本下限**，删掉等于把 WorkManager 从
+    // 2.11.0 降到 2.7.1。
+    //
+    // 今天没有影响：全工程不用 WorkManager，而 Glance 也一行没引用，
+    // R8 会把两者一起裁掉，产物里什么都没有（release 包 1 个 dex / 7.03 MB 可证）。
+    //
+    // 等 V2 真做桌面小组件时这个版本才有意义。那时**不要沿用 Glance 带来的 2.7.1**
+    // —— 那是 2022 年的版本，早于 Android 14 的前台服务类型要求。要么写回显式依赖，
+    // 要么用 constraint 把版本顶上去。
     implementation(libs.glance.appwidget)
     implementation(libs.glance.material3)
 
