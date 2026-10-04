@@ -23,7 +23,7 @@ ktlint 门禁与 Lint，另外还有一个 job 真的走一次 R8 与资源压�
 | `release-runtime-verify-backup-log.txt` | 上文中 `verify_backup.sh` 单跑的原始输出 |
 | `release-runtime-coldstart.png` | release 包冷启动后的首页截图（资源未被 `isShrinkResources` 误裁的直接凭证） |
 | `ci-first-green-2026-10-04.md` | **CI 首次绿灯**：两次运行（先红后绿）的逐步骤记录、为变绿修掉的三处问题、以及 CI 现在守住/没守住什么 |
-| `ui-foundation-2026-10-04.md` | **界面令牌层收口**：量化诊断（令牌引用数全为 0 而硬编码 39 处）、新增间距/排版/动效令牌与统一空状态、19 处圆角等价收回令牌、以及「未做视觉验证」的边界 |
+| `ui-foundation-2026-10-04.md` | **界面令牌层收口**：量化诊断（令牌引用数全为 0 而硬编码 39 处）、新增间距/排版/动效令牌与统一空状态、21 处圆角等价收回令牌、以及「未做视觉验证」的边界 |
 
 ## CI
 

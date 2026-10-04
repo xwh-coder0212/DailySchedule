@@ -51,30 +51,38 @@
   - 两处"一行灰字"空态 → `DsEmptyState`（`Icons.Outlined.Timer` / `Icons.Outlined.History`）
   - 三张卡片加 `animateContentSize()`，让有/无会话切换、列表增删时高度平滑过渡
 
-### 存量治理：19 处圆角等价收回令牌
+### 存量治理：21 处圆角等价收回令牌
 
-消费端 `RoundedCornerShape(N.dp)` 的取值分布与 `shapes` 槽位对照：
+消费端（排除定义处 `ThemePackSpec`）原始共 **34 处** `RoundedCornerShape`，
+与 `shapes` 槽位对照如下：
 
 | 取值 | 处数 | 槽位 | 处理 |
 | --- | --- | --- | --- |
 | `12.dp` | 10 | `medium`（12dp） | **本轮替换**（零视觉变化） |
 | `16.dp` | 9 | `large`（16dp） | **本轮替换**（零视觉变化） |
+| `20.dp` | 2 | `extraLarge`（20dp） | **本轮替换**（随 `HomeScreen` 改造一并） |
 | `14.dp` | 3 | 介于 medium 与 large 之间 | 未动 |
 | `10.dp` | 3 | 介于 small 与 medium 之间 | 未动 |
 | `9.dp` | 2 | 同上 | 未动 |
 | `11.dp` | 2 | 同上 | 未动 |
 | `6.dp` | 1 | 介于 extraSmall 与 small 之间 | 未动 |
 | `2.dp` | 1 | 非槽位 | 未动 |
+| `topStart = 6.dp, topEnd = 6.dp` | 1 | 命名参数形式 | 未动 |
+| **合计** | **34** | 替换 21 / 未动 13 | — |
 
-替换在 11 个消费端文件上进行，`ThemePackSpec.kt`（定义处）明确排除。
-`12.dp` → `MaterialTheme.shapes.medium`、`16.dp` → `MaterialTheme.shapes.large`，
-数值完全相等，**视觉零变化**。
+替换在 11 个消费端文件上批量进行（`12.dp` → `MaterialTheme.shapes.medium`、
+`16.dp` → `MaterialTheme.shapes.large`，数值完全相等），另加 `HomeScreen` 的 2 处
+`20.dp` → `shapes.extraLarge`。`ThemePackSpec.kt`（定义处）明确排除。
+
+**注**：上表第 10 行的命名参数写法（`topStart = …`）不会被 `RoundedCornerShape(N.dp)`
+这种简单模式匹配到。第一版统计漏了它，得出「剩余 12 处」，实际是 13 处 ——
+按简单正则数数会少算，这类计数一律回读源码行核对。
 
 其中 5 个文件替换后 `RoundedCornerShape` 成为孤儿 import，已一并删除
 （`DsNumberPad` / `ExpenseEditScreen` / `CategoryManageScreen` / `SettingsScreen` / `DataTransferScreen`）；
 其余 6 个文件仍有非槽位取值在用，import 保留。
 
-**为什么只做 19 处**：剩下 12 处不是 4dp 网格值，归位必然改变视觉（14→12 或 14→16）。
+**为什么只做 21 处**：剩下 13 处不是 4dp 网格值，归位必然改变视觉（14→12 或 14→16）。
 那属于视觉微调，需与排版评审一起定，不单方面改。
 
 ## 三、验证证据
@@ -98,7 +106,7 @@
    组件层 `DsCharts.kt` 的 2 处同理。
 3. **其余 11 个页面未接入令牌。** 批量替换上百处 dp 会与即将到来的排版评审冲突，
    一次到位比分两次更省。
-4. **非槽位圆角 12 处未归位。** 见上文。
+4. **非槽位圆角 13 处未归位。** 见上文。
 5. **未做视觉验证。** 本次改动没有在设备上看过一眼。原因见下节。
 
 ## 五、未验证的边界（重要）

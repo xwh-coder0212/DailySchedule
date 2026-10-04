@@ -35,9 +35,9 @@
 - `HomeScreen.kt`：示范页接入四层令牌 —— dp 字面量改 `DsSpacing`、圆角改
   `MaterialTheme.shapes.extraLarge`、4 处手写 tnum 改 `numeric()`、两处空态改 `DsEmptyState`，
   并给三张卡片加 `animateContentSize()`。
-- **19 处圆角等价收回令牌**：消费端 `RoundedCornerShape(12.dp)` → `MaterialTheme.shapes.medium`、
-  `(16.dp)` → `Large`，数值完全相等、视觉零变化。定义处 `ThemePackSpec` 明确排除，
-  5 个文件的孤儿 import 一并删除。
+- **21 处圆角等价收回令牌**：消费端 `RoundedCornerShape(12.dp)` → `MaterialTheme.shapes.medium`、
+  `(16.dp)` → `Large`（11 个文件，共 19 处），另加 `HomeScreen` 的 2 处 `20.dp` → `extraLarge`。
+  数值完全相等、视觉零变化。定义处 `ThemePackSpec` 明确排除，5 个文件的孤儿 import 一并删除。
 
 **Verified**
 
@@ -56,8 +56,9 @@
   被其主动拒绝（Activity 创建后立即 `onHandleDestroyed`）。
 - 字号一个都没改：三个大数字令牌（34 / 40sp）与页面在用的 Material3 基准
   （`displayMedium` 45sp、`titleLarge` 22sp）不一致，统一到哪套属排版决策。
-- 其余 11 个页面未接入令牌；页面里 20 处手写 tnum 与非槽位圆角 12 处（`14/11/10/9/6/2.dp`）
-  未动 —— 后者的归位必然改变视觉，需与排版评审一起定。
+- 其余 11 个页面未接入令牌；页面里 20 处手写 tnum 与非槽位圆角 13 处
+  （`14 / 11 / 10 / 9 / 6 / 2.dp` 各若干，另有 1 处是 `topStart = 6.dp, topEnd = 6.dp`
+  的命名参数写法，简单正则数不到）未动 —— 后者的归位必然改变视觉，需与排版评审一起定。
 - 完整诊断与取舍见 `docs/quality/ui-foundation-2026-10-04.md`。
 
 ### release 构建打通、补 CI、清死依赖（2026-10-04）
