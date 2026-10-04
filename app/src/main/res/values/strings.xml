@@ -54,7 +54,8 @@
     <!-- 项目 -->
     <string name="project_create">新建项目</string>
     <string name="project_edit">编辑项目</string>
-    <string name="project_empty">还没有项目。点右下角 + 创建第一个，比如「考研数学」。</string>
+    <string name="project_empty_title">还没有项目</string>
+    <string name="project_empty">点右下角 + 创建第一个，比如「考研数学」。</string>
     <string name="project_archived_section">已归档</string>
     <string name="project_name_label">项目名称</string>
     <string name="project_color_label">颜色</string>
@@ -86,7 +87,7 @@
     <string name="stats_percent">%1$d%%</string>
     <string name="stats_center_total">合计</string>
     <string name="stats_share_other">其他</string>
-    <string name="stats_chart_empty">这个周期还没有数据。</string>
+    <string name="stats_chart_empty">这个周期还没有数据</string>
 
     <!-- 待办页 -->
     <string name="projects_subtitle">点右侧「开始」进入本次专注</string>
@@ -109,7 +110,8 @@
     <string name="expense_vs_less">少 %1$d%%</string>
     <string name="expense_vs_flat">持平</string>
     <string name="expense_vs_unknown">上月无记录</string>
-    <string name="expense_empty">本月还没有记账。点右下角 + 记第一笔。</string>
+    <string name="expense_empty_title">本月还没有记账</string>
+    <string name="expense_empty">点右下角 + 记第一笔。</string>
     <string name="expense_add">记一笔</string>
     <string name="expense_edit">编辑</string>
     <string name="expense_edit_title">编辑这一笔</string>

@@ -51,6 +51,11 @@
   - 两处"一行灰字"空态 → `DsEmptyState`（`Icons.Outlined.Timer` / `Icons.Outlined.History`）
   - 三张卡片加 `animateContentSize()`，让有/无会话切换、列表增删时高度平滑过渡
 
+> **⚠ 本节的判断是错的（同日真机验收时发现）。** `HomeScreen` 全仓零调用、
+> `AppNavHost.kt` 里没有 `Home` 目的地，它自首次提交（`9076d24`）起就是**死代码** ——
+> 上面这些改动在 App 里一帧都不会出现。用户真正看到的是「待办 / 统计 / 记账」三个 Tab 页。
+> 补做与证据见 [`ui-visible-pages-2026-10-04.md`](ui-visible-pages-2026-10-04.md)。
+
 ### 存量治理：21 处圆角等价收回令牌
 
 消费端（排除定义处 `ThemePackSpec`）原始共 **34 处** `RoundedCornerShape`，
@@ -101,9 +106,9 @@
 1. **字号一个都没改。** `DsTypography` 目前仍等于 Material3 默认。三个大数字令牌
    （34sp / 40sp）与页面在用的 Material3 基准（`displayMedium` 45sp、`titleLarge` 22sp）
    不一致，统一到哪一套属于排版决策，等评审意见，不抢跑。
-2. **页面里 20 处手写 tnum 未收敛。** 除 `HomeScreen` 外的写法各不相同
-   （有的带 `fontWeight`、有的带 `fontSize`），机械替换会改变视觉，需逐处判断。
-   组件层 `DsCharts.kt` 的 2 处同理。
+2. **页面里手写 tnum 未全部收敛。** 原为 20 处，同日已在三个可见 Tab 页收敛 5 处，
+   剩 15 处；剩下的写法各不相同（有的带 `fontWeight`、有的带 `fontSize`），
+   机械替换会改变视觉，需逐处判断。组件层 `DsCharts.kt` 的 2 处同理。
 3. **其余 11 个页面未接入令牌。** 批量替换上百处 dp 会与即将到来的排版评审冲突，
    一次到位比分两次更省。
 4. **非槽位圆角 13 处未归位。** 见上文。
@@ -131,3 +136,8 @@ Failure [INSTALL_FAILED_USER_RESTRICTED: Install canceled by user]
   前台回到桌面。
 
 所以这一步需要人手在设备上开一次开关，然后我可以自动化跑完全部验收。
+
+**已解除（同日）**：用户在该设备上打开了「USB 调试（安全设置）」，
+`adb install -r --no-streaming` 随即返回 `Success`。此后 release 包在真机上的安装、
+冷启动、JSON 导出 / 恢复 / 撤销全链路都已跑通，见
+[`ui-visible-pages-2026-10-04.md`](ui-visible-pages-2026-10-04.md)。

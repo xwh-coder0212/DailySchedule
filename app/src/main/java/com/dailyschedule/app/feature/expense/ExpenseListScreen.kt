@@ -1,5 +1,6 @@
 package com.dailyschedule.app.feature.expense
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -48,10 +50,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dailyschedule.app.R
 import com.dailyschedule.app.core.model.ExpenseType
 import com.dailyschedule.app.core.time.DurationFormatter
+import com.dailyschedule.app.core.ui.component.DsEmptyState
 import com.dailyschedule.app.core.ui.component.SwipeRevealActionsWidth
 import com.dailyschedule.app.core.ui.component.SwipeRevealRow
 import com.dailyschedule.app.core.ui.component.dayLabelOf
 import com.dailyschedule.app.core.ui.theme.ProjectColors
+import com.dailyschedule.app.core.ui.theme.numeric
+import com.dailyschedule.app.core.ui.theme.numericEmphasis
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -110,19 +115,11 @@ fun ExpenseListScreen(
 
             if (state.rows.isEmpty()) {
                 item(key = "empty") {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 48.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.expense_empty),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
+                    DsEmptyState(
+                        icon = Icons.AutoMirrored.Outlined.ReceiptLong,
+                        title = stringResource(R.string.expense_empty_title),
+                        description = stringResource(R.string.expense_empty),
+                    )
                 }
             } else {
                 items(state.rows, key = { it.expense.id }) { row ->
@@ -199,10 +196,7 @@ private fun MonthSwitcher(
         }
         Text(
             text = stringResource(R.string.expense_month_label, year, month),
-            style =
-                MaterialTheme.typography.titleMedium.copy(
-                    fontFeatureSettings = "tnum",
-                ),
+            style = numeric(MaterialTheme.typography.titleMedium),
             modifier = Modifier.widthIn(min = 96.dp),
             textAlign = TextAlign.Center,
         )
@@ -223,7 +217,7 @@ private fun MonthSummaryCard(
     lastMonthCents: Long,
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
         shape = MaterialTheme.shapes.large,
         colors =
             CardDefaults.cardColors(
@@ -244,9 +238,8 @@ private fun MonthSummaryCard(
             Text(
                 text = DurationFormatter.amountExact(totalCents),
                 style =
-                    MaterialTheme.typography.headlineMedium.copy(
+                    numeric(MaterialTheme.typography.headlineMedium).copy(
                         fontWeight = FontWeight.SemiBold,
-                        fontFeatureSettings = "tnum",
                     ),
                 modifier = Modifier.padding(vertical = 4.dp),
             )
@@ -365,11 +358,7 @@ private fun ExpenseRowItem(
             }
             Text(
                 text = DurationFormatter.amountExact(signedCents(row.expense.amountCents, row.expense.type)),
-                style =
-                    MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.Medium,
-                        fontFeatureSettings = "tnum",
-                    ),
+                style = numericEmphasis(MaterialTheme.typography.titleSmall),
             )
         }
     }

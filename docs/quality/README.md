@@ -24,6 +24,8 @@ ktlint 门禁与 Lint，另外还有一个 job 真的走一次 R8 与资源压�
 | `release-runtime-coldstart.png` | release 包冷启动后的首页截图（资源未被 `isShrinkResources` 误裁的直接凭证） |
 | `ci-first-green-2026-10-04.md` | **CI 首次绿灯**：两次运行（先红后绿）的逐步骤记录、为变绿修掉的三处问题、以及 CI 现在守住/没守住什么 |
 | `ui-foundation-2026-10-04.md` | **界面令牌层收口**：量化诊断（令牌引用数全为 0 而硬编码 39 处）、新增间距/排版/动效令牌与统一空状态、21 处圆角等价收回令牌、以及「未做视觉验证」的边界 |
+| `ui-visible-pages-2026-10-04.md` | **令牌层落到可见页面**：纠正上一份文档「HomeScreen 是示范页」的误判（实为死代码，全仓零调用）、把三个 Tab 页的空态换成 `DsEmptyState`、5 处手写 tnum 收敛到令牌、release 包真机验收，并记下 MIUI 软键盘覆盖下半屏导致 tap 失效的排查 |
+| `ui-visible-todo.png` / `ui-visible-stats-empty.png` / `ui-visible-money-empty.png` | 上文中三个 Tab 页的真机截图（release 包） |
 
 ## CI
 

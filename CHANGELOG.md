@@ -5,6 +5,50 @@
 
 ## [未发布]
 
+### 令牌层落到可见页面、release 包真机验收通过（2026-10-04）
+
+上一节的判断里有一处是错的，真机验收时被证伪：上一节把 `HomeScreen.kt` 当「示范页」接入令牌，
+但**全仓对 `HomeScreen` 零引用、导航图 `AppNavHost.kt` 里也没有 `Home` 目的地** ——
+它自首次提交（`9076d24`）起就是死代码。上一节为它做的空态、tnum、`animateContentSize` 改造，
+在 App 里**一帧都不会出现**。真正可见的是「待办 / 统计 / 记账」三个 Tab 页。
+
+**Fixed**
+
+- `Icons.Outlined.ReceiptLong` 被标记 deprecated（应改用 AutoMirrored 版本），
+  改为 `Icons.AutoMirrored.Outlined.ReceiptLong`，release 编译警告数回到 0。
+
+**Changed**
+
+- 三个 Tab 页（`ProjectsScreen` / `StatsScreen` / `ExpenseListScreen`）的「一行灰字」空态
+  换成 `DsEmptyState`（图标 + 标题 + 引导）；空态文案拆成标题与引导两条字符串，
+  原来是「还没有项目。点右下角 + 创建第一个……」一句话兜底。
+- 5 处手写 `fontFeatureSettings = "tnum"` 收敛到 `numeric()` / `numericEmphasis()` 令牌。
+  其中 `ExpenseListScreen` 的月度汇总卡保持原 `SemiBold` 字重不变 —— 用
+  `numeric(...).copy(fontWeight = SemiBold)` 而不是会把字重改成 `Medium` 的 `numericEmphasis`。
+- 三张会变高的卡片加 `animateContentSize()`：正在专注卡、统计 `SectionCard`、月度汇总卡。
+- 清掉 `ProjectsScreen` 因空态替换而变成孤儿的 `TextAlign` import。
+
+**Verified**
+
+- release 编译 `RELEASE_EXIT=0`，**编译警告 0 条**；APK 7,379,541 → 7,380,325（+784 字节，
+  与新加的空态图标和两条新字符串相符）。
+- 单测 **213 用例 / 24 类 / 0 失败 / 0 错误 / 0 跳过**；ktlint 门禁通过（基线 0 处存量）；
+  Lint `0 error / 27 warning` —— 三项与改造前**逐项相同**。
+- **release 包真机验收通过**（Redmi `2407FRK8EC` / Android 16 / HyperOS）：安装 `Success`、
+  冷启动 `TotalTime 176 ms`、`FATAL EXCEPTION` 与 `ANR` 命中数 **0**；
+  `verify_backup.sh --replace` 退出码 **0**、0 项失败（导出 → 选文件 → 二次确认 →
+  替换并恢复 → 撤销上次导入全链路），导出文件 `appVersion = 1.0.0`
+  （**不带 `-debug` 后缀**，直接确认本次结果属于 release 包）。
+
+**仍未覆盖**
+
+- `HomeScreen` / `HomeViewModel` 的去留未定：死代码属实，但「做首页」还是「删掉」是产品决策。
+- 其余 15 处手写 tnum、非槽位圆角 13 处、字号定稿、其余详情页接令牌 —— 等排版评审一并做。
+- 真机 release 包的**逐字段库比对**仍做不到：依赖 `run-as`，而 release 包不可 debuggable。
+  脚本已明确打「已跳过」而不是假装通过。
+
+完整证据见 `docs/quality/ui-visible-pages-2026-10-04.md`。
+
 ### 界面令牌层收口（2026-10-04）
 
 背景是「界面看着潦草」。先量化再动手，量出来的根因不是缺组件，而是**设计令牌层建了但没人用**：
@@ -32,9 +76,12 @@
 **Changed**
 
 - `Theme.kt`：`typography` 默认值由裸 `Typography()` 改为 `DsTypography`，排版有了唯一定稿入口。
-- `HomeScreen.kt`：示范页接入四层令牌 —— dp 字面量改 `DsSpacing`、圆角改
+- `HomeScreen.kt`：接入四层令牌 —— dp 字面量改 `DsSpacing`、圆角改
   `MaterialTheme.shapes.extraLarge`、4 处手写 tnum 改 `numeric()`、两处空态改 `DsEmptyState`，
   并给三张卡片加 `animateContentSize()`。
+  **更正（同日真机验收时发现）**：`HomeScreen` 自首次提交起就是**死代码**，
+  全仓零调用、导航图里没有 `Home` 目的地 —— 这些改动在 App 里一帧都不会出现。
+  可见页面的处置见上一节。
 - **21 处圆角等价收回令牌**：消费端 `RoundedCornerShape(12.dp)` → `MaterialTheme.shapes.medium`、
   `(16.dp)` → `Large`（11 个文件，共 19 处），另加 `HomeScreen` 的 2 处 `20.dp` → `extraLarge`。
   数值完全相等、视觉零变化。定义处 `ThemePackSpec` 明确排除，5 个文件的孤儿 import 一并删除。
@@ -50,10 +97,10 @@
 
 **仍未覆盖**
 
-- **本次改动没有经过任何视觉验证**，只过了编译与门禁。卡点在设备而非代码：
-  真机连接正常但 `adb install` 被 MIUI 以 `INSTALL_FAILED_USER_RESTRICTED` 拦下，
-  该开关不在标准 settings 命名空间内，adb 侧改不了；`am start` 拉起 MIUI 安装器后
-  被其主动拒绝（Activity 创建后立即 `onHandleDestroyed`）。
+- 本次改动当时没有经过视觉验证，只过了编译与门禁。卡点是 MIUI 的
+  `INSTALL_FAILED_USER_RESTRICTED`（该开关不在标准 settings 命名空间内，adb 侧改不了；
+  `am start` 拉起 MIUI 安装器会被其主动拒绝）。**该卡点已解除**：用户在设备上打开
+  「USB 调试（安全设置）」后 `adb install -r` 直接成功，相关改动已在真机 release 包上目视核对。
 - 字号一个都没改：三个大数字令牌（34 / 40sp）与页面在用的 Material3 基准
   （`displayMedium` 45sp、`titleLarge` 22sp）不一致，统一到哪套属排版决策。
 - 其余 11 个页面未接入令牌；页面里 20 处手写 tnum 与非槽位圆角 13 处

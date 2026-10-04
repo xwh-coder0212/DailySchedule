@@ -1,0 +1,192 @@
+# 令牌层落到「用户真正看得见的页面」（2026-10-04）
+
+## 这份文档回答什么
+
+上一份 [`ui-foundation-2026-10-04.md`](ui-foundation-2026-10-04.md) 建好了令牌层（间距 / 排版 / 动效 / 空状态），
+并把它接进了一个**示范页**。那份文档的假设是：示范页就是用户打开 App 看到的第一屏。
+
+**这个假设是错的。** 真机验收时把它证伪了 —— 见下节。
+
+本文记录：错在哪、修正了什么、以及修正后的设备证据。
+
+## 一、先纠正上一份文档的一个错误判断
+
+上一份文档写：
+
+> `feature/home/HomeScreen.kt`：作为示范页接入全部四层……
+
+真机截图显示，用户看到的首页是「待办 / 统计 / 记账」三个 Tab，**没有任何一屏是 `HomeScreen`**。
+回到源码核对：
+
+```
+$ grep -rn "HomeScreen" --include=*.kt --include=*.kts --include=*.xml . | grep -v /build/
+./app/src/main/java/com/dailyschedule/app/feature/home/HomeScreen.kt:50:fun HomeScreen(...
+```
+
+全仓**只有定义，零调用**。`HomeViewModel` 同样只有一处定义。
+
+再核对导航图 `navigation/AppNavHost.kt`，`NavHost` 注册的目的地是：
+
+| 目的地 | 页面 |
+| --- | --- |
+| `Projects`（startDestination，待办 Tab） | `ProjectsScreen` |
+| `Stats`（统计 Tab） | `StatsScreen` |
+| `Expense`（记账 Tab） | `ExpenseListScreen` |
+| `ExpenseEdit` / `ProjectSessions` / `ProjectEdit` | 详情页 |
+| `Settings` / `CategoryManager` / `DataTransfer` | 设置链路 |
+
+**没有 `Home` 目的地。** `git log` 显示 `HomeScreen.kt` 自首次提交（`9076d24`）起就存在，
+从未被接进导航 —— 也就是说它一直是死代码。
+
+**后果**：上一轮为 `HomeScreen` 做的 `DsEmptyState`、`numeric()`、`animateContentSize()`、
+`DsSpacing` 改造，在 App 里**一帧都不会出现**。上一份文档里「等价替换零视觉变化」的结论不受影响
+（那 21 处圆角在 11 个消费端文件里，是可见页面的），但「示范页已接入」这句不成立。
+
+`HomeScreen` / `HomeViewModel` 本轮**没有删除**：那是一个产品决策（未来要不要做首页），
+不属于界面整治范围，留给评审。
+
+## 二、把改动落到可见页面上
+
+三个 Tab 页各自的问题与本轮改法：
+
+| 页面 | 改前 | 改后 |
+| --- | --- | --- |
+| `ProjectsScreen`（待办） | 空态是居中一行灰字 `bodyMedium` | `DsEmptyState`（`Icons.Outlined.Checklist` + 标题 + 引导） |
+| `StatsScreen`（统计） | 空态是居中一行灰字 `bodyMedium` | `DsEmptyState`（`Icons.Outlined.PieChart` + 标题） |
+| `ExpenseListScreen`（记账） | 空态是居中一行灰字 `bodyMedium` | `DsEmptyState`（`Icons.AutoMirrored.Outlined.ReceiptLong` + 标题 + 引导） |
+
+空态文案拆成「标题 + 引导」两段，读起来才有层次：
+
+| 键 | 改前 | 改后 |
+| --- | --- | --- |
+| `project_empty` | `还没有项目。点右下角 + 创建第一个，比如「考研数学」。` | 拆成 `project_empty_title` = `还没有项目` + `project_empty` = `点右下角 + 创建第一个，比如「考研数学」。` |
+| `stats_chart_empty` | `这个周期还没有数据。` | `这个周期还没有数据`（作标题，去掉句末句号） |
+| `expense_empty` | `本月还没有记账。点右下角 + 记第一笔。` | 拆成 `expense_empty_title` = `本月还没有记账` + `expense_empty` = `点右下角 + 记第一笔。` |
+
+手写 `fontFeatureSettings = "tnum"` 收敛到 `DsText` 令牌，共 5 处（这是上一份文档里
+「20 处消费端手写 tnum」的一部分）：
+
+| 文件:行 | 改前 | 改后 |
+| --- | --- | --- |
+| `ProjectsScreen.kt:283` | `displayMedium.copy(fontWeight = Medium, fontFeatureSettings = "tnum")` | `numericEmphasis(displayMedium)` |
+| `StatsScreen.kt:431` | `headlineSmall.copy(fontWeight = Medium, fontFeatureSettings = "tnum")` | `numericEmphasis(headlineSmall)` |
+| `ExpenseListScreen.kt:204` | `titleMedium.copy(fontFeatureSettings = "tnum")` | `numeric(titleMedium)` |
+| `ExpenseListScreen.kt:249` | `headlineMedium.copy(fontWeight = SemiBold, fontFeatureSettings = "tnum")` | `numeric(headlineMedium).copy(fontWeight = SemiBold)` |
+| `ExpenseListScreen.kt:371` | `titleSmall.copy(fontWeight = Medium, fontFeatureSettings = "tnum")` | `numericEmphasis(titleSmall)` |
+
+注意第 249 处**没有**用 `numericEmphasis`：原值是 `SemiBold`，而 `numericEmphasis` 会写成 `Medium`。
+用 `numeric(...).copy(fontWeight = SemiBold)` 保持字重不变，只把 tnum 收进令牌。
+
+另外给三张会变高的卡片加了 `animateContentSize()`：`ProjectsScreen` 的正在专注卡、
+`StatsScreen` 的 `SectionCard`、`ExpenseListScreen` 的月度汇总卡。
+
+顺带清掉 `ProjectsScreen` 里因空态替换而变成孤儿的 `TextAlign` import。
+
+## 三、验证证据
+
+### 3.1 门禁（与改造前的对照）
+
+| 门禁 | 命令 | 结果 | 改造前 |
+| --- | --- | --- | --- |
+| 编译（release） | `gradle --no-daemon :app:assembleRelease` | `RELEASE_EXIT=0`，**编译警告 0 条** | 0 警告 |
+| 单测 | `gradle --no-daemon :app:testDebugUnitTest --rerun-tasks` | **213 用例 / 24 类 / 0 失败 / 0 错误 / 0 跳过**（`TEST_EXIT=0`） | 213 / 0 / 0 / 0 |
+| ktlint | `gradle --no-daemon :app:ktlintGate` | 通过，**基线 0 处存量，未引入新违规**（`KTLINT_EXIT=0`） | 同样通过 |
+| Android Lint | `gradle --no-daemon :app:lintDebug` | `LINT_EXIT=0`，**0 error / 27 warning** | 0 error / 27 warning |
+
+单测与 Lint 数字与改造前逐项相同。
+
+编译过程中出现并已修掉一条：`Icons.Outlined.ReceiptLong` 被标记 deprecated，提示改用
+AutoMirrored 版本。已改为 `Icons.AutoMirrored.Outlined.ReceiptLong`，改后警告数回到 0。
+
+### 3.2 设备证据（Redmi 2407FRK8EC / Android 16 / HyperOS，release 包）
+
+| 项 | 值 |
+| --- | --- |
+| APK | 7,380,325 字节，SHA-256 `036b5d78b867070aa5a27ca2dfc740a6e3c80b073acbd4be02ad0b26e469412b` |
+| 体积变化 | 7,379,541 → 7,380,325（**+784 字节**，与新加空态图标、两条新字符串相符） |
+| 安装 | `adb install -r --no-streaming` → `Success` |
+| 冷启动 | `Status: ok`，`TotalTime 176 ms` |
+| 崩溃 / ANR | logcat 全文 grep `FATAL EXCEPTION` / `ANR in com.dailyschedule.app` → **命中数 0** |
+
+三张页面截图（归档在 `docs/quality/`）：
+
+- [`ui-visible-todo.png`](ui-visible-todo.png) —— 待办页有 1 个项目时的卡片
+- [`ui-visible-stats-empty.png`](ui-visible-stats-empty.png) —— 统计页新空态：图标 + 「这个周期还没有数据」
+- [`ui-visible-money-empty.png`](ui-visible-money-empty.png) —— 记账页切到 2026年9月 后的新空态：图标 + 「本月还没有记账」+「点右下角 + 记第一笔。」
+
+记账页当前月（2026年10月）渲染 `本月支出 ¥ 1,234.56`、明细行 `-¥ 1,234.56`，
+走的就是收敛后的 `numeric()` 路径。
+
+### 3.3 为让验收有意义而造的测试数据
+
+设备数据库原本是空的（0 项目 / 0 记账），JSON 往返会退化成「只搬运 7 个默认分类」。
+因此本轮先在设备上造了数据：
+
+- 1 个项目 `StudyMath120`
+- 1 笔记账 `餐饮 · ¥1,234.56 · 今天 19:19`
+
+这两条是**测试数据**，不是产品内容，可在 App 内直接删除。
+
+有了它，release 包的真机 JSON 往返才有内容可搬：
+
+```
+counts = {'projects': 1, 'categories': 7, 'sessions': 0, 'expenses': 1}
+appVersion = 1.0.0 / dbVersion = 2
+导出文件：DailySchedule_备份_20261004_1920.json（3114 字节）
+verify_backup.sh --replace 退出码 = 0，0 项失败
+```
+
+`appVersion` 是 `1.0.0` 而**没有** `-debug` 后缀 —— 这是「本次结果属于 release 包」的直接凭证。
+
+## 四、一个必须记下来的设备坑（会产出假结论）
+
+造测试数据时，`adb shell input tap` 点「每日目标」输入框和「保存」按钮**连续十几次都不生效**，
+而同一屏上方的项目名称框、以及底栏 Tab 都能点。
+
+一度以为是坐标算错。实际原因是：
+
+**MIUI/搜狗输入法在点击文本框后会弹出软键盘，键盘覆盖了表单下半屏。
+点在 y≈2114、y≈2360 上的 tap 全部落在键盘上，根本没到 App。**
+
+三点取证：
+
+1. `adb shell dumpsys input_method | grep mInputShown` → `true`；
+2. 截图里键盘占据屏幕下半部，目标框与保存按钮都在键盘之后；
+3. 关掉键盘（`KEYCODE_BACK`，且**只在 `mInputShown=true` 时按**，否则会误退页面）后，
+   保存按钮第一次点击就生效。
+
+另外两个反直觉点：
+
+- **把输入法 `ime disable` 掉并不能阻止键盘弹出**。实测三个输入法全禁用后，
+  点文本框仍报 `mInputShown=true`（MIUI 有兜底输入路径）。
+- **`adb shell input text` 不弹键盘**（它直接注入按键事件），所以「没看到键盘」
+  不等于「键盘没开」；而**点一下文本框就会开**。这个不对称是本次踩坑的根源。
+
+**正确做法**（已可用于后续所有真机脚本）：
+
+```bash
+keyboard() { adb shell dumpsys input_method | grep -m1 -o 'mInputShown=[a-z]*'; }
+close_kb() {                       # 只在键盘真的开着时才按返回
+  for i in 1 2 3 4; do
+    [ "$(keyboard)" = "mInputShown=false" ] && return 0
+    adb shell input keyevent KEYCODE_BACK; sleep 1.3
+  done
+  return 1
+}
+# 规则：点击 y > 约 1500 的控件之前，必须先 close_kb 并确认 mInputShown=false
+```
+
+顺带一提，记账页是**自带数字键盘**（1-9 / . / 0 / ⌫）的表单，不弹软键盘，
+所以那一页的 tap 一直正常 —— 这也解释了为什么问题只在「新建项目」这一页出现。
+
+## 五、仍未覆盖
+
+| 项 | 状态 | 原因 |
+| --- | --- | --- |
+| `HomeScreen` / `HomeViewModel` 的去留 | **未决** | 死代码属实，但「做首页」还是「删掉」是产品决策，不单方面定 |
+| 空态图标尺寸 | 待评审 | 当前用 `DsSpacing.xxxl`（32dp）。截图里看着略小，是否调到 40dp 属视觉决策 |
+| 其余 15 处消费端手写 tnum | 未收敛 | 写法各不相同（有的带 `fontSize`、有的带 `fontWeight`），机械替换会改视觉 |
+| 非槽位圆角 13 处 | 未归位 | 见上一份文档 |
+| 字号定稿 | 未做 | `DsTypography` 仍等于 Material3 默认，等排版评审 |
+| 其余详情页接令牌 | 未做 | 等排版评审一次性做，避免做两遍 |
+| 真机跑 release 包的**逐字段库比对** | 未做 | 依赖 `run-as`，release 包不可 debuggable；脚本已明确打「已跳过」而不是假装通过 |

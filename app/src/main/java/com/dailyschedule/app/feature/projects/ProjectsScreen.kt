@@ -1,5 +1,6 @@
 package com.dailyschedule.app.feature.projects
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -38,14 +40,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dailyschedule.app.R
 import com.dailyschedule.app.core.time.DurationFormatter
+import com.dailyschedule.app.core.ui.component.DsEmptyState
 import com.dailyschedule.app.core.ui.theme.ProjectColors
+import com.dailyschedule.app.core.ui.theme.numericEmphasis
 import com.dailyschedule.app.domain.model.FocusSession
 import kotlinx.coroutines.delay
 
@@ -121,19 +124,11 @@ fun ProjectsScreen(
 
                 if (state.active.isEmpty()) {
                     item {
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 48.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = stringResource(R.string.project_empty),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
+                        DsEmptyState(
+                            icon = Icons.Outlined.Checklist,
+                            title = stringResource(R.string.project_empty_title),
+                            description = stringResource(R.string.project_empty),
+                        )
                     }
                 } else {
                     item(key = "hint") {
@@ -248,7 +243,7 @@ private fun ActiveSessionCard(
     val paused = session.pauseStartElapsedMs != null
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
         shape = MaterialTheme.shapes.large,
         colors =
             CardDefaults.cardColors(
@@ -277,11 +272,7 @@ private fun ActiveSessionCard(
             Spacer(Modifier.height(6.dp))
             Text(
                 text = DurationFormatter.clock(session.elapsedSinceStart(nowElapsedMs)),
-                style =
-                    MaterialTheme.typography.displayMedium.copy(
-                        fontWeight = FontWeight.Medium,
-                        fontFeatureSettings = "tnum",
-                    ),
+                style = numericEmphasis(MaterialTheme.typography.displayMedium),
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
             Spacer(Modifier.height(14.dp))

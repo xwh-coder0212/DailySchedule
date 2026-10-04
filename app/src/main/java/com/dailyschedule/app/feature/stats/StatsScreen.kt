@@ -1,5 +1,6 @@
 package com.dailyschedule.app.feature.stats
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.PieChart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -35,10 +38,12 @@ import com.dailyschedule.app.core.ui.component.BarDatum
 import com.dailyschedule.app.core.ui.component.DonutSlice
 import com.dailyschedule.app.core.ui.component.DsBarChart
 import com.dailyschedule.app.core.ui.component.DsDonutChart
+import com.dailyschedule.app.core.ui.component.DsEmptyState
 import com.dailyschedule.app.core.ui.component.DsLegendGrid
 import com.dailyschedule.app.core.ui.component.DsLineChart
 import com.dailyschedule.app.core.ui.component.LegendItem
 import com.dailyschedule.app.core.ui.theme.ProjectColors
+import com.dailyschedule.app.core.ui.theme.numericEmphasis
 import com.dailyschedule.app.domain.model.StatBucket
 
 /**
@@ -272,19 +277,10 @@ private fun ShareCard(
 
 @Composable
 private fun EmptyHint() {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 32.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = stringResource(R.string.stats_chart_empty),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
+    DsEmptyState(
+        icon = Icons.Outlined.PieChart,
+        title = stringResource(R.string.stats_chart_empty),
+    )
 }
 
 /**
@@ -399,7 +395,7 @@ private fun SectionCard(
     content: @Composable () -> Unit,
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
         shape = MaterialTheme.shapes.large,
         colors =
             CardDefaults.cardColors(
@@ -425,11 +421,7 @@ private fun BigStatCell(
     Column {
         Text(
             text = value,
-            style =
-                MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Medium,
-                    fontFeatureSettings = "tnum",
-                ),
+            style = numericEmphasis(MaterialTheme.typography.headlineSmall),
         )
         Text(
             text = label,
