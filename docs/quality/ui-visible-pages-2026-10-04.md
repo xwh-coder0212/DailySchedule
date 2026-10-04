@@ -171,11 +171,17 @@ AutoMirrored 版本。已改为 `Icons.AutoMirrored.Outlined.ReceiptLong`，改�
 于是第一次点击即使没生效，断言也会立刻通过。统计页本次**没有被真正重新核对**；
 它的数字由单测 `StatsNumbersEndToEndTest` 覆盖，且 `DsCharts` 的改动是等价改写。
 
-三张页面截图（归档在 `docs/quality/`）：
+四张页面截图（归档在 `docs/quality/`）：
 
 - [`ui-visible-todo.png`](ui-visible-todo.png) —— 待办页有 1 个项目时的卡片
+- [`ui-visible-todo-empty.png`](ui-visible-todo-empty.png) —— **待办页新空态**（清理测试数据后补拍，见 3.4）
 - [`ui-visible-stats-empty.png`](ui-visible-stats-empty.png) —— 统计页新空态：图标 + 「这个周期还没有数据」
 - [`ui-visible-money-empty.png`](ui-visible-money-empty.png) —— 记账页切到 2026年9月 后的新空态：图标 + 「本月还没有记账」+「点右下角 + 记第一笔。」
+
+⚠️ 口径说明：统计页与记账页的空态**上一轮就已拍到**；**待办页空态此前拍不到** ——
+因为待办页只有 1 个项目（见表 3.3），有数据就不会渲染空态。
+`ui-visible-todo-empty.png` 是补拍的，也是本轮 `DsEmptyState` 改造里
+**唯一一个此前从未在设备上被看到过**的产物。
 
 记账页当前月（2026年10月）渲染 `本月支出 ¥ 1,234.56`、明细行 `-¥ 1,234.56`，
 走的就是收敛后的 `numeric()` 路径。
@@ -188,7 +194,43 @@ AutoMirrored 版本。已改为 `Icons.AutoMirrored.Outlined.ReceiptLong`，改�
 - 1 个项目 `StudyMath120`
 - 1 笔记账 `餐饮 · ¥1,234.56 · 今天 19:19`
 
-这两条是**测试数据**，不是产品内容，可在 App 内直接删除。
+这两条是**测试数据**，不是产品内容。
+
+### 3.4 测试数据的清理（2026-10-04 收尾）
+
+测试数据由实施方（AI）在验收时注入，**也由实施方负责清除**，不留给用户手工删。
+
+清理方式：`adb shell pm clear com.dailyschedule.app` —— 回到 `adb install` 之后的原始状态。
+选择它而非「在 App 内逐条删除」的原因是：**当时设备上的 `input tap` 已失效**（见下）。
+
+- 清理前先确认设备库里的内容确实只有测试数据：待办页截图仅 1 张项目卡 `StudyMath120`
+  （`docs/quality/ui-visible-todo.png`），与 `verify_backup.sh` 输出的
+  `counts={projects:1, categories:7, sessions:0, expenses:1}` 一致 —— 7 个分类是 App 首次建库的默认值。
+- 清理后冷启动 `Status: ok / LaunchState: COLD / TotalTime: 246 ms`，
+  `FATAL EXCEPTION` 与 `ANR in com.dailyschedule` 命中数 **0**。
+- 清理后待办页渲染出新空态：图标 + `还没有项目` + `点右下角 + 创建第一个，比如「考研数学」。`
+  截图见 [`ui-visible-todo-empty.png`](ui-visible-todo-empty.png)。
+
+**同一台设备上 `input tap` 会失效（本轮实测）**
+
+同一台 Redmi（`2407FRK8EC` / Android 16 / HyperOS）在本轮稍早时 `input tap` 是可用的，
+收尾时却完全失效：`adb shell input tap` 返回 `TAP_EXIT=0` **且不报权限错误**，
+但点击既没有触发目标控件，也没有触发遮罩关闭 —— 即事件根本没进入应用。
+
+排查与结论：
+
+| 检查项 | 结果 | 是否原因 |
+| --- | --- | --- |
+| `dumpsys input_method` 的 `mInputShown` | `false` | 否（不是键盘遮挡） |
+| `dumpsys power` 的 `mWakefulness` | `Awake` | 否（不是息屏） |
+| `input tap` 退出码 / 权限报错 | `0` / 无 | 否（不报错，静默失效） |
+| 屏幕时间戳前后对比 | 8:42 → 8:43 | 否（设备是活的、界面在刷新） |
+
+**关联线索**：本轮每次执行 adb 命令都会看到 `daemon not running; starting now` ——
+adb 守护进程在命令之间没能存活。MIUI 的「USB 调试（安全设置）」所授予的
+模拟输入能力与 adb 会话绑定，**守护进程重启后该授权可能不再生效**。
+判据留在此处：若 `input tap` 静默失效而三项上表检查全否，先尝试在开发者选项里
+**关掉再打开「USB 调试（安全设置）」**，而不是反复调坐标。
 
 有了它，release 包的真机 JSON 往返才有内容可搬：
 
@@ -247,7 +289,7 @@ close_kb() {                       # 只在键盘真的开着时才按返回
 | 项 | 状态 | 原因 |
 | --- | --- | --- |
 | `HomeScreen` / `HomeViewModel` 的去留 | **未决** | 死代码属实，但「做首页」还是「删掉」是产品决策，不单方面定 |
-| 空态图标尺寸 | 待评审 | 当前用 `DsSpacing.xxxl`（32dp）。截图里看着略小，是否调到 40dp 属视觉决策 |
+| 空态图标尺寸 | **待评审（已有真机截图可判）** | 当前用 `DsSpacing.xxxl`（32dp）。[`ui-visible-todo-empty.png`](ui-visible-todo-empty.png) 是第一个真实空态截图，图标在 1220×2712 的屏上明显偏小，且标题与引导之间留白偏大；是否把图标提到 40dp、收紧两行间距属视觉决策 |
 | ~~其余手写 tnum~~ | **已清零** | 见「二之续」：11 处全部等价收敛，`grep` 结果为 0 处 |
 | 非槽位圆角 13 处 | 未归位 | 见上一份文档 |
 | 字号定稿 | 未做 | `DsTypography` 仍等于 Material3 默认，等排版评审 |
