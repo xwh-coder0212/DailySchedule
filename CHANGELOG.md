@@ -5,6 +5,59 @@
 
 ## [未发布]
 
+### release 构建打通、补 CI、清死依赖（2026-10-04）
+
+在此之前这个工程**一个 release 包都没产出过**：`app/build/outputs/apk/` 下只有 debug，
+`docs/quality/quality-gate-final.txt` 全文不含 `release`，签名配置在三个构建文件里零命中。
+`isMinifyEnabled` / `isShrinkResources` 一直开着，但 R8 从没执行过一次。
+
+**Added**
+
+- **release 签名配置**（`app/build.gradle.kts`）。只在仓库根的 `key.properties` 存在
+  且四个键齐全时生效，否则退回 unsigned **并在构建期打一条警告** ——
+  「装不上的包 + BUILD SUCCESSFUL」是最容易被忽略的组合。keystore 按设计不入库。
+- **CI**（`.github/workflows/ci.yml`）。两个 job：`quality`（单测 + ktlint 门禁 + Lint，
+  每次推送都跑）与 `release`（真的走一次 R8 与资源压缩，核对 dex 与体积）。
+  此前 `docs/quality/README.md` 里那句「项目没有 CI，这些日志就是门禁确实跑过的唯一凭据」
+  说的就是这件事 —— 门禁成立与否，取决于「这次记不记得手动跑」。
+- 7 个单测，总计 **213 个 / 24 个测试类**。
+  - `StatsNumbersEndToEndTest`：统计页的**数值**断言。第一轮验收只做了「三张图渲染正常、
+    占比合计 100%」这种目视核对，能发现「图画不出来」，发现不了「柱子画对了但数字是错的」。
+    走真实 Room + 真实 `DayBoundary` + 真实 `StatsViewModel`，期望值全是按业务规则手算的常量。
+  - `ManualBadgeMixTest`：「补录」角标在**混排**列表里的归属。两个用例的时间顺序与来源模式
+    刻意相反 —— 只测一种的话，「角标跟着记录走」和「角标按行号 0/2/4 走」会得出同样结果，
+    测试无法区分这两种实现。
+
+**Changed**
+
+- 删掉 `androidx.work:work-runtime-ktx`（`app/build.gradle.kts` 与 `gradle/libs.versions.toml`）。
+  全工程零调用，是排查死依赖时发现的。保时提醒与开机恢复走 `AlarmManager` + `BroadcastReceiver`。
+  **一处需要留意**：这行声明原本还在充当版本下限。删之前 runtime classpath 上是它声明的
+  2.11.0，删之后只剩 `glance-appwidget:1.2.0 → glance:1.2.0` 传递带入的
+  `work-runtime(-ktx):2.7.1`，即降了 4 个 minor。当前无影响（两者都没被引用，R8 全裁掉），
+  但 V2 实现桌面小组件时不能沿用 2.7.1 —— 那是 2022 年的版本，早于 Android 14 的
+  前台服务类型要求。
+- `README.md` 补上 release 包与签名的构建方式、`--rerun-tasks` 的坑、依赖表的更正。
+
+**Verified**
+
+- `:app:assembleRelease` 首次成功。包体 **26.93 MB → 7.03 MB**（dex 从 21 个降到 1 个）。
+- `apksigner verify --print-certs`：v2 方案通过，签名者
+  `CN=DailySchedule, OU=Personal, O=xwh-coder0212, C=CN`，
+  证书 SHA-256 `1ac90d20…398fd645`。v1 为 false 属预期（`minSdk = 26`）。
+  release 包 7,379,541 字节，SHA-256 `7812a544…0fe84017a6`。
+- **R8 没有伤到 kotlinx.serialization**。排查过程中有两次「看起来是缺陷」：
+  release dex 里 grep 不到 `$$serializer`（实际是被改名，`mapping.txt` 可证），
+  以及枚举常量字段被改名（`RUNNING -> f`，但 `dexdump` 显示传给 `Enum.<init>` 的名字
+  字符串仍是 `"RUNNING"`）。真正兜底的是 `kotlinx-serialization-core-jvm:1.9.0` 自带的
+  consumer R8 规则，AGP 自动应用。逐条证据见
+  `docs/quality/release-build-first-run-2026-10-04.md`。
+
+**仍未覆盖**
+
+- release 包的真机端到端（JSON 导出 → 导入 → 与库逐字段比对）。静态验证再强也替代不了
+  这一步：它证明的是「类与字符串还在」，不是「这条代码路径真的能跑通」。
+
 ### 真机验收与验收脚本修正（2026-10-03）
 
 在 Redmi（`rothko` / 2407FRK8EC，Android 16，HyperOS OS3.0）上对 JSON 完整备份与恢复

@@ -1,8 +1,4 @@
-# Android Lint 原始报告（lint-results-debug.txt，由 :app:lintDebug 生成）
-# 生成时间：2026-10-02 15:55:06
-# 命令：gradle --no-daemon :app:lintDebug
-
-D:\DailySchedule\app\build.gradle.kts:21: Warning: Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the android.os.Build.VERSION_CODES javadoc for details. [OldTargetApi]
+D:\DailySchedule\app\build.gradle.kts:69: Warning: Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the android.os.Build.VERSION_CODES javadoc for details. [OldTargetApi]
         targetSdk = libs.versions.targetSdk.get().toInt()
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 D:\DailySchedule\gradle\libs.versions.toml:9: Warning: Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the android.os.Build.VERSION_CODES javadoc for details. [OldTargetApi]
@@ -41,7 +37,7 @@ distributionUrl=https\://services.gradle.org/distributions/gradle-9.5.0-bin.zip
 D:\DailySchedule\gradle\libs.versions.toml:16: Warning: A newer version of androidx.sqlite:sqlite-bundled than 2.6.1 is available: 2.6.2 [GradleDependency]
 sqlite = "2.6.1"
          ~~~~~~~
-D:\DailySchedule\gradle\libs.versions.toml:37: Warning: A newer version of androidx.core:core-ktx than 1.17.0 is available: 1.18.0 [GradleDependency]
+D:\DailySchedule\gradle\libs.versions.toml:36: Warning: A newer version of androidx.core:core-ktx than 1.17.0 is available: 1.18.0 [GradleDependency]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.17.0" }
                                                                             ~~~~~~~~
 
@@ -61,28 +57,28 @@ kotlin = "2.3.21"
 D:\DailySchedule\gradle\libs.versions.toml:3: Warning: A newer version of org.jetbrains.kotlin.plugin.serialization than 2.3.21 is available: 2.4.20 [NewerVersionAvailable]
 kotlin = "2.3.21"
          ~~~~~~~~
-D:\DailySchedule\gradle\libs.versions.toml:23: Warning: A newer version of org.jetbrains.kotlinx:kotlinx-coroutines-android than 1.10.2 is available: 1.11.0 [NewerVersionAvailable]
+D:\DailySchedule\gradle\libs.versions.toml:22: Warning: A newer version of org.jetbrains.kotlinx:kotlinx-coroutines-android than 1.10.2 is available: 1.11.0 [NewerVersionAvailable]
 kotlinxCoroutines = "1.10.2"
                     ~~~~~~~~
-D:\DailySchedule\gradle\libs.versions.toml:23: Warning: A newer version of org.jetbrains.kotlinx:kotlinx-coroutines-test than 1.10.2 is available: 1.11.0 [NewerVersionAvailable]
+D:\DailySchedule\gradle\libs.versions.toml:22: Warning: A newer version of org.jetbrains.kotlinx:kotlinx-coroutines-test than 1.10.2 is available: 1.11.0 [NewerVersionAvailable]
 kotlinxCoroutines = "1.10.2"
                     ~~~~~~~~
-D:\DailySchedule\gradle\libs.versions.toml:24: Warning: A newer version of org.jetbrains.kotlinx:kotlinx-serialization-json than 1.9.0 is available: 1.11.0 [NewerVersionAvailable]
+D:\DailySchedule\gradle\libs.versions.toml:23: Warning: A newer version of org.jetbrains.kotlinx:kotlinx-serialization-json than 1.9.0 is available: 1.11.0 [NewerVersionAvailable]
 kotlinxSerialization = "1.9.0"
                        ~~~~~~~
-D:\DailySchedule\gradle\libs.versions.toml:27: Warning: A newer version of com.google.truth:truth than 1.4.4 is available: 1.4.5 [NewerVersionAvailable]
+D:\DailySchedule\gradle\libs.versions.toml:26: Warning: A newer version of com.google.truth:truth than 1.4.4 is available: 1.4.5 [NewerVersionAvailable]
 truth = "1.4.4"
         ~~~~~~~
-D:\DailySchedule\gradle\libs.versions.toml:29: Warning: A newer version of io.mockk:mockk than 1.14.2 is available: 1.14.11 [NewerVersionAvailable]
+D:\DailySchedule\gradle\libs.versions.toml:28: Warning: A newer version of io.mockk:mockk than 1.14.2 is available: 1.14.11 [NewerVersionAvailable]
 mockk = "1.14.2"
         ~~~~~~~~
-D:\DailySchedule\gradle\libs.versions.toml:32: Warning: A newer version of org.robolectric:robolectric than 4.16 is available: 4.17 [NewerVersionAvailable]
+D:\DailySchedule\gradle\libs.versions.toml:31: Warning: A newer version of org.robolectric:robolectric than 4.16 is available: 4.17 [NewerVersionAvailable]
 robolectric = "4.16"
               ~~~~~~
-D:\DailySchedule\gradle\libs.versions.toml:33: Warning: A newer version of org.jlleitschuh.gradle.ktlint than 12.3.0 is available: 14.2.0 [NewerVersionAvailable]
+D:\DailySchedule\gradle\libs.versions.toml:32: Warning: A newer version of org.jlleitschuh.gradle.ktlint than 12.3.0 is available: 14.2.0 [NewerVersionAvailable]
 ktlintPlugin = "12.3.0"
                ~~~~~~~~
-D:\DailySchedule\gradle\libs.versions.toml:34: Warning: A newer version of com.pinterest.ktlint:ktlint-cli than 1.0.1 is available: 1.8.0 [NewerVersionAvailable]
+D:\DailySchedule\gradle\libs.versions.toml:33: Warning: A newer version of com.pinterest.ktlint:ktlint-cli than 1.0.1 is available: 1.8.0 [NewerVersionAvailable]
 ktlintCli = "1.0.1"
             ~~~~~~~
 

@@ -7,6 +7,47 @@
 
 ---
 
+## 零、A 档执行状态（2026-10-04 更新）
+
+| 项 | 状态 | 证据 |
+| --- | --- | --- |
+| A1 清死依赖 | **已完成** | `work-runtime-ktx` 从 `app/build.gradle.kts` 与 `gradle/libs.versions.toml` 移除（连同 `work` 版本条目）；Glance 两行按本文件建议保留给 V2。**执行时发现本文件写错了一处**：那行显式声明并不是「纯冗余」—— 实测 `releaseRuntimeClasspath` 显示 `glance-appwidget:1.2.0 → glance:1.2.0` 传递带入的是 `work-runtime(-ktx):2.7.1`，删掉等于把 WorkManager 从 2.11.0 降到 2.7.1。今天无影响（两者都没被引用，R8 全裁），但 V2 做小组件时不能沿用 2.7.1 |
+| A2 release 签名 + 首次构建 | **已完成（真机端到端除外）** | `:app:assembleRelease` 首次成功，26.93 MB → **7.03 MB**；`apksigner verify` v2 通过，签名者 `CN=DailySchedule, OU=Personal, O=xwh-coder0212, C=CN`，证书 SHA-256 `1ac90d20…398fd645`。详见 `docs/quality/release-build-first-run-2026-10-04.md` |
+| A2b release 包真机端到端 | **阻塞** | `adb devices` 为空，无设备。静态验证已完成（见下），但替代不了真机 |
+| A3 验收遗留两项转单测 | **已完成** | 新增 `StatsNumbersEndToEndTest`（4 个用例）+ `ManualBadgeMixTest`（3 个用例）。全量 **213 通过 / 0 失败 / 0 跳过**，24 个测试类（原 206 / 22） |
+| A4 加 CI | **已写入，未在 GitHub 上实跑** | `.github/workflows/ci.yml`：`quality`（单测 + ktlintGate + lintDebug）与 `release`（R8 实跑 + 核对 dex 与体积）两个 job。语法结构已核，真正的验证要等推送到 `xwh-coder0212` |
+
+**执行过程中推翻的两个判断**（这两条比结论本身更有用）
+
+1. **「R8 把 `$$serializer` 裁掉了」是错的。** release dex 里 grep 不到任何
+   `Lcom/dailyschedule/app/**serializer;`，看起来像被删。真相是**只改了名**
+   （`BackupDocument$$serializer -> tg`），`mapping.txt` 里白纸黑字，`INSTANCE` 字段也在。
+   grep dex 找类名，在混淆过的包里本来就不成立。
+2. **「枚举常量字段被改名会把 JSON 里的枚举值写坏」也是错的。** `mapping.txt` 显示
+   `SessionStatus RUNNING -> f`，但 `dexdump` 反汇编显示 `<clinit>` 里传给
+   `java.lang.Enum.<init>` 的名字字符串**仍是 `"RUNNING"`**，而 `Enum.name()` 返回的就是它。
+   四个枚举逐一核对过。
+
+  真正的兜底不是 `app/proguard-rules.pro` 里手写的那几条，而是
+  `kotlinx-serialization-core-jvm:1.9.0` 自带的 consumer R8 规则
+  （`META-INF/com.android.tools/r8/kotlinx-serialization-r8.pro`），AGP 自动应用。
+  这一点在 `mapping/release/configuration.txt`（R8 的已解析配置）里能直接看到。
+
+**执行过程中撞到的两个环境/工具坑**
+
+1. **`--rerun-tasks` 加在整个任务图上会触发 lint/KSP 竞态。**
+   `lintAnalyzeDebugUnitTest` 把 `app/build/kspCaches/release/backups/java` 当成 Java 源根，
+   而 `kspReleaseKotlin` 正在换掉这个目录，lint 于是读到
+   `FileNotFoundException ... AppStartupUseCase_Factory.java (系统找不到指定的路径。)`。
+   lint 自己的报错文案就写着 "this is a bug in lint or one of the libraries it depends on"。
+   做法：`--rerun-tasks` 只给 `testDebugUnitTest`，lint 单独一次且任务图里不含 release 任务。
+   本文件的 A3 验证方式写的是「只给单测加」，这一点原本就写对了。
+2. **本机沙箱里 Gradle 守护进程写构建缓存会被拒**（`build-cache-1\*.part (拒绝访问。)`）。
+   同一目录同一套动作由 Bash 启动的 JVM 做完全成功，判据是进程身份，不是工程问题。
+   绕过方式是 `--no-build-cache`，只损失构建速度。
+
+---
+
 ## 一、结论摘要
 
 | 档 | 项 | 工作量【估算】 | 风险 | 前置依赖 |
@@ -33,6 +74,9 @@
 ---
 
 ## 二、现状基线（实测）
+
+> ⚠️ 这一节是 **2026-10-03 的快照**，其中「无 CI」「release 从未构建」等条目
+> 已在 2026-10-04 改变。最新状态看上面的「零、A 档执行状态」。
 
 | 项 | 实测值 | 来源 |
 | --- | --- | --- |
@@ -102,8 +146,14 @@ $ grep -rn 'WorkManager\|CoroutineWorker\|OneTimeWorkRequest' app/src
 既然 README 的版本规划里桌面小组件已经占着 V2 的位置，就按「保留 Glance、
 只删 `work-runtime-ktx`」处理：
 
-- `app/build.gradle.kts:106` 的 `work-runtime-ktx` —— **删**。没有任何代码调用它，
-  即使保留 Glance，`glance-appwidget` 也会传递带入 `work-runtime`，显式声明纯属冗余。
+- `app/build.gradle.kts:106` 的 `work-runtime-ktx` —— **删**。没有任何代码调用它。
+  **但本文件原来说的「纯属冗余」是错的**（2026-10-04 执行时实测纠正）：
+  那行声明一直在充当**版本下限**。删之前 `releaseRuntimeClasspath` 上解析到的是
+  显式声明的 2.11.0；删之后只剩 `glance-appwidget:1.2.0 → glance:1.2.0` 带来的
+  `androidx.work:work-runtime:2.7.1` / `work-runtime-ktx:2.7.1`。也就是降了 4 个 minor。
+  今天没有影响 —— 全工程不用 WorkManager，Glance 也一行没引用，R8 把两者一起裁掉，
+  产物里什么都没有。V2 做小组件时**不要沿用 2.7.1**（2022 年的版本，
+  早于 Android 14 的前台服务类型要求），要么写回显式依赖，要么用 constraint 顶上去。
   真要写 Worker 时再加回来，成本是三行。
 - `app/build.gradle.kts:107-108` 的两行 Glance —— **留**。它占的是 V2 的位置，
   删了再装回来虽然几乎零成本，但对一个已经规划在 V2 的功能来回折腾没有收益。
@@ -173,7 +223,8 @@ keystore 一旦丢失，**所有已经分发出去的包都永远无法升级**�
 
 ### A4 加 CI（GitHub Actions）
 
-**实测证据**：`.github` 目录不存在；`docs/quality/README.md` 明写「项目没有 CI」。
+**实测证据（2026-10-03 时的事实）**：`.github` 目录不存在；`docs/quality/README.md` 明写「项目没有 CI」。
+（2026-10-04 已写出 `.github/workflows/ci.yml`，见「零、A 档执行状态」。）
 
 **做法**：`.github/workflows/ci.yml`，`ubuntu-latest` + **JDK 21**
 （`app/build.gradle.kts` 里 source/target 都是 `VERSION_21`，`jvmTarget = JVM_21`）。
@@ -341,15 +392,29 @@ Glance 的依赖**已经躺在构建脚本里**（零引用，见 A1），
 ## 七、建议的推进顺序（含依赖）
 
 ```
-① A1 清死依赖：删 work-runtime-ktx，Glance 留待 V2（按 README 的 V2 范围）  ← 不依赖任何项
-② A2 release 签名 + 首次 release 包实跑验证        ← 门槛项，排最前
-③ A3 验收遗留两项转单测                            ← 不依赖任何项，可穿插
-④ A4 加 CI                                        ← 依赖 ①②③ 完成（让 CI 首跑在干净基线）
-⑤ B2 / B3 / B4                                    ← 三者都在纯函数层，可并行，不碰 UI
+① A1 清死依赖：删 work-runtime-ktx，Glance 留待 V2（按 README 的 V2 范围）  ← 不依赖任何项   ✅ 2026-10-04
+② A2 release 签名 + 首次 release 包实跑验证        ← 门槛项，排最前                        ◐ 构建与签名已通，真机端到端待设备
+③ A3 验收遗留两项转单测                            ← 不依赖任何项，可穿插                     ✅ 2026-10-04
+④ A4 加 CI                                        ← 依赖 ①②③ 完成（让 CI 首跑在干净基线）  ◐ 文件已写，待推送实跑
+⑤ B2 / B3 / B4                                    ← 三者都在纯函数层，可并行，不碰 UI        ← 下一个起点
 ⑥ B1 先量冷启动基线 → 再决定投不投 Baseline Profile
 ⑦ B5 单独一轮做依赖升级
 ⑧ C2 / C5（低成本增强）→ C3（统计维度）→ C4（仅在需要上架时）
 ```
+
+**下一步的岔路（需要你定）**
+
+A 档只剩下两件收尾的事，都不需要写新代码：
+
+- **推送到 `xwh-coder0212`**，让 A4 的 CI 真的跑一次。这一步同时会验证
+  `quality` 与 `release` 两个 job，也是「CI 首跑在干净基线」这个前提的兑现。
+  联网/凭据的前置问题在真机验收那一轮已经查过（本机 `GIT_TERMINAL_PROMPT=0`
+  且走 `127.0.0.1:31180` 代理，`curl` 的结论不能直接套到 `git` 上）。
+- **插上手机做 A2b**：装 release 包，跑一次 JSON 导出 → 导入。
+  这是唯一还没被证明的一环，而它恰好是「换手机不丢数据」这个核心承诺的最后一米。
+
+两件互不依赖，可以先做任一件。⑤ 及之后的 B 档随时可以开，它们都在纯函数层，
+不碰 UI，也不会与上面两件事冲突。
 
 **为什么 A2 排最前**：它是唯一一个「不做就没法把 App 给别人用」的项，
 而成本只有「加一段构建脚本 + 生成一个 keystore」。
@@ -362,17 +427,21 @@ Glance 的依赖**已经躺在构建脚本里**（零引用，见 A1），
 
 ## 八、每项的验证方式（可核验，不接受「应该没问题」）
 
-| 项 | 验证命令 / 动作 | 通过标准 |
-| --- | --- | --- |
-| A1 | `./gradlew :app:assembleRelease :app:testDebugUnitTest` | 编译通过 + 206 个单测全过 |
-| A2 | `./gradlew :app:assembleRelease` → `apksigner verify --print-certs` → `adb install -r` → **真机跑一次 JSON 导出让后导入** | 签名信息显示正确 CN；导出 JSON 能被 release 包读回 |
-| A3 | `./gradlew :app:testDebugUnitTest --rerun-tasks` | 新增用例全过；**必须带 `--rerun-tasks`**，否则输入没变会被判 UP-TO-DATE 而什么都没跑 |
-| A4 | 推送后看 GitHub Actions 页面 | 两个 job 都是绿；release job 在无 secret 时显示为 skipped 而非 failed |
-| B1 | 灌数据后 `adb shell am start -W` 三次取中位数 → 加 profile 后再测三次 | 改善幅度可复现，不是单次抖动 |
-| B2 | `./gradlew :app:testDebugUnitTest` | 版本矩阵每个组合都有断言 |
-| B3 | 同上 | 含「校验和缺失仍能导入」与「校验和不匹配被拒绝」两个方向的用例 |
-| B4 | 设置页手动触发体检 + 单测 | 人为造一条 `sqlite_sequence` 落后的库，体检能报出来 |
-| B5 | `./gradlew clean check :app:assembleRelease` | 0 error；warning 数量下降 |
+| 项 | 验证命令 / 动作 | 通过标准 | 2026-10-04 实况 |
+| --- | --- | --- | --- |
+| A1 | `./gradlew :app:assembleRelease :app:testDebugUnitTest` | 编译通过 + 单测全过 | **通过**。删掉 `work-runtime-ktx` 后依赖树照常解析，213 个单测全过 |
+| A2 | `./gradlew :app:assembleRelease` → `apksigner verify --print-certs` → `adb install -r` → **真机跑一次 JSON 导出后导入** | 签名信息显示正确 CN；导出 JSON 能被 release 包读回 | **前三步通过**（签名 CN 与 SHA-256 已核）；第四步**未做**，`adb devices` 为空 |
+| A3 | `./gradlew :app:testDebugUnitTest --rerun-tasks` | 新增用例全过；**必须带 `--rerun-tasks`** | **通过**。24 个测试类 / 213 用例 / 0 失败，逐类明细归档在 `docs/quality/quality-gate-tests.txt` |
+| A4 | 推送后看 GitHub Actions 页面 | 两个 job 都是绿；release job 在无 secret 时显示为 skipped 而非 failed | **未做**，需要先推到 `xwh-coder0212` |
+| B1 | 灌数据后 `adb shell am start -W` 三次取中位数 → 加 profile 后再测三次 | 改善幅度可复现，不是单次抖动 | — |
+| B2 | `./gradlew :app:testDebugUnitTest` | 版本矩阵每个组合都有断言 | — |
+| B3 | 同上 | 含「校验和缺失仍能导入」与「校验和不匹配被拒绝」两个方向的用例 | — |
+| B4 | 设置页手动触发体检 + 单测 | 人为造一条 `sqlite_sequence` 落后的库，体检能报出来 | — |
+| B5 | `./gradlew clean check :app:assembleRelease` | 0 error；warning 数量下降 | — |
+
+**一条实测补充**：A3 那条「只给单测加 `--rerun-tasks`」的写法原本就写对了 ——
+把 `--rerun-tasks` 摊到整个任务图上会撞上 lint 与 KSP 的竞态（见 `docs/quality/README.md`
+的「`--rerun-tasks` 与 lint 的竞态」一节）。
 
 **一个通用注意**：`testDebugUnitTest` 在输入未变时会被 Gradle 判为 UP-TO-DATE
 **而不执行**。只看 `BUILD SUCCESSFUL` 可能什么都没跑。

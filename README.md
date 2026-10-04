@@ -67,11 +67,16 @@ DailySchedule 把两条流水合并到**项目**这一个维度上：
 | 导航 | Navigation Compose | 2.9.6 |
 | 持久化 | Room + KSP / DataStore Preferences | 2.8.4 / 1.2.0 |
 | 依赖注入 | Hilt | 2.60.1 |
-| 后台 | WorkManager / Foreground Service + Exact Alarm | 2.11.0 |
+| 后台 | Foreground Service + Exact Alarm | — |
 | 序列化 | kotlinx.serialization | 1.9.0 |
 | 异步 | kotlinx.coroutines | 1.10.2 |
 | 测试 | JUnit4 + Truth + Turbine + Mockk + Robolectric | — |
 | SDK | minSdk 26 / targetSdk 36 / compileSdk 37 | — |
+
+**这个表里删过一行东西**：曾声明 `androidx.work:work-runtime-ktx 2.11.0`，
+但全工程零调用（唯一一次出现是 `BootCompletedReceiver` 的注释里提到「Worker / JobScheduler」，
+属说明文字）。保时提醒、开机恢复都用 `AlarmManager` + `BroadcastReceiver` 实现，
+没有一处需要 WorkManager。
 
 **AGP 9 起内置 Kotlin 支持**，因此没有 `org.jetbrains.kotlin.android` 插件，
 只需要 `kotlin.plugin.compose` / `kotlin.plugin.serialization`。
@@ -186,13 +191,42 @@ echo "sdk.dir=/你的/Android/sdk" > local.properties
 # app/build/outputs/apk/debug/app-debug.apk
 ```
 
-发布构建需要自备签名；`release` 已开启 `minifyEnabled` 与 `shrinkResources`。
+### release 包与签名
+
+`release` 已开启 `isMinifyEnabled` 与 `isShrinkResources`（实测包体 26.93 MB → 7.03 MB）。
+要产出**可安装**的 release 包，需要在仓库根放一份 `key.properties`（已被 `.gitignore` 挡住）：
+
+```properties
+storeFile=D:/path/to/your.jks
+storePassword=…
+keyAlias=…
+keyPassword=…
+```
+
+```bash
+./gradlew assembleRelease        # 产物：app/build/outputs/apk/release/app-release.apk
+apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk
+```
+
+**没有 `key.properties` 时构建不会失败，而是产出一个 unsigned 包并在构建输出里打一条警告。**
+这是刻意的：keystore 不入库，硬失败会让没有密钥的机器/CI 连「R8 有没有把东西裁坏」都验不了。
+代价是 unsigned 包在设备上会以 `INSTALL_PARSE_FAILED_NO_CERTIFICATES` 失败，
+而这一点只看 `BUILD SUCCESSFUL` 是看不出来的，所以那条警告不能忽略。
+
+PKCS12 格式下 `keyPassword` 必须等于 `storePassword`，否则 `keytool` 只会警告一句
+然后用 `storePassword` 覆盖掉你写的 `keyPassword`。
+
+首次 release 构建的完整静态验证（R8 mapping / usage / dexdump、序列化与枚举是否被裁）见
+[docs/quality/release-build-first-run-2026-10-04.md](./docs/quality/release-build-first-run-2026-10-04.md)。
 
 ### 测试
 
 ```bash
-./gradlew testDebugUnitTest      # 206 个单测
+./gradlew testDebugUnitTest --rerun-tasks     # 213 个单测
 ```
+
+**本地一定要带 `--rerun-tasks`。** 源码没变时 `testDebugUnitTest` 会被判为最新直接跳过，
+日志里只剩 `BUILD SUCCESSFUL`，什么都没跑。CI 每次都是全新拉取，不需要这个参数。
 
 单测用 Robolectric 跑，不需要设备。`testOptions.unitTests.isReturnDefaultValues = true`
 是刻意打开的 —— `android.util.Log` 在纯 JVM 下是抛异常的 stub，打开后日志调用退化为 no-op。
@@ -205,16 +239,20 @@ echo "sdk.dir=/你的/Android/sdk" > local.properties
 
 ## 质量门禁
 
-当前实测结果（2026-10-02）：
+当前实测结果（2026-10-04）：
 
 | 门禁 | 命令 | 结果 |
 | --- | --- | --- |
-| 编译 | `./gradlew compileDebugKotlin` | 通过，0 警告 |
-| 单元测试 | `./gradlew testDebugUnitTest` | **206 通过 / 0 失败 / 0 跳过** |
+| 单元测试 | `./gradlew :app:testDebugUnitTest --rerun-tasks` | **213 通过 / 0 失败 / 0 错误 / 0 跳过**（24 个测试类） |
 | Android Lint | `./gradlew :app:lintDebug` | **0 error / 27 warning** |
 | ktlint | `./gradlew :app:ktlintGate` | **通过，存量 0 处** |
-| 打包 | `./gradlew assembleDebug` | 通过 |
+| debug 打包 | `./gradlew assembleDebug` | 通过 |
+| release 打包 | `./gradlew assembleRelease` | 通过，7,379,541 字节，v2 已签名 |
 | 真机验收 | `docs/quality/device-acceptance-2026-10-03.md` | Redmi / Android 16 上 14 项全部通过（含 JSON 备份恢复全链路、补录角标） |
+
+**CI 从 2026-10-04 起存在**（`.github/workflows/ci.yml`）。在它之前，「门禁成立」的前提是
+「记得手动跑」；现在推送即跑单测、ktlint 门禁与 Lint，另有一个 job 真的走一次 R8 与资源压缩。
+原始输出归档在 `docs/quality/`。
 
 几个需要说明的地方，因为它们都是「看起来绿、实际空过」的坑：
 
@@ -257,8 +295,9 @@ echo "sdk.dir=/你的/Android/sdk" > local.properties
 | `rev2-ui-revision.html` | 第二轮改版方案与落地状态（三 Tab、统计重做、补录标记） |
 | `quality/device-acceptance-2026-10-02.md` | 真机验收报告（第一轮）：环境、逐项证据、发现的问题、未覆盖项 |
 | `quality/device-acceptance-2026-10-03.md` | 真机验收报告（第二轮）：JSON 备份/恢复全链路、补录角标、验收脚本修正 |
+| `quality/release-build-first-run-2026-10-04.md` | release 包首次构建与静态验证：签名、包体对比、R8 有没有裁掉 kotlinx.serialization |
 | `quality/README.md` | 质量门禁原始日志的索引与 ktlint 违规分布 |
-| `optimization-roadmap-2026-10-03.md` | 验收之后的优化方案与可行性评估（A/B/C/D 四档、依赖顺序、逐项验证方式） |
+| `optimization-roadmap-2026-10-03.md` | 验收之后的优化方案与可行性评估（A/B/C/D 四档、依赖顺序、逐项验证方式、A 档执行状态） |
 | `../BUILD.md` | 本机构建与排错 |
 
 ## 版本规划
@@ -276,4 +315,4 @@ echo "sdk.dir=/你的/Android/sdk" > local.properties
 
 ---
 
-项目规模：主源码 125 个文件 / 14,108 行，测试 25 个文件 / 4,215 行。
+项目规模：主源码 125 个文件 / 14,108 行，测试 27 个文件 / 4,831 行（213 个 `@Test`，24 个测试类）。

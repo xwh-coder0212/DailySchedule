@@ -1,7 +1,11 @@
 # docs/quality —— 质量门禁的原始证据
 
-本目录保存最近一次完整质量门禁的原始输出。项目没有 CI，这些日志就是"门禁确实跑过"
-的唯一凭据，因此随仓库一起提交。
+本目录保存最近一次完整质量门禁的原始输出，随仓库一起提交。
+
+**从 2026-10-04 起这个仓库有了 CI**（`.github/workflows/ci.yml`），推送即跑单测、
+ktlint 门禁与 Lint，另外还有一个 job 真的走一次 R8 与资源压缩。在此之前，
+「门禁成立与否」取决于这一次记不记得手动跑，本目录的日志就是唯一的凭据；
+现在日志的作用变成了「本地怎么复现 CI 的结论」和「留一份可回溯的原始输出」。
 
 | 文件 | 内容 |
 | --- | --- |
@@ -13,20 +17,46 @@
 | `ktlint-reformat-neutrality.txt` | **语义中性验证**：去掉全部空白后逐字符比对 137 个被重排的文件，证明格式化只动了排版 |
 | `device-acceptance-2026-10-02.md` | **真机验收报告（第一轮）**：设备环境、逐项证据、发现的问题、未覆盖项 |
 | `device-acceptance-2026-10-03.md` | **真机验收报告（第二轮）**：JSON 备份/恢复全链路、补录角标，以及验收脚本自身修掉的 4 个失真问题 |
+| `release-build-first-run-2026-10-04.md` | **release 包首次构建与静态验证**：签名、包体对比、R8 有没有裁掉 kotlinx.serialization（含两次「看起来是缺陷但实测不是」的排查） |
 
-## 最近一次结果（2026-10-02）
+## 最近一次结果（2026-10-04）
 
-| 门禁 | 结果 |
-| --- | --- |
-| `compileDebugKotlin` | 通过，0 警告 |
-| `testDebugUnitTest` | 206 通过 / 0 失败 / 0 跳过 |
-| `:app:lintDebug` | 0 error / 27 warning |
-| `:app:ktlintGate` | 通过，存量 0 处 |
-| `assembleDebug` | 通过 |
+四个关卡分四次运行、每次一张日志，原因见下面「`--rerun-tasks` 与 lint 的竞态」。
+原始输出见 `quality-gate-final.txt`（四段合同一份）与 `quality-gate-tests.txt`、`quality-gate-lint.txt`。
 
-单测用 `--rerun` 强制重跑过，不是 Gradle 的 UP-TO-DATE 缓存结果 ——
+| 门禁 | 命令 | 结果 |
+| --- | --- | --- |
+| 单元测试 | `:app:testDebugUnitTest --rerun-tasks` | **213 通过 / 0 失败 / 0 错误 / 0 跳过**（24 个测试类） |
+| ktlint | `:app:ktlintGate` | 通过，存量 **0** 处 |
+| Android Lint | `:app:lintDebug --rerun-tasks` | **0 error / 27 warning** |
+| release 打包 | `:app:assembleRelease` | 通过（工程史上首次），7,379,541 字节，v2 已签名 |
+
+单测用 `--rerun-tasks` 强制重跑过，不是 Gradle 的 UP-TO-DATE 缓存结果 ——
 `testDebugUnitTest` 在输入未变时会被判为最新而不执行，只看 `BUILD SUCCESSFUL`
-可能什么都没跑。
+可能什么都没跑。`quality-gate-tests.txt` 末尾附了逐类的用例数，方便核对「213」这个数字
+不是从某一次旧运行里抄来的。
+
+## `--rerun-tasks` 与 lint 的竞态
+
+**`--rerun-tasks` 是全局开关，不要加在整个任务图上。** 不加限定地重跑全部任务时，
+`lintAnalyzeDebugUnitTest` 与 `kspReleaseKotlin` 会在同一次构建里同时跑，
+而 lint 把 `app/build/kspCaches/release/backups/java` 当成 Java 源根，
+KSP 正在换掉这个目录，于是 lint 读到：
+
+```
+Unexpected failure during lint analysis of ExportTableFactoryTest.kt
+...kspCaches\release\backups\java\...\AppStartupUseCase_Factory.java (系统找不到指定的路径。)
+```
+
+lint 自己的报错文案就写着 `this is a bug in lint or one of the libraries it depends on`，
+不是本工程的配置问题。做法是拆开：
+
+```bash
+./gradlew :app:testDebugUnitTest --rerun-tasks    # 强制重跑只给单测
+./gradlew :app:ktlintGate                         # ktlint 任务没有声明 outputs，本来每次都会跑
+./gradlew :app:lintDebug --rerun-tasks            # 单独一次，任务图里不含 release 任务
+./gradlew :app:assembleRelease
+```
 
 ## ktlint 存量债的处理路径
 
