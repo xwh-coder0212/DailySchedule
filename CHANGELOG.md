@@ -5,6 +5,36 @@
 
 ## [未发布]
 
+### 推送回路打通，CI 在 da5bc98 上通过（2026-10-04 收尾）
+
+上一节的改动提交为 `da5bc98`（8 files changed / 103 insertions / 55 deletions）。
+推送时经 IP 池代理**连续三次**返回 `error: 403` —— 与此前所有失败模式
+（`Recv failure`、`schannel: server closed abruptly`、`could not read Username`）都不同。
+改用直连后**一次成功**：`0dbfdf2..da5bc98  main -> main`，`PUSH_EXIT=0`。
+
+**Verified**
+
+- 远端引用核对：本地 `HEAD` 与 `origin/main` 同为
+  `da5bc9868ae72b0fafa5b2d307093764fed1fbe2`，`ahead/behind = 0 0`。
+- CI run `37201131583`（`head_sha = da5bc98…`）**conclusion = success**：
+  job `单测 + ktlint 门禁 + Lint` 与 `release 构建（R8 与资源压缩真的跑一次）` 双绿，
+  12:09:19Z → 12:16:03Z 共 **6 分 44 秒**；`还原发布密钥` 步骤为 **skipped**
+  （未配 secret，符合设计，不是 failed）。
+
+**Changed**
+
+- 路线图文档里三处**已被本轮证伪**的状态标记按实测更正：
+  A2「已完成（真机端到端除外）」→ **已完成**；A2b「真机仍未做」→ **已完成（模拟器 + 真机双验）**；
+  A4「未做，需要先推到 xwh-coder0212」→ **通过**。第八节的 A2 / A4 实况列同步。
+- 回填两个本轮踩到的坑：`apksigner` 需 `JAVA_HOME` 指向 JDK 21（默认指向 IntelliJ 目录会报
+  `invalid directory`）；真机验收用的是 `assembleRelease` 输出的通用 APK。
+
+**仍未覆盖**
+
+- **403 的根因未定位**：代理在线、IP 池 32 个可用，但 HTTPS 层返回 403；同一时刻直连可通。
+  属代理层状态，不是仓库或凭据配置问题，故未改任何配置。
+- A4b 仍未做：四个 `ANDROID_*` secret 未配，CI 出的是 unsigned 包。
+
 ### 令牌层落到可见页面、release 包真机验收通过（2026-10-04）
 
 上一节的判断里有一处是错的，真机验收时被证伪：上一节把 `HomeScreen.kt` 当「示范页」接入令牌，

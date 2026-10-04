@@ -12,10 +12,10 @@
 | 项 | 状态 | 证据 |
 | --- | --- | --- |
 | A1 清死依赖 | **已完成** | `work-runtime-ktx` 从 `app/build.gradle.kts` 与 `gradle/libs.versions.toml` 移除（连同 `work` 版本条目）；Glance 两行按本文件建议保留给 V2。**执行时发现本文件写错了一处**：那行显式声明并不是「纯冗余」—— 实测 `releaseRuntimeClasspath` 显示 `glance-appwidget:1.2.0 → glance:1.2.0` 传递带入的是 `work-runtime(-ktx):2.7.1`，删掉等于把 WorkManager 从 2.11.0 降到 2.7.1。今天无影响（两者都没被引用，R8 全裁），但 V2 做小组件时不能沿用 2.7.1 |
-| A2 release 签名 + 首次构建 | **已完成（真机端到端除外）** | `:app:assembleRelease` 首次成功，26.93 MB → **7.03 MB**；`apksigner verify` v2 通过，签名者 `CN=DailySchedule, OU=Personal, O=xwh-coder0212, C=CN`，证书 SHA-256 `1ac90d20…398fd645`。详见 `docs/quality/release-build-first-run-2026-10-04.md` |
-| A2b release 包端到端 | **运行期已验证（模拟器），真机仍未做** | 把 release 包装进 Android 14 模拟器（`system-images;android-34;google_apis;x86_64`）跑通 JSON 导出 → 恢复 → 撤销：`verify_backup.sh 退出码 = 0`、logcat 崩溃特征 **0 命中**、冷启动 415 ms、导出文件 `appVersion = 1.0.0`（不带 `-debug` 后缀，是「本次产出属于 release 包」的直接凭证）。**但这不是真机验收**：`adb devices` 仍为空，真机侧唯一凭据仍是两轮 debug 包验收。详见 `docs/quality/release-runtime-verification-2026-10-04.md` |
+| A2 release 签名 + 首次构建 | **已完成** | `:app:assembleRelease` 首次成功，26.93 MB → **7.03 MB**；`apksigner verify` v2 通过，签名者 `CN=DailySchedule, OU=Personal, O=xwh-coder0212, C=CN`，证书 SHA-256 `1ac90d20…398fd645`。**踩坑记录**：`apksigner` 报 `JAVA_HOME is set to an invalid directory: D:\idea\IntelliJ IDEA 2025.2.4`，须先 `export JAVA_HOME=D:/toolchain/jdk21/jdk-21.0.12.1+1`。详见 `docs/quality/release-build-first-run-2026-10-04.md` |
+| A2b release 包端到端 | **已完成（模拟器 + 真机双验）** | 模拟器侧（Android 14，`system-images;android-34;google_apis;x86_64`）：JSON 导出 → 恢复 → 撤销，`verify_backup.sh` 退出码 0、崩溃 0 命中、冷启动 415 ms。**真机侧（2026-10-04 补做）**：`verify_device.sh all` 安装 `Success`、冷启动 `Status: ok / TotalTime 195 ms`、崩溃与 ANR **各 0 命中**；`verify_backup.sh --replace` **退出码 0 / 0 项失败**（SAF 导出 → 二次确认 → 替换恢复 → 撤销全通）；设备库 `counts={projects:1, categories:7, sessions:0, expenses:1}`，导出文件 `appVersion = 1.0.0`（无 `-debug` 后缀，是「本次产出属于 release 包」的直接凭证）。真机验收用的是 `assembleRelease` 输出的通用 APK |
 | A3 验收遗留两项转单测 | **已完成** | 新增 `StatsNumbersEndToEndTest`（4 个用例）+ `ManualBadgeMixTest`（3 个用例）。全量 **213 通过 / 0 失败 / 0 跳过**，24 个测试类（原 206 / 22） |
-| A4 加 CI | **已完成（已在 GitHub 上跑绿）** | run `37187264545`（sha `5e6fb89`）两个 job 全绿，总 9 分 13 秒：`quality` 292 秒、`release` 234 秒（R8 与资源压缩真跑，含 1 MB 体积下限守卫）。首次运行是红的，修掉三处：`android-actions/setup-android@v3` 在 Node 24 上会碎（改为不依赖第三方 Action，直接用 runner 预装的 `ANDROID_HOME`）、`platforms;android-37` 包名不存在（应为 `platforms;android-37.0`）、`gradlew` 缺可执行位。详见 `docs/quality/ci-first-green-2026-10-04.md` |
+| A4 加 CI | **已完成（已在 GitHub 上跑绿）** | run `37187264545`（sha `5e6fb89`）两个 job 全绿，总 9 分 13 秒：`quality` 292 秒、`release` 234 秒（R8 与资源压缩真跑，含 1 MB 体积下限守卫）。首次运行是红的，修掉三处：`android-actions/setup-android@v3` 在 Node 24 上会碎（改为不依赖第三方 Action，直接用 runner 预装的 `ANDROID_HOME`）、`platforms;android-37` 包名不存在（应为 `platforms;android-37.0`）、`gradlew` 缺可执行位。详见 `docs/quality/ci-first-green-2026-10-04.md`。**此后每次 push 自动触发**；最新 run `37201131583`（sha `da5bc98`）同样两 job 全绿，12:09:19Z → 12:16:03Z 共 6 分 44 秒，job 名 `单测 + ktlint 门禁 + Lint` 与 `release 构建（R8 与资源压缩真的跑一次）`，其中 `还原发布密钥` 步骤为 **skipped**（未配 secret，符合设计） |
 | A4b 配签名 secret | **未做** | 四个 `ANDROID_*` secret 未配，CI 上的 release job 跑的是 unsigned 包（设计如此，不阻塞） |
 
 **执行过程中推翻的两个判断**（这两条比结论本身更有用）
@@ -437,9 +437,9 @@ A 档只剩下两件收尾的事，都不需要写新代码：
 | 项 | 验证命令 / 动作 | 通过标准 | 2026-10-04 实况 |
 | --- | --- | --- | --- |
 | A1 | `./gradlew :app:assembleRelease :app:testDebugUnitTest` | 编译通过 + 单测全过 | **通过**。删掉 `work-runtime-ktx` 后依赖树照常解析，213 个单测全过 |
-| A2 | `./gradlew :app:assembleRelease` → `apksigner verify --print-certs` → `adb install -r` → **真机跑一次 JSON 导出后导入** | 签名信息显示正确 CN；导出 JSON 能被 release 包读回 | **前三步通过**（签名 CN 与 SHA-256 已核）；第四步**未做**，`adb devices` 为空 |
+| A2 | `./gradlew :app:assembleRelease` → `apksigner verify --print-certs` → `adb install -r` → **真机跑一次 JSON 导出后导入** | 签名信息显示正确 CN；导出 JSON 能被 release 包读回 | **四步全通过**。签名 CN 与 SHA-256 已核；真机 `verify_backup.sh --replace` **退出码 0 / 0 项失败**，导出文件 `appVersion=1.0.0` 被 release 包读回、`counts={projects:1, categories:7, sessions:0, expenses:1}` |
 | A3 | `./gradlew :app:testDebugUnitTest --rerun-tasks` | 新增用例全过；**必须带 `--rerun-tasks`** | **通过**。24 个测试类 / 213 用例 / 0 失败，逐类明细归档在 `docs/quality/quality-gate-tests.txt` |
-| A4 | 推送后看 GitHub Actions 页面 | 两个 job 都是绿；release job 在无 secret 时显示为 skipped 而非 failed | **未做**，需要先推到 `xwh-coder0212` |
+| A4 | 推送后看 GitHub Actions 页面 | 两个 job 都是绿；release job 在无 secret 时显示为 skipped 而非 failed | **通过**。最新 run `37201131583`（sha `da5bc98`）两 job 全 绿；`还原发布密钥` 步骤显示 **skipped**（非 failed），与通过标准一致 |
 | B1 | 灌数据后 `adb shell am start -W` 三次取中位数 → 加 profile 后再测三次 | 改善幅度可复现，不是单次抖动 | — |
 | B2 | `./gradlew :app:testDebugUnitTest` | 版本矩阵每个组合都有断言 | — |
 | B3 | 同上 | 含「校验和缺失仍能导入」与「校验和不匹配被拒绝」两个方向的用例 | — |
