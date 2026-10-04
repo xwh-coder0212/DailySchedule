@@ -2,7 +2,6 @@
 <resources>
     <string name="app_name">DailySchedule</string>
 
-    <string name="tab_home">今日</string>
     <string name="tab_stats">统计</string>
     <string name="tab_expense">记账</string>
     <string name="tab_projects">待办</string>
@@ -135,13 +134,6 @@
     <string name="record_amount_hint">输入金额</string>
     <string name="record_note_label">备注（可选）</string>
     <string name="record_saved">已记录</string>
-
-    <!-- 首页 -->
-    <string name="home_label_study">学习</string>
-    <string name="home_label_expense">消费</string>
-    <string name="home_label_focus">专注</string>
-    <string name="home_no_session">未开始计时</string>
-    <string name="home_timeline_empty">今天还没有记录。</string>
 
     <!-- 重启 / 时间异常 -->
 

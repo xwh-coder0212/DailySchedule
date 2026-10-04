@@ -27,6 +27,10 @@ ktlint 门禁与 Lint，另外还有一个 job 真的走一次 R8 与资源压�
 | `ui-visible-pages-2026-10-04.md` | **令牌层落到可见页面**：纠正上一份文档「HomeScreen 是示范页」的误判（实为死代码，全仓零调用）、把三个 Tab 页的空态换成 `DsEmptyState`、5 处手写 tnum 收敛到令牌、release 包真机验收，并记下 MIUI 软键盘覆盖下半屏导致 tap 失效的排查 |
 | `ui-visible-todo.png` / `ui-visible-todo-empty.png` / `ui-visible-stats-empty.png` / `ui-visible-money-empty.png` | 上文中四个真机截图（release 包）：待办页有数据时的卡片、待办页新空态、统计页空态、记账页空态。**待办页空态是清理测试数据后才拍到的**（有数据就不渲染空态），也是本轮 `DsEmptyState` 改造里唯一此前从未在设备上出现过的产物 |
 
+| `dead-home-removal-2026-10-05.md` | **删除死代码 `feature/home/`**：纠正「HomeScreen 去留属产品决策」这一误判 —— Rev2 改版当时已定「不再有今日页、并进统计」，只是漏删了整个包；含删前逐项引用核查、6 条孤儿字符串、**保留** `observeTimeline` 的理由、以及顺带查出设计文档自相矛盾的一处（今日时间轴到底该不该在统计页） |
+| `dead-home-removal-3tabs.png` | 上文中删除后的 release 包冷启动截图：底栏只有「待办 / 统计 / 记账」三格，无「今日」 |
+| `dead-home-removal-verify-backup.log` | 上文中模拟器上 `verify_backup.sh --replace` 的原始输出（退出码 0） |
+
 ## CI
 
 **从 2026-10-04 起这个仓库有了 CI**（`.github/workflows/ci.yml`），推送即跑。

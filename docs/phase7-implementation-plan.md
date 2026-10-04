@@ -176,9 +176,9 @@ T2（纯 Kotlin，可 JVM 单测）和 T4（Room）可以并行，但都由我�
 | DAO | `*Dao` | `SessionDao` |
 | Repository | 接口 `XxxRepository` / 实现 `XxxRepositoryImpl` | |
 | UseCase | `*UseCase`，单个 `operator fun invoke` | `StartSessionUseCase` |
-| ViewModel | `*ViewModel` | `HomeViewModel` |
-| UiState | `*UiState`（密封或 data class） | `HomeUiState` |
-| Composable | 页面 `*Screen`，组件 `Ds*` | `HomeScreen`、`DsCard` |
+| ViewModel | `*ViewModel` | `StatsViewModel` |
+| UiState | `*UiState`（密封或 data class） | `StatsUiState` |
+| Composable | 页面 `*Screen`，组件 `Ds*` | `ProjectsScreen`、`DsCard` |
 
 ---
 

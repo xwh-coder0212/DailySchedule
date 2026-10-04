@@ -33,12 +33,14 @@ import com.dailyschedule.app.core.ui.theme.DsSpacing
  * ## 用法
  * ```
  * DsEmptyState(
- *     icon = Icons.Outlined.History,
- *     title = stringResource(R.string.home_timeline_empty),
- *     description = stringResource(R.string.home_timeline_empty_hint),
+ *     icon = Icons.Outlined.Checklist,
+ *     title = stringResource(R.string.project_empty_title),
+ *     description = stringResource(R.string.project_empty),
  * )
  * ```
  *
+ * 示例里的两个字符串是 `ProjectsScreen` 实际在用的（`还没有项目` / `点右下角 + 创建第一个…`）。
+ * 别把已删除的字符串写进示例 —— 注释不会编译报错，于是能长期骗过所有人。
  * @param icon 视觉落点。建议用 `Icons.Outlined.*`，与填充风格区分开。
  * @param title 一句话说明空的原因。
  * @param description 引导动作。为空则不占位。

@@ -5,6 +5,54 @@
 
 ## [未发布]
 
+### 删除死代码 `feature/home/`（2026-10-05）
+
+`HomeScreen.kt`（284 行）+ `HomeViewModel.kt`（134 行）**不是待接线的新页，是 Rev2 改版漏删的残留**。
+此前把它们记成「做首页还是删掉，属产品决策」——**这个判断是错的**：
+Rev2 改版就已经定过「不再有独立的『今日』『记录』页、并进统计」，
+那次只删了 `feature/record/` 整包，**漏删了 `feature/home/` 这一个包**。
+
+**Removed**
+
+- `app/src/main/java/com/dailyschedule/app/feature/home/`（2 个文件 / 418 行）。
+- 6 条变为零引用的字符串：`tab_home`、`home_label_study`、`home_label_expense`、
+  `home_label_focus`、`home_no_session`、`home_timeline_empty`。
+  删前逐条 grep 确认全仓只剩 `feature/home/` 在引用。
+- 顺带修掉 `DsEmptyState` 的 KDoc 示例：它引用的 `home_timeline_empty` 已删，
+  且 `home_timeline_empty_hint` **从来就不存在**。注释不参与编译，所以能长期骗过所有人。
+
+**不动**
+
+- `record_no_project` / `record_pause` / `record_resume` / `record_stop` **保留**：
+  名字还带 `record`，但 Rev2 之后计时控件搬到了 `ProjectsScreen`，正在用它们。**按名字猜用途会误删。**
+- `SessionRepository.observeTimeline()` **保留**：删除后它的生产代码调用点归零，
+  但它对应的功能（「今日时间轴」）还没实现，属「功能待补、API 先留」，
+  不是「旧 API 待清」。代价是 domain 层留了一个无调用者的方法，见 `docs/quality/dead-home-removal-2026-10-05.md`。
+
+**Verified**
+
+- ktlint / Lint / 单测 / release 构建四道门禁全绿：`KTLINT_EXIT=0`、`LINT_EXIT=0`、
+  `TESTS_EXIT=0`、`RELEASE_EXIT=0`（0 条编译警告）。
+- **单测 24 类 / 213 用例 / 0 失败 / 0 错误 / 0 跳过，Lint 27 条 warning，
+  与删除前逐项相同** —— 这是「删的确实是死代码、没有连带损伤」的直接证据。
+- APK 7,380,325 → **7,378,237 字节（−2,088）**；`apksigner` V2 验签通过，
+  证书 SHA-256 仍为 `1ac90d20…398fd645`。
+- 模拟器端到端：安装 `Success`、`versionName=1.0.0`（无 `-debug` 后缀）、冷启动 690 ms、
+  崩溃特征 **0 命中**；`verify_backup.sh --replace` **退出码 0 / 0 项失败**。
+- 底栏三格已视觉确认（`docs/quality/dead-home-removal-3tabs.png`）：只有待办 / 统计 / 记账。
+
+**顺带查出的一处文档矛盾**
+
+`docs/rev2-ui-revision.html` 内部打架：正文说「今日时间轴**也**放进了统计页」，
+而同一份文档的条目清单把统计页重做成「分段切换 + 概览 + 环形 + 柱状 + 折线」——没提时间轴。
+实现与条目清单一致。两处都出自同一份文档，哪一处作准需要拍板，本轮不单方面裁定。
+
+**仍未覆盖**
+
+- **本轮没做真机冒烟**：计划在 Redmi `2407FRK8EC` 上装一遍，执行时 `adb devices` 已为空
+  （设备断开）。改用模拟器（Android 14）端到端验证替代，覆盖不到 Android 16 / HyperOS 的厂商差异。
+  本轮是纯删除改动，风险小，但这一条如实记下，不拿模拟器结论冒充真机结论。
+
 ### 推送回路打通，CI 在 da5bc98 上通过（2026-10-04 收尾）
 
 上一节的改动提交为 `da5bc98`（8 files changed / 103 insertions / 55 deletions）。
@@ -85,7 +133,8 @@
 
 **仍未覆盖**
 
-- `HomeScreen` / `HomeViewModel` 的去留未定：死代码属实，但「做首页」还是「删掉」是产品决策。
+- ~~`HomeScreen` / `HomeViewModel` 的去留未定~~ → **2026-10-05 已删除**，见下一节。
+  原先记成「产品决策」，这个判断是错的：Rev2 改版当时就定过，只是漏删了。
 - 非槽位圆角 13 处、字号定稿、其余详情页接间距令牌 —— 等排版评审一并做。
   （手写 tnum 已清零，见上。）
 - 真机 release 包的**逐字段库比对**仍做不到：依赖 `run-as`，而 release 包不可 debuggable。
