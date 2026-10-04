@@ -38,11 +38,17 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      # compileSdk = 37，runner 预装的平台里不一定有，显式装一遍
+      # compileSdk = 37，runner 预装的平台里不一定有，显式装一遍。
+      #
+      # 包名是 `platforms;android-37.0` 而**不是** `platforms;android-37` ——
+      # SDK 从 API 36 之后改用「主版本.小版本」命名，仓库里只提供 37.0 / 37.1 / 37.2，
+      # 没有不带小版本的那个。写错的话 `sdkmanager` 会直接报 Failed to find package
+      # 并让这一步失败，两个 job 都过不去（本机实测：`sdkmanager --list` 里
+      # 搜 `platforms;android-37` 前缀只有 37.0 / 37.1 / 37.2 三个）。
       - name: 装 Android SDK
         uses: android-actions/setup-android@v3
       - name: 装 compileSdk 对应的平台与构建工具
-        run: sdkmanager "platforms;android-37" "build-tools;37.0.0"
+        run: sdkmanager "platforms;android-37.0" "build-tools;37.0.0"
 
       - uses: gradle/actions/setup-gradle@v4
 
@@ -92,7 +98,7 @@ jobs:
       - name: 装 Android SDK
         uses: android-actions/setup-android@v3
       - name: 装 compileSdk 对应的平台与构建工具
-        run: sdkmanager "platforms;android-37" "build-tools;37.0.0"
+        run: sdkmanager "platforms;android-37.0" "build-tools;37.0.0"
 
       - uses: gradle/actions/setup-gradle@v4
 
