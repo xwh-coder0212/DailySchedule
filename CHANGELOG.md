@@ -29,6 +29,13 @@
 - 回填两个本轮踩到的坑：`apksigner` 需 `JAVA_HOME` 指向 JDK 21（默认指向 IntelliJ 目录会报
   `invalid directory`）；真机验收用的是 `assembleRelease` 输出的通用 APK。
 
+**一条关于 CI 触发范围的实测**
+
+- `on.push.branches: [main]` **没有 `paths` 过滤**，所以 docs-only 提交照样会跑完整两个 job
+  （实测 run `37201754977` / sha `fd6c4bc`，2 分 36 秒，两 job 均 success；有 Gradle 缓存命中所以比首次快）。
+- 推论：**不要在文档里用「最新一次 run」指代**，那会被下一次提交自己的 CI 顶掉。
+  要指代就写死 `sha`，并用 `python D:/toolchain/wait_ci.py <owner/repo> <sha>` 以 `head_sha` 过滤。
+
 **仍未覆盖**
 
 - **403 的根因未定位**：代理在线、IP 池 32 个可用，但 HTTPS 层返回 403；同一时刻直连可通。
