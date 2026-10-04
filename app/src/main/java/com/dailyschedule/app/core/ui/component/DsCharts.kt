@@ -26,11 +26,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.dailyschedule.app.core.ui.theme.numericEmphasis
 
 /**
  * 统计页的三个图表组件。
@@ -119,11 +119,7 @@ fun DsDonutChart(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = centerValue,
-                    style =
-                        MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = FontWeight.Medium,
-                            fontFeatureSettings = "tnum",
-                        ),
+                    style = numericEmphasis(MaterialTheme.typography.titleSmall),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -185,11 +181,7 @@ fun DsLegendGrid(
                         )
                         Text(
                             text = item.valueText,
-                            style =
-                                MaterialTheme.typography.bodySmall.copy(
-                                    fontWeight = FontWeight.Medium,
-                                    fontFeatureSettings = "tnum",
-                                ),
+                            style = numericEmphasis(MaterialTheme.typography.bodySmall),
                             maxLines = 1,
                         )
                     }

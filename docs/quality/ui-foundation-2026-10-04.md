@@ -106,9 +106,13 @@
 1. **字号一个都没改。** `DsTypography` 目前仍等于 Material3 默认。三个大数字令牌
    （34sp / 40sp）与页面在用的 Material3 基准（`displayMedium` 45sp、`titleLarge` 22sp）
    不一致，统一到哪一套属于排版决策，等评审意见，不抢跑。
-2. **页面里手写 tnum 未全部收敛。** 原为 20 处，同日已在三个可见 Tab 页收敛 5 处，
-   剩 15 处；剩下的写法各不相同（有的带 `fontWeight`、有的带 `fontSize`），
-   机械替换会改变视觉，需逐处判断。组件层 `DsCharts.kt` 的 2 处同理。
+2. ~~**页面里手写 tnum 未全部收敛。**~~ **本项同日已清空。** 20 处消费端手写 tnum
+   （`HomeScreen` 4 + 三个可见 Tab 页 5 + 其余 6 个文件 11）已全部等价收敛到
+   `numeric()` / `numericEmphasis()`，`grep` 结果为 0 处。
+   ⚠️ 本项原先写的「剩下写法各不相同、机械替换会改视觉」和「剩 15 处」**都是错的**：
+   剩余调用点形状完全一致（`X.copy(fontWeight = W, fontFeatureSettings = "tnum")`），
+   而 `numeric()` 只设 `fontFeatureSettings`，故可严格等价改写；数量也应为 11。
+   详见 [`ui-visible-pages-2026-10-04.md`](ui-visible-pages-2026-10-04.md) 的「二之续」。
 3. **其余 11 个页面未接入令牌。** 批量替换上百处 dp 会与即将到来的排版评审冲突，
    一次到位比分两次更省。
 4. **非槽位圆角 13 处未归位。** 见上文。

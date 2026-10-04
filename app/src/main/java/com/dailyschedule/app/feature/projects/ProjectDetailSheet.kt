@@ -49,6 +49,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dailyschedule.app.R
 import com.dailyschedule.app.core.time.DurationFormatter
 import com.dailyschedule.app.core.ui.theme.ProjectColors
+import com.dailyschedule.app.core.ui.theme.numeric
+import com.dailyschedule.app.core.ui.theme.numericEmphasis
 
 /**
  * 待办详情面板。
@@ -356,9 +358,8 @@ private fun NumberWithUnit(
         Text(
             text = number,
             style =
-                MaterialTheme.typography.headlineSmall.copy(
+                numeric(MaterialTheme.typography.headlineSmall).copy(
                     fontWeight = FontWeight.SemiBold,
-                    fontFeatureSettings = "tnum",
                 ),
         )
         Text(
@@ -507,11 +508,7 @@ private fun StatsLine(
         )
         Text(
             text = DurationFormatter.duration(valueMs),
-            style =
-                MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Medium,
-                    fontFeatureSettings = "tnum",
-                ),
+            style = numericEmphasis(MaterialTheme.typography.titleMedium),
         )
     }
 }

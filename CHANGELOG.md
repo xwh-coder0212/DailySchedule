@@ -22,9 +22,15 @@
 - 三个 Tab 页（`ProjectsScreen` / `StatsScreen` / `ExpenseListScreen`）的「一行灰字」空态
   换成 `DsEmptyState`（图标 + 标题 + 引导）；空态文案拆成标题与引导两条字符串，
   原来是「还没有项目。点右下角 + 创建第一个……」一句话兜底。
-- 5 处手写 `fontFeatureSettings = "tnum"` 收敛到 `numeric()` / `numericEmphasis()` 令牌。
-  其中 `ExpenseListScreen` 的月度汇总卡保持原 `SemiBold` 字重不变 —— 用
-  `numeric(...).copy(fontWeight = SemiBold)` 而不是会把字重改成 `Medium` 的 `numericEmphasis`。
+- **全工程手写 tnum 清零**：`fontFeatureSettings = "tnum"` 在 `DsText.kt` 之外 **0 处**。
+  - 三个可见页 5 处：`ProjectsScreen` / `StatsScreen` / `ExpenseListScreen`。
+    其中月度汇总卡保持原 `SemiBold` 字重不变 —— 用 `numeric(...).copy(fontWeight = SemiBold)`
+    而不是会把字重改成 `Medium` 的 `numericEmphasis`。
+  - 其余 11 处：`ProjectSessionsScreen` 5 / `DsCharts` 2 / `ProjectDetailSheet` 2 /
+    `ExpenseEditScreen` 1 / `DataTransferScreen` 1。这 11 处形状一致
+    （`X.copy(fontWeight = W, fontFeatureSettings = "tnum")`），且 `numeric()` 只设
+    `fontFeatureSettings`，故均为严格等价改写；另删掉 `DsCharts` 与 `ExpenseEditScreen`
+    里因此变成孤儿的 `FontWeight` import。
 - 三张会变高的卡片加 `animateContentSize()`：正在专注卡、统计 `SectionCard`、月度汇总卡。
 - 清掉 `ProjectsScreen` 因空态替换而变成孤儿的 `TextAlign` import。
 
@@ -43,7 +49,8 @@
 **仍未覆盖**
 
 - `HomeScreen` / `HomeViewModel` 的去留未定：死代码属实，但「做首页」还是「删掉」是产品决策。
-- 其余 15 处手写 tnum、非槽位圆角 13 处、字号定稿、其余详情页接令牌 —— 等排版评审一并做。
+- 非槽位圆角 13 处、字号定稿、其余详情页接间距令牌 —— 等排版评审一并做。
+  （手写 tnum 已清零，见上。）
 - 真机 release 包的**逐字段库比对**仍做不到：依赖 `run-as`，而 release 包不可 debuggable。
   脚本已明确打「已跳过」而不是假装通过。
 

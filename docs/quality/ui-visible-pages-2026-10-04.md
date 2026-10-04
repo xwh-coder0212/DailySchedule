@@ -63,8 +63,7 @@ $ grep -rn "HomeScreen" --include=*.kt --include=*.kts --include=*.xml . | grep 
 | `stats_chart_empty` | `这个周期还没有数据。` | `这个周期还没有数据`（作标题，去掉句末句号） |
 | `expense_empty` | `本月还没有记账。点右下角 + 记第一笔。` | 拆成 `expense_empty_title` = `本月还没有记账` + `expense_empty` = `点右下角 + 记第一笔。` |
 
-手写 `fontFeatureSettings = "tnum"` 收敛到 `DsText` 令牌，共 5 处（这是上一份文档里
-「20 处消费端手写 tnum」的一部分）：
+手写 `fontFeatureSettings = "tnum"` 收敛到 `DsText` 令牌。三个可见页面共 5 处：
 
 | 文件:行 | 改前 | 改后 |
 | --- | --- | --- |
@@ -82,6 +81,50 @@ $ grep -rn "HomeScreen" --include=*.kt --include=*.kts --include=*.xml . | grep 
 
 顺带清掉 `ProjectsScreen` 里因空态替换而变成孤儿的 `TextAlign` import。
 
+### 二之续、把剩下 11 处手写 tnum 也一并收敛（同日晚）
+
+上一份文档断言「其余手写 tnum 各处写法不同（有的带 `fontSize`、有的带 `fontWeight`），
+机械替换会改视觉，需逐处判断」。**这句话经不起核对。**
+
+把剩余调用点全部列出来之后，它们形状**完全一致**：
+
+```kotlin
+MaterialTheme.typography.X.copy(fontWeight = W, fontFeatureSettings = "tnum")
+```
+
+而 `numeric()` 的实现就是 `base.copy(fontFeatureSettings = "tnum")`，不动任何其它属性。
+所以每一点都能严格等价改写：
+
+| 原写法 | 等价改写 |
+| --- | --- |
+| `X.copy(fontWeight = Medium, fontFeatureSettings = "tnum")` | `numericEmphasis(X)` |
+| `X.copy(fontWeight = SemiBold, fontFeatureSettings = "tnum")` | `numeric(X).copy(fontWeight = SemiBold)` |
+| `X.copy(fontFeatureSettings = "tnum")`（不设字重） | `numeric(X)` |
+
+| 文件 | 处数 |
+| --- | --- |
+| `ProjectSessionsScreen.kt` | 5 |
+| `DsCharts.kt` | 2 |
+| `ProjectDetailSheet.kt` | 2 |
+| `ExpenseEditScreen.kt` | 1 |
+| `DataTransferScreen.kt` | 1 |
+| **合计** | **11** |
+
+另删掉 `DsCharts.kt` / `ExpenseEditScreen.kt` 里因此变成孤儿的 `FontWeight` import。
+
+改完后：
+
+```
+$ grep -rn 'fontFeatureSettings' app/src/main/java --include=*.kt | grep -v core/ui/theme/DsText.kt
+（0 行）
+```
+
+全工程数字排版只剩 `DsText.kt` 一个定义处。
+
+**顺带纠正一个数字**：上一份文档与本节初稿都写「剩余 15 处」。
+实际是 HomeScreen 4 处 + 三个可见页 5 处 + 其余 11 处 = 20（与「20 处消费端」吻合），
+**剩余的正确值是 11**。「15」是没有回读源码就写下的数 —— 与上一轮圆角计数少算 1 处是同一类错误。
+
 ## 三、验证证据
 
 ### 3.1 门禁（与改造前的对照）
@@ -95,6 +138,11 @@ $ grep -rn "HomeScreen" --include=*.kt --include=*.kts --include=*.xml . | grep 
 
 单测与 Lint 数字与改造前逐项相同。
 
+**第二遍（收敛其余 11 处 tnum）之后四道门禁重跑，结果完全相同**：
+`KTLINT_EXIT=0`（基线 0 处）、`LINT_EXIT=0`（0 error / 27 warning）、
+`TEST_EXIT=0`（213 / 24 / 0 / 0 / 0）、`RELEASE_EXIT=0`（**0 条编译警告**）。
+这也是「等价改写」这一判断的第二组证据。
+
 编译过程中出现并已修掉一条：`Icons.Outlined.ReceiptLong` 被标记 deprecated，提示改用
 AutoMirrored 版本。已改为 `Icons.AutoMirrored.Outlined.ReceiptLong`，改后警告数回到 0。
 
@@ -102,11 +150,26 @@ AutoMirrored 版本。已改为 `Icons.AutoMirrored.Outlined.ReceiptLong`，改�
 
 | 项 | 值 |
 | --- | --- |
-| APK | 7,380,325 字节，SHA-256 `036b5d78b867070aa5a27ca2dfc740a6e3c80b073acbd4be02ad0b26e469412b` |
+| APK | 7,380,325 字节，SHA-256 `7a8b2d4d1a012c72c4db0a6c85fcb25320c894257a7ecf80b6fd6d3c41dc2eef`（第二遍收敛后重构建；第一遍为 `036b5d78…`） |
 | 体积变化 | 7,379,541 → 7,380,325（**+784 字节**，与新加空态图标、两条新字符串相符） |
 | 安装 | `adb install -r --no-streaming` → `Success` |
 | 冷启动 | `Status: ok`，`TotalTime 176 ms` |
 | 崩溃 / ANR | logcat 全文 grep `FATAL EXCEPTION` / `ANR in com.dailyschedule.app` → **命中数 0** |
+
+第二遍重装后的冒烟测试（改动过的详情页逐个走一遍）：
+
+| 页 | 结果 |
+| --- | --- |
+| 安装 | `Success` |
+| 冷启动 | `Status: ok`，`TotalTime 219 ms` |
+| `ExpenseEditScreen`（记一笔） | 正常打开，内置数字键盘与「选择分类即完成记录」全在 |
+| `ProjectDetailSheet`（项目详情） | 正常打开：更换背景 / 编辑 / 排序 / 删除 / 专注历史记录 / 数据统计 / 周热力图 / 累计专注 `0 次 0 小时 0 分钟` |
+| 崩溃 / ANR | **0 命中** |
+
+⚠️ 本次冒烟里**我自己的一条断言是无效的**：用 `tap_until` 切「统计」Tab 时，
+判定文本写的是 `统计`，而底栏 Tab 标签本身就是「统计」——
+于是第一次点击即使没生效，断言也会立刻通过。统计页本次**没有被真正重新核对**；
+它的数字由单测 `StatsNumbersEndToEndTest` 覆盖，且 `DsCharts` 的改动是等价改写。
 
 三张页面截图（归档在 `docs/quality/`）：
 
@@ -185,7 +248,7 @@ close_kb() {                       # 只在键盘真的开着时才按返回
 | --- | --- | --- |
 | `HomeScreen` / `HomeViewModel` 的去留 | **未决** | 死代码属实，但「做首页」还是「删掉」是产品决策，不单方面定 |
 | 空态图标尺寸 | 待评审 | 当前用 `DsSpacing.xxxl`（32dp）。截图里看着略小，是否调到 40dp 属视觉决策 |
-| 其余 15 处消费端手写 tnum | 未收敛 | 写法各不相同（有的带 `fontSize`、有的带 `fontWeight`），机械替换会改视觉 |
+| ~~其余手写 tnum~~ | **已清零** | 见「二之续」：11 处全部等价收敛，`grep` 结果为 0 处 |
 | 非槽位圆角 13 处 | 未归位 | 见上一份文档 |
 | 字号定稿 | 未做 | `DsTypography` 仍等于 Material3 默认，等排版评审 |
 | 其余详情页接令牌 | 未做 | 等排版评审一次性做，避免做两遍 |

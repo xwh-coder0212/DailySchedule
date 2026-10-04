@@ -56,6 +56,8 @@ import com.dailyschedule.app.core.time.DurationFormatter
 import com.dailyschedule.app.core.ui.component.SwipeRevealActionsWidth
 import com.dailyschedule.app.core.ui.component.SwipeRevealRow
 import com.dailyschedule.app.core.ui.component.dayLabelOf
+import com.dailyschedule.app.core.ui.theme.numeric
+import com.dailyschedule.app.core.ui.theme.numericEmphasis
 import com.dailyschedule.app.domain.model.FocusSession
 
 /**
@@ -272,9 +274,8 @@ private fun TotalCard(
                     Text(
                         text = totalCount.toString(),
                         style =
-                            MaterialTheme.typography.headlineSmall.copy(
+                            numeric(MaterialTheme.typography.headlineSmall).copy(
                                 fontWeight = FontWeight.SemiBold,
-                                fontFeatureSettings = "tnum",
                             ),
                     )
                     Text(
@@ -288,9 +289,8 @@ private fun TotalCard(
                     Text(
                         text = hours.toString(),
                         style =
-                            MaterialTheme.typography.headlineSmall.copy(
+                            numeric(MaterialTheme.typography.headlineSmall).copy(
                                 fontWeight = FontWeight.SemiBold,
-                                fontFeatureSettings = "tnum",
                             ),
                     )
                     Text(
@@ -302,9 +302,8 @@ private fun TotalCard(
                     Text(
                         text = minutes.toString(),
                         style =
-                            MaterialTheme.typography.headlineSmall.copy(
+                            numeric(MaterialTheme.typography.headlineSmall).copy(
                                 fontWeight = FontWeight.SemiBold,
-                                fontFeatureSettings = "tnum",
                             ),
                         modifier = Modifier.padding(start = 12.dp),
                     )
@@ -376,20 +375,13 @@ private fun SessionRowItem(
                             session.endWallClockMs ?: session.startWallClockMs,
                         )
                     }",
-                    style =
-                        MaterialTheme.typography.bodySmall.copy(
-                            fontFeatureSettings = "tnum",
-                        ),
+                    style = numeric(MaterialTheme.typography.bodySmall),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Text(
                 text = DurationFormatter.duration(session.durationMs ?: 0L),
-                style =
-                    MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.Medium,
-                        fontFeatureSettings = "tnum",
-                    ),
+                style = numericEmphasis(MaterialTheme.typography.titleSmall),
             )
         }
     }

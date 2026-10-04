@@ -37,13 +37,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dailyschedule.app.R
 import com.dailyschedule.app.core.ui.component.DsNumberPad
+import com.dailyschedule.app.core.ui.theme.numericEmphasis
 import com.dailyschedule.app.domain.model.Category
 
 /**
@@ -151,11 +151,7 @@ fun ExpenseEditScreen(
                         )
                         Text(
                             text = if (state.amountText.isEmpty()) "0" else state.amountText,
-                            style =
-                                MaterialTheme.typography.displayMedium.copy(
-                                    fontWeight = FontWeight.Medium,
-                                    fontFeatureSettings = "tnum",
-                                ),
+                            style = numericEmphasis(MaterialTheme.typography.displayMedium),
                             modifier = Modifier.padding(vertical = 8.dp),
                         )
                         OutlinedTextField(

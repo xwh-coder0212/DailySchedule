@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dailyschedule.app.R
 import com.dailyschedule.app.core.transfer.BackupCounts
 import com.dailyschedule.app.core.transfer.BackupRejection
+import com.dailyschedule.app.core.ui.theme.numericEmphasis
 
 /** 系统文件选择器要认的 MIME。用标准的 xlsx 类型，用户能直接看到「另存为 Excel」 */
 private const val XLSX_MIME =
@@ -508,11 +509,7 @@ private fun CountRow(
         Text(text = label, style = MaterialTheme.typography.bodyLarge)
         Text(
             text = stringResource(countFormat, count),
-            style =
-                MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.Medium,
-                    fontFeatureSettings = "tnum",
-                ),
+            style = numericEmphasis(MaterialTheme.typography.bodyLarge),
         )
     }
 }
