@@ -1,0 +1,115 @@
+
+════ 0. 起 adb server 与无窗口模拟器 ════
+emulator launcher pid=1825
+
+════ 1. 等系统起来（最多 6 分钟） ════
+  sys.boot_completed=1，约 20s
+  设备：Android 14 (SDK 34) / x86_64
+
+════ 2. 安装 release 包 ════
+  APK: 7379541 字节
+Performing Streamed Install
+Success
+  已装版本：
+        primaryCpuAbi=x86_64
+        versionCode=1 minSdk=26 targetSdk=36
+        versionName=1.0.0
+
+════ 3. 冷启动测量与崩溃检查 ════
+  Status: ok
+  TotalTime: 415
+  WaitTime: 418
+  截图：D:/toolchain/emu/release-rt/01-coldstart.png (67832 字节)
+  logcat 里的崩溃/异常（应为空）：
+  → 命中崩溃特征行数: 0
+  前台窗口：
+      mCurrentFocus=Window{f037a5e u0 com.dailyschedule.app/com.dailyschedule.app.MainActivity}
+      mFocusedApp=ActivityRecord{7d51668 u0 com.dailyschedule.app/.MainActivity t25}
+
+════ 4. JSON 导出 → 导入替换 → 撤销（DS_PKG=com.dailyschedule.app） ════
+  设备 Download 目录现状：
+    total 0
+
+──── 1. 冷启动到待办页 ────
+   Status: ok
+   TotalTime: 399
+✅ 顶部栏有设置入口
+
+──── 2. 进入设置页 —— 验证标题栏与返回按钮 ────
+   截图: D:/toolchain/shots/backup/01_settings.png
+✅ 设置页有标题「设置」
+✅ 设置页有返回按钮
+
+──── 3. 进入数据导出与恢复页 ────
+   截图: D:/toolchain/shots/backup/02_transfer.png
+✅ 有「完整备份」分区
+✅ 有「导出备份文件」按钮
+✅ 有「从备份文件恢复」按钮
+✅ 有「Excel 报表」分区
+
+──── 4. 导出备份 —— 走 SAF 写入手机存储 ────
+   截图: D:/toolchain/shots/backup/03_picker.png
+✅ 系统保存对话框已弹出
+   截图: D:/toolchain/shots/backup/04_after_export.png
+✅ 界面回报导出成功
+
+──── 5. 检查手机存储里的文件 ────
+✅ 找到备份文件: DailySchedule_备份_20261004_0740.json
+   本地副本: D:/toolchain/tmp/device-backup.json (2331 字节)
+
+──── 6. 校验设备导出的文件内容 ────
+   counts = {'projects': 0, 'categories': 7, 'sessions': 0, 'expenses': 0}
+   exportedAtIso = 2026-10-04T07:41:09.139Z
+   appVersion = 1.0.0 / dbVersion = 2
+✅ 设备导出的备份文件结构完整、条数自洽、外键自洽
+   对照设备数据库：
+   ⏭ 库对照已跳过：run-as 取不到 com.dailyschedule.app 的 databases/（该包不可 debuggable，仅 debug 包支持）
+      因此本节只证明「JSON 自身结构完整」，不证明「JSON 与库逐字段一致」。
+      要补这一层，请用 debug 包再跑一次本脚本。
+
+──── 7. 导入路径 —— 选文件到二次确认框 ────
+   截图: D:/toolchain/shots/backup/13_picker.png
+
+──── 5a. 在选择器里定位备份文件 ────
+   顶部没有「浏览」标签 → 按 AOSP/Google DocumentsUI 走抽屉
+   截图: D:/toolchain/shots/backup/p_roots.png
+   抽屉里找到 Downloads 项，点击
+   纵向可点范围下限调为 300
+   找到 DailySchedule_备份_20261004_0740.json（y=1123），点击选中
+✅ 文件已选中
+   选择器已直接返回（单选模式），没有「确定」这一步，跳过
+   截图: D:/toolchain/shots/backup/14_confirm.png
+✅ 弹出二次确认框
+✅ 确认框里显示了将写入的条数
+✅ 确认框明确警告了数据会被清空
+
+──── 7b. --replace：真执行替换并恢复 ────
+   截图: D:/toolchain/shots/backup/15_restored.png
+✅ 界面回报已恢复（含条数）
+✅ 出现「撤销上次导入」入口
+   恢复后与备份文件对照：
+   ⏭ 库对照已跳过：run-as 取不到 com.dailyschedule.app 的 databases/（该包不可 debuggable，仅 debug 包支持）
+      因此本节只证明「JSON 自身结构完整」，不证明「JSON 与库逐字段一致」。
+      要补这一层，请用 debug 包再跑一次本脚本。
+
+──── 7c. 撤销上次导入 ────
+   截图: D:/toolchain/shots/backup/17_undone.png
+✅ 撤销成功（撤销前又自动留了新快照）
+
+──── 完成（截图目录：D:/toolchain/shots/backup） ────
+
+✅ 结论：JSON 备份的导出与导入路径在设备上走通（0 项失败）
+
+════ 5. 收工 ════
+
+════ 汇总 ════
+verify_backup.sh 退出码 = 0  (0=全过)
+崩溃特征命中数        = 0  (0=没有)
+证据目录              = D:/toolchain/emu/release-rt
+  total 136
+  drwxr-xr-x 1 郗文瀚 197609     0 Oct  4 15:39 .
+  drwxr-xr-x 1 郗文瀚 197609     0 Oct  4 15:16 ..
+  -rw-r--r-- 1 郗文瀚 197609 67832 Oct  4 15:40 01-coldstart.png
+  -rw-r--r-- 1 郗文瀚 197609 48502 Oct  4 15:40 logcat-coldstart.txt
+  -rw-r--r-- 1 郗文瀚 197609  4539 Oct  4 15:43 run-full.log
+  -rw-r--r-- 1 郗文瀚 197609  3255 Oct  4 15:43 verify-backup.log

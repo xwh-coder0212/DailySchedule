@@ -219,6 +219,13 @@ PKCS12 格式下 `keyPassword` 必须等于 `storePassword`，否则 `keytool` �
 首次 release 构建的完整静态验证（R8 mapping / usage / dexdump、序列化与枚举是否被裁）见
 [docs/quality/release-build-first-run-2026-10-04.md](./docs/quality/release-build-first-run-2026-10-04.md)。
 
+静态证据证伪不了「跑起来会炸」（资源被误裁、`NoClassDefFoundError`、反序列化路径问题
+都只在运行时暴露），所以补了一轮运行期验证：把 release 包装进 Android 14 模拟器跑
+JSON 导出 → 恢复 → 撤销，结果 `退出码=0`、logcat 崩溃特征 0 命中、冷启动 415 ms。
+详见 [docs/quality/release-runtime-verification-2026-10-04.md](./docs/quality/release-runtime-verification-2026-10-04.md)。
+**注意这一轮不是真机验收**（手上没有可连接的设备），真机侧的唯一凭据仍是
+`docs/quality/device-acceptance-2026-10-0{2,3}.md` 那两轮。
+
 ### 测试
 
 ```bash
@@ -248,7 +255,9 @@ PKCS12 格式下 `keyPassword` 必须等于 `storePassword`，否则 `keytool` �
 | ktlint | `./gradlew :app:ktlintGate` | **通过，存量 0 处** |
 | debug 打包 | `./gradlew assembleDebug` | 通过 |
 | release 打包 | `./gradlew assembleRelease` | 通过，7,379,541 字节，v2 已签名 |
+| release 运行期 | `verify_release_rt.sh`（Android 14 模拟器） | **`退出码=0` / 崩溃特征 0 命中**；冷启动 415 ms；JSON 导出→恢复→撤销全通 |
 | 真机验收 | `docs/quality/device-acceptance-2026-10-03.md` | Redmi / Android 16 上 14 项全部通过（含 JSON 备份恢复全链路、补录角标） |
+| 真机验收（release 包） | —— | **未做**。手上没有可连接的设备；release 包目前只在模拟器上跑过 |
 
 **CI 从 2026-10-04 起存在**（`.github/workflows/ci.yml`）。在它之前，「门禁成立」的前提是
 「记得手动跑」；现在推送即跑单测、ktlint 门禁与 Lint，另有一个 job 真的走一次 R8 与资源压缩。

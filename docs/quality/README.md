@@ -18,6 +18,10 @@ ktlint 门禁与 Lint，另外还有一个 job 真的走一次 R8 与资源压�
 | `device-acceptance-2026-10-02.md` | **真机验收报告（第一轮）**：设备环境、逐项证据、发现的问题、未覆盖项 |
 | `device-acceptance-2026-10-03.md` | **真机验收报告（第二轮）**：JSON 备份/恢复全链路、补录角标，以及验收脚本自身修掉的 4 个失真问题 |
 | `release-build-first-run-2026-10-04.md` | **release 包首次构建与静态验证**：签名、包体对比、R8 有没有裁掉 kotlinx.serialization（含两次「看起来是缺陷但实测不是」的排查） |
+| `release-runtime-verification-2026-10-04.md` | **release 包运行期验证**：把 R8 后的包装进 Android 运行时，跑通 JSON 导出与恢复；含本次在验收脚本里查出的 3 个失真问题与 1 个环境事实 |
+| `release-runtime-verify-log.txt` | 上文的原始输出（模拟器启动 → 安装 → 冷启动 → 复用验收脚本跑 JSON 全链路） |
+| `release-runtime-verify-backup-log.txt` | 上文中 `verify_backup.sh` 单跑的原始输出 |
+| `release-runtime-coldstart.png` | release 包冷启动后的首页截图（资源未被 `isShrinkResources` 误裁的直接凭证） |
 
 ## 最近一次结果（2026-10-04）
 
@@ -30,6 +34,7 @@ ktlint 门禁与 Lint，另外还有一个 job 真的走一次 R8 与资源压�
 | ktlint | `:app:ktlintGate` | 通过，存量 **0** 处 |
 | Android Lint | `:app:lintDebug --rerun-tasks` | **0 error / 27 warning** |
 | release 打包 | `:app:assembleRelease` | 通过（工程史上首次），7,379,541 字节，v2 已签名 |
+| release 运行期 | `verify_release_rt.sh`（模拟器） | **`退出码=0`，崩溃特征 0 命中**；冷启动 415 ms；JSON 导出→恢复→撤销全通 |
 
 单测用 `--rerun-tasks` 强制重跑过，不是 Gradle 的 UP-TO-DATE 缓存结果 ——
 `testDebugUnitTest` 在输入未变时会被判为最新而不执行，只看 `BUILD SUCCESSFUL`
@@ -107,6 +112,26 @@ lint 自己的报错文案就写着 `this is a bug in lint or one of the librari
 前四条占了 76%。它们全都是「换行位置」类规则 —— 也就是说这批存量债的大头是
 排版风格漂移，不是代码缺陷。真正可能掩盖问题的两条（`no-unused-imports` 13 处、
 `if-else-bracing` 1 处）也一并清掉了。
+
+## release 运行期验证
+
+静态证据（`mapping.txt` / `usage.txt` / `dexdump`）读的是文件，能把「类被删了」「字段被改了」
+证伪，但证伪不了「跑起来会炸」—— `Resources.NotFoundException`、
+`NoClassDefFoundError`、反序列化路径上的问题，都要等真实运行时才暴露。
+
+`release-runtime-verification-2026-10-04.md` 补的就是这一层：把 R8 后的 release 包
+装进 Android 14（模拟器，`system-images;android-34;google_apis;x86_64`）跑一遍
+JSON 导出与恢复。结论是 `verify_backup.sh 退出码 = 0`、logcat 崩溃特征 0 命中、
+冷启动 415 ms，导出文件里 `appVersion` 是 `1.0.0`（不带 `-debug` 后缀，可直接确认
+产出属于 release 包）。
+
+它**不是**真机验收：手上没有可连接的设备。所以 `device-acceptance-*` 那两轮
+仍然是真机侧的唯一凭据，模拟器跑的只是「release 构建产物在 AOSP 路径上可用」。
+
+驱动脚本 `D:/toolchain/emu/verify_release_rt.sh`。两个必须写在脚本里的原因：
+模拟器进程必须活在同一棵进程树里（`emulator.exe` 只是 launcher，拉起后端就自己退了，
+分次调用会让进程被回收），以及跑之前要清掉设备上上一轮的导出文件
+（验收脚本用「最新那个」取文件，残留会让结论失真）。
 
 ## 真机验收
 

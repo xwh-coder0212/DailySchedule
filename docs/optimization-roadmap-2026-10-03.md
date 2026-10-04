@@ -13,7 +13,7 @@
 | --- | --- | --- |
 | A1 清死依赖 | **已完成** | `work-runtime-ktx` 从 `app/build.gradle.kts` 与 `gradle/libs.versions.toml` 移除（连同 `work` 版本条目）；Glance 两行按本文件建议保留给 V2。**执行时发现本文件写错了一处**：那行显式声明并不是「纯冗余」—— 实测 `releaseRuntimeClasspath` 显示 `glance-appwidget:1.2.0 → glance:1.2.0` 传递带入的是 `work-runtime(-ktx):2.7.1`，删掉等于把 WorkManager 从 2.11.0 降到 2.7.1。今天无影响（两者都没被引用，R8 全裁），但 V2 做小组件时不能沿用 2.7.1 |
 | A2 release 签名 + 首次构建 | **已完成（真机端到端除外）** | `:app:assembleRelease` 首次成功，26.93 MB → **7.03 MB**；`apksigner verify` v2 通过，签名者 `CN=DailySchedule, OU=Personal, O=xwh-coder0212, C=CN`，证书 SHA-256 `1ac90d20…398fd645`。详见 `docs/quality/release-build-first-run-2026-10-04.md` |
-| A2b release 包真机端到端 | **阻塞** | `adb devices` 为空，无设备。静态验证已完成（见下），但替代不了真机 |
+| A2b release 包端到端 | **运行期已验证（模拟器），真机仍未做** | 把 release 包装进 Android 14 模拟器（`system-images;android-34;google_apis;x86_64`）跑通 JSON 导出 → 恢复 → 撤销：`verify_backup.sh 退出码 = 0`、logcat 崩溃特征 **0 命中**、冷启动 415 ms、导出文件 `appVersion = 1.0.0`（不带 `-debug` 后缀，是「本次产出属于 release 包」的直接凭证）。**但这不是真机验收**：`adb devices` 仍为空，真机侧唯一凭据仍是两轮 debug 包验收。详见 `docs/quality/release-runtime-verification-2026-10-04.md` |
 | A3 验收遗留两项转单测 | **已完成** | 新增 `StatsNumbersEndToEndTest`（4 个用例）+ `ManualBadgeMixTest`（3 个用例）。全量 **213 通过 / 0 失败 / 0 跳过**，24 个测试类（原 206 / 22） |
 | A4 加 CI | **已写入，未在 GitHub 上实跑** | `.github/workflows/ci.yml`：`quality`（单测 + ktlintGate + lintDebug）与 `release`（R8 实跑 + 核对 dex 与体积）两个 job。语法结构已核，真正的验证要等推送到 `xwh-coder0212` |
 
@@ -45,6 +45,12 @@
 2. **本机沙箱里 Gradle 守护进程写构建缓存会被拒**（`build-cache-1\*.part (拒绝访问。)`）。
    同一目录同一套动作由 Bash 启动的 JVM 做完全成功，判据是进程身份，不是工程问题。
    绕过方式是 `--no-build-cache`，只损失构建速度。
+3. **模拟器在沙箱内启动会立刻崩，在沙箱外正常**（同一类进程身份问题）。
+   取证：崩溃库 `%TEMP%\AndroidEmulator\emu-crash-37.2.12.db\reports\*.dmp`，
+   自写 minidump 解析器读出异常码 `0xE06D7363`（MSVC 未捕获的 C++ 异常），
+   dump 的模块列表里有沙箱注入的 `tsbx.dll`。另外 `emulator.exe` 只是 launcher，
+   拉起后端 `qemu-system-x86_64-headless.exe` 后自己就退（退出码 127）——
+   所以「启动命令返回了」不等于模拟器还活着，必须让模拟器和后续 adb 操作活在同一棵进程树里。
 
 ---
 

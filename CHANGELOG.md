@@ -53,10 +53,22 @@
   consumer R8 规则，AGP 自动应用。逐条证据见
   `docs/quality/release-build-first-run-2026-10-04.md`。
 
+- **release 包运行期验证通过**（补做，同日）。静态证据证伪不了「跑起来会炸」——
+  `Resources.NotFoundException`、`NoClassDefFoundError`、反序列化路径问题都只在运行时暴露。
+  把 release 包装进 Android 14 模拟器（`system-images;android-34;google_apis;x86_64`）跑通
+  JSON 导出 → 恢复 → 撤销：`verify_backup.sh 退出码 = 0`，logcat 崩溃特征 **0 命中**，
+  冷启动 415 ms，导出文件里 `appVersion = 1.0.0`（不带 `-debug` 后缀，可直接确认产出属于 release 包）。
+  证据见 `docs/quality/release-runtime-verification-2026-10-04.md`。
+  这一轮顺带在验收脚本里查出 3 处「把某台设备/某种语言的偶然现象当成规则」的缺陷
+  （拿上一轮残留文件当本次结果、只认中文「保存」不认 `SAVE`、抽屉导航点中面包屑导致
+  后续滑动全落在抽屉上），均已修复。
+
 **仍未覆盖**
 
-- release 包的真机端到端（JSON 导出 → 导入 → 与库逐字段比对）。静态验证再强也替代不了
-  这一步：它证明的是「类与字符串还在」，不是「这条代码路径真的能跑通」。
+- release 包的**真机**端到端。上面那轮跑在模拟器上，覆盖的是 Android 14 / AOSP 路径；
+  真机（Redmi / HyperOS / Android 16）侧目前只有 debug 包的凭据，release 包还没在真机上装过。
+- 导出文件与数据库**逐 id 逐字段**比对没能在 release 包上做 —— 这一步依赖 `run-as`，
+  release 包不可 debuggable。脚本现在会明确打「已跳过」而不是假装通过。
 
 ### 真机验收与验收脚本修正（2026-10-03）
 
