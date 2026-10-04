@@ -63,12 +63,32 @@
   （拿上一轮残留文件当本次结果、只认中文「保存」不认 `SAVE`、抽屉导航点中面包屑导致
   后续滑动全落在抽屉上），均已修复。
 
+- **CI 推上去第一次运行是红的，修掉三处后全绿**（run `37187264545`，sha `5e6fb89`，
+  两个 job 全绿，总 9 分 13 秒：`quality` 292 秒、`release` 234 秒）。
+  1. `android-actions/setup-android@v3` 是为 Node.js 20 构建的，而 runner 已把这类
+     Action 强制迁到 Node.js 24 —— 它那一步直接 failure，之后的步骤全被 skip，
+     所以问题 2 当时根本没机会执行。**改为不依赖这个第三方 Action**：runner 镜像
+     本来就预装 `ANDROID_HOME=/usr/local/lib/android/sdk`，平台清单里已有
+     `android-37.0` 与 `build-tools 37.0.0`，换成一段幂等 shell 定位 `sdkmanager`
+     并补装。四个 Action 同时升到当前大版本（`using: node24`）。
+  2. **`platforms;android-37` 这个包名不存在**。SDK 从 API 36 之后改成
+     「主版本.小版本」命名，仓库里只有 `37.0` / `37.1` / `37.2`。
+     已改为 `platforms;android-37.0`。
+  3. **`gradlew` 在 git 里是 `100644`，没有可执行位**（Windows 上
+     `core.fileMode` 不跟踪，入库时丢的），Linux runner 上 `./gradlew` 会
+     `Permission denied`。已改成 `100755`。
+  详见 `docs/quality/ci-first-green-2026-10-04.md`。
+- `release` job 上的 release 包是 **unsigned**（四个 `ANDROID_*` secret 未配，
+  「还原发布密钥」跳过）—— 设计如此：这一步盯的是 R8 有没有把东西裁坏，不是签名。
+  签名包目前只在本地产出。
+
 **仍未覆盖**
 
 - release 包的**真机**端到端。上面那轮跑在模拟器上，覆盖的是 Android 14 / AOSP 路径；
   真机（Redmi / HyperOS / Android 16）侧目前只有 debug 包的凭据，release 包还没在真机上装过。
 - 导出文件与数据库**逐 id 逐字段**比对没能在 release 包上做 —— 这一步依赖 `run-as`，
   release 包不可 debuggable。脚本现在会明确打「已跳过」而不是假装通过。
+- CI 上的签名包（`A4b`）：要配四个 `ANDROID_*` secret 才会产出，目前未配。
 
 ### 真机验收与验收脚本修正（2026-10-03）
 

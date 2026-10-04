@@ -15,7 +15,8 @@
 | A2 release 签名 + 首次构建 | **已完成（真机端到端除外）** | `:app:assembleRelease` 首次成功，26.93 MB → **7.03 MB**；`apksigner verify` v2 通过，签名者 `CN=DailySchedule, OU=Personal, O=xwh-coder0212, C=CN`，证书 SHA-256 `1ac90d20…398fd645`。详见 `docs/quality/release-build-first-run-2026-10-04.md` |
 | A2b release 包端到端 | **运行期已验证（模拟器），真机仍未做** | 把 release 包装进 Android 14 模拟器（`system-images;android-34;google_apis;x86_64`）跑通 JSON 导出 → 恢复 → 撤销：`verify_backup.sh 退出码 = 0`、logcat 崩溃特征 **0 命中**、冷启动 415 ms、导出文件 `appVersion = 1.0.0`（不带 `-debug` 后缀，是「本次产出属于 release 包」的直接凭证）。**但这不是真机验收**：`adb devices` 仍为空，真机侧唯一凭据仍是两轮 debug 包验收。详见 `docs/quality/release-runtime-verification-2026-10-04.md` |
 | A3 验收遗留两项转单测 | **已完成** | 新增 `StatsNumbersEndToEndTest`（4 个用例）+ `ManualBadgeMixTest`（3 个用例）。全量 **213 通过 / 0 失败 / 0 跳过**，24 个测试类（原 206 / 22） |
-| A4 加 CI | **已写入，未在 GitHub 上实跑** | `.github/workflows/ci.yml`：`quality`（单测 + ktlintGate + lintDebug）与 `release`（R8 实跑 + 核对 dex 与体积）两个 job。语法结构已核，真正的验证要等推送到 `xwh-coder0212` |
+| A4 加 CI | **已完成（已在 GitHub 上跑绿）** | run `37187264545`（sha `5e6fb89`）两个 job 全绿，总 9 分 13 秒：`quality` 292 秒、`release` 234 秒（R8 与资源压缩真跑，含 1 MB 体积下限守卫）。首次运行是红的，修掉三处：`android-actions/setup-android@v3` 在 Node 24 上会碎（改为不依赖第三方 Action，直接用 runner 预装的 `ANDROID_HOME`）、`platforms;android-37` 包名不存在（应为 `platforms;android-37.0`）、`gradlew` 缺可执行位。详见 `docs/quality/ci-first-green-2026-10-04.md` |
+| A4b 配签名 secret | **未做** | 四个 `ANDROID_*` secret 未配，CI 上的 release job 跑的是 unsigned 包（设计如此，不阻塞） |
 
 **执行过程中推翻的两个判断**（这两条比结论本身更有用）
 

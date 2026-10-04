@@ -256,11 +256,19 @@ JSON 导出 → 恢复 → 撤销，结果 `退出码=0`、logcat 崩溃特征 0
 | debug 打包 | `./gradlew assembleDebug` | 通过 |
 | release 打包 | `./gradlew assembleRelease` | 通过，7,379,541 字节，v2 已签名 |
 | release 运行期 | `verify_release_rt.sh`（Android 14 模拟器） | **`退出码=0` / 崩溃特征 0 命中**；冷启动 415 ms；JSON 导出→恢复→撤销全通 |
+| CI | 推送后 GitHub Actions | **两个 job 全绿**（run `37187264545`，sha `5e6fb89`，总 9 分 13 秒） |
 | 真机验收 | `docs/quality/device-acceptance-2026-10-03.md` | Redmi / Android 16 上 14 项全部通过（含 JSON 备份恢复全链路、补录角标） |
 | 真机验收（release 包） | —— | **未做**。手上没有可连接的设备；release 包目前只在模拟器上跑过 |
 
 **CI 从 2026-10-04 起存在**（`.github/workflows/ci.yml`）。在它之前，「门禁成立」的前提是
 「记得手动跑」；现在推送即跑单测、ktlint 门禁与 Lint，另有一个 job 真的走一次 R8 与资源压缩。
+两个 job 都不带 `--rerun-tasks`（CI 每次都是全新 workspace，那个参数只在本地需要），
+`release` job 跑的是 **unsigned 包**（四个 `ANDROID_*` secret 未配，跳过还原密钥那一步）——
+它要盯的是「R8 有没有把东西裁坏」，不是签名。
+首次运行是红的，原因和修法记在 [`docs/quality/ci-first-green-2026-10-04.md`](./docs/quality/ci-first-green-2026-10-04.md)：
+`android-actions/setup-android@v3` 是为 Node 20 构建的、而 runner 已强制迁到 Node 24；
+顺带查出 `platforms;android-37` 这个包名根本不存在（应为 `platforms;android-37.0`）、
+以及 `gradlew` 在 git 里没有可执行位。
 原始输出归档在 `docs/quality/`。
 
 几个需要说明的地方，因为它们都是「看起来绿、实际空过」的坑：

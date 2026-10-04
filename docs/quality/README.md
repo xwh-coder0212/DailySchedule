@@ -22,6 +22,29 @@ ktlint 门禁与 Lint，另外还有一个 job 真的走一次 R8 与资源压�
 | `release-runtime-verify-log.txt` | 上文的原始输出（模拟器启动 → 安装 → 冷启动 → 复用验收脚本跑 JSON 全链路） |
 | `release-runtime-verify-backup-log.txt` | 上文中 `verify_backup.sh` 单跑的原始输出 |
 | `release-runtime-coldstart.png` | release 包冷启动后的首页截图（资源未被 `isShrinkResources` 误裁的直接凭证） |
+| `ci-first-green-2026-10-04.md` | **CI 首次绿灯**：两次运行（先红后绿）的逐步骤记录、为变绿修掉的三处问题、以及 CI 现在守住/没守住什么 |
+
+## CI
+
+**从 2026-10-04 起这个仓库有了 CI**（`.github/workflows/ci.yml`），推送即跑。
+`docs/quality/ci-first-green-2026-10-04.md` 记了第一次真实运行的过程，
+本目录其它日志的作用因此变成「本地怎么复现 CI 的结论」和「留一份可回溯的原始输出」。
+
+| job | 内容 | 首次绿灯耗时 |
+| --- | --- | --- |
+| `quality` | 单测（`testDebugUnitTest`）+ ktlint 门禁（`ktlintGate`）+ Lint（`lintDebug`） | 292 秒 |
+| `release` | `assembleRelease` 真跑一次 R8 与资源压缩，再核对产物（含 1 MB 体积下限守卫） | 234 秒 |
+
+两个 job 都**不带 `--rerun-tasks`** —— CI 每次都是全新 workspace，没有历史产物，
+`testDebugUnitTest` 不可能是 UP-TO-DATE。那个参数只在本地需要。
+
+`release` job 目前跑的是 **unsigned 包**：四个 `ANDROID_*` secret 未配，
+`还原发布密钥` 那一步会跳过。这一步要盯的是「R8 有没有把东西裁坏」而不是签名，
+所以足够。**签名包目前只在本地产出**（见 `release-build-first-run-2026-10-04.md`）。
+
+CI 不跑真机 / 模拟器 —— GitHub 托管的 runner 没有 Android 运行时。
+运行期那一层仍靠 `release-runtime-verification-2026-10-04.md` 里那套脚本手工跑。
+
 
 ## 最近一次结果（2026-10-04）
 
@@ -35,6 +58,7 @@ ktlint 门禁与 Lint，另外还有一个 job 真的走一次 R8 与资源压�
 | Android Lint | `:app:lintDebug --rerun-tasks` | **0 error / 27 warning** |
 | release 打包 | `:app:assembleRelease` | 通过（工程史上首次），7,379,541 字节，v2 已签名 |
 | release 运行期 | `verify_release_rt.sh`（模拟器） | **`退出码=0`，崩溃特征 0 命中**；冷启动 415 ms；JSON 导出→恢复→撤销全通 |
+| CI（GitHub Actions） | 推送后看 `/actions` | **两个 job 全绿**（run `37187264545`，sha `5e6fb89`，总 9 分 13 秒） |
 
 单测用 `--rerun-tasks` 强制重跑过，不是 Gradle 的 UP-TO-DATE 缓存结果 ——
 `testDebugUnitTest` 在输入未变时会被判为最新而不执行，只看 `BUILD SUCCESSFUL`
